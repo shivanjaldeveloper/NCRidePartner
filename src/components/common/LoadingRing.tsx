@@ -1,70 +1,49 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+import { hscale, vscale, fscale } from '../../theme/scale';
 
 interface Props {
-  size?: number;
-  color?: string;
-  strokeWidth?: number;
+  icon: React.ReactNode;
+  label: string;
 }
 
-const LoadingRing: React.FC<Props> = ({
-  size = 28,
-  color = Colors.limeGreen,
-  strokeWidth = 2.5,
-}) => {
-  const spin = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(spin, {
-        toValue: 1,
-        duration: 900,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    ).start();
-  }, [spin]);
-
-  const rotate = spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-
+const IconCard: React.FC<Props> = ({ icon, label }) => {
   return (
-    <Animated.View
-      style={[
-        styles.wrapper,
-        { width: size, height: size, transform: [{ rotate }] },
-      ]}
-    >
-      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={`${circumference * 0.25}, ${circumference}`}
-          fill="none"
-        />
-      </Svg>
-    </Animated.View>
+    <View style={styles.card}>
+      <View style={styles.iconWrap}>{icon}</View>
+      <Text style={styles.label}>{label}</Text>
+    </View>
   );
 };
 
-export default LoadingRing;
+export default IconCard;
 
 const styles = StyleSheet.create({
-  wrapper: {
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: hscale(14),
+    paddingVertical: vscale(14),
+    paddingHorizontal: hscale(14),
+    width: hscale(140),
+    gap: hscale(10),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  iconWrap: {
+    width: hscale(28),
+    height: hscale(28),
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  label: {
+    fontSize: fscale(13),
+    fontWeight: '600',
+    color: Colors.ink,
   },
 });

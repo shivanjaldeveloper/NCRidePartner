@@ -17,8 +17,8 @@ const OnboardingScreen3 = () => {
       title="Earnings on time. Always."
       sub="Track daily earnings, weekly payouts, and bonuses in real-time. NCRide Partner pays every Monday."
       illustration={<Onb3Illustration />}
-      onNext={() => navigation.navigate('Home')}
-      onSkip={() => navigation.navigate('Home')}
+      onNext={() => navigation.navigate('Login')}
+      onSkip={() => navigation.navigate('Login')}
     />
   );
 };

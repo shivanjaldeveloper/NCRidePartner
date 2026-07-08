@@ -17,7 +17,7 @@ const OnboardingScreen2 = () => {
       sub="Drive a car, auto, e-rickshaw, or bike taxi. Cover NCR from Noida to Gurugram — on your terms."
       illustration={<Onb2Illustration />}
       onNext={() => navigation.navigate('Onboarding3')}
-      onSkip={() => navigation.navigate('Home')}
+      onSkip={() => navigation.navigate('Login')}
     />
   );
 };

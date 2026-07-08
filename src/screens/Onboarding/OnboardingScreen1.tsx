@@ -17,7 +17,7 @@ const OnboardingScreen1 = () => {
       sub="Join thousands of NCRide partners driving across Noida, Delhi, and Gurugram. Set your own hours and earn more."
       illustration={<Onb1Illustration />}
       onNext={() => navigation.navigate('Onboarding2')}
-      onSkip={() => navigation.navigate('Home')}
+      onSkip={() => navigation.navigate('Login')}
     />
   );
 };

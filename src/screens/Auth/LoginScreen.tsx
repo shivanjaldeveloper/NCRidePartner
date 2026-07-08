@@ -1,0 +1,449 @@
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  NativeSyntheticEvent,
+  TextInputKeyPressEventData,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+import { Colors } from '../../constants/Colors';
+import { hscale, vscale, fscale } from '../../theme/scale';
+import TopSafeStrap from '../../components/layout/TopSafeStrap';
+import PrimaryButton from '../../components/common/PrimaryButton';
+import ChevronLeftIcon from '../../assets/icons/ChevronLeftIcon';
+import ShieldIcon from '../../assets/icons/ShieldIcon';
+import { RootStackParamList } from '../../navigation/types';
+
+type NavProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+
+type Stage = 'phone' | 'otp';
+
+const OTP_LENGTH = 6;
+const RESEND_SECONDS = 38;
+
+// Formats raw digits as "98765 43210"
+const formatPhone = (digits: string) =>
+  digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : digits;
+
+const LoginScreen = () => {
+  const navigation = useNavigation<NavProp>();
+
+  const [stage, setStage] = useState<Stage>('phone');
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
+  const [resendIn, setResendIn] = useState(RESEND_SECONDS);
+
+  const otpRefs = useRef<Array<TextInput | null>>([]);
+
+  useEffect(() => {
+    if (stage !== 'otp' || resendIn <= 0) return;
+    const t = setInterval(() => setResendIn(prev => prev - 1), 1000);
+    return () => clearInterval(t);
+  }, [stage, resendIn]);
+
+  const isPhoneValid = phone.length === 10;
+  const isOtpComplete = otp.every(d => d.length === 1);
+
+  const handleBack = () => {
+    if (stage === 'otp') {
+      setStage('phone');
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const handleSendOtp = () => {
+    if (!isPhoneValid) return;
+    setOtp(Array(OTP_LENGTH).fill(''));
+    setResendIn(RESEND_SECONDS);
+    setStage('otp');
+    setTimeout(() => otpRefs.current[0]?.focus(), 250);
+  };
+
+  const handleChangeNumber = () => {
+    setStage('phone');
+  };
+
+  const handleResend = () => {
+    if (resendIn > 0) return;
+    setOtp(Array(OTP_LENGTH).fill(''));
+    setResendIn(RESEND_SECONDS);
+    otpRefs.current[0]?.focus();
+  };
+
+  const handleOtpChange = (text: string, index: number) => {
+    const digit = text.replace(/[^0-9]/g, '').slice(-1);
+    const next = [...otp];
+    next[index] = digit;
+    setOtp(next);
+    if (digit && index < OTP_LENGTH - 1) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyPress = (
+    e: NativeSyntheticEvent<TextInputKeyPressEventData>,
+    index: number,
+  ) => {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleVerify = () => {
+    if (!isOtpComplete) return;
+    navigation.navigate('Permissions');
+  };
+
+  const timerLabel = `00:${resendIn.toString().padStart(2, '0')}`;
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View style={styles.container}>
+        <TopSafeStrap backgroundColor={Colors.surface} />
+
+        <View style={styles.topRow}>
+          <TouchableOpacity
+            onPress={handleBack}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <ChevronLeftIcon size={20} color={Colors.ink} strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.content}>
+          {stage === 'phone' ? (
+            <View>
+              <View style={styles.appBadge}>
+                <View style={styles.appBadgeDot} />
+                <Text style={styles.appBadgeText}>NCRide Partner App</Text>
+              </View>
+
+              <Text style={styles.title}>
+                Welcome, partner.{'\n'}Sign in to start driving.
+              </Text>
+              <Text style={styles.subtitle}>
+                We'll send a 6-digit OTP to verify your number.
+              </Text>
+
+              <View style={styles.fieldBlock}>
+                <Text style={styles.fieldLabel}>Mobile number</Text>
+                <View style={styles.phoneInputBox}>
+                  <View style={styles.ccGroup}>
+                    <Text style={styles.flag}>🇮🇳</Text>
+                    <Text style={styles.ccText}>+91</Text>
+                  </View>
+                  <View style={styles.divider} />
+                  <TextInput
+                    style={styles.phoneInput}
+                    value={formatPhone(phone)}
+                    onChangeText={t =>
+                      setPhone(t.replace(/[^0-9]/g, '').slice(0, 10))
+                    }
+                    placeholder="98765 43210"
+                    placeholderTextColor={Colors.mute2}
+                    keyboardType="number-pad"
+                    maxLength={11}
+                    autoFocus
+                  />
+                </View>
+              </View>
+
+              <View style={styles.trustBanner}>
+                <ShieldIcon size={17} color={Colors.green} strokeWidth={1.8} />
+                <Text style={styles.trustText}>
+                  Your number is used only for partner verification.
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <View>
+              <View style={styles.otpBadge}>
+                <View style={styles.otpBadgeDot} />
+                <Text style={styles.otpBadgeText}>
+                  OTP sent to +91 {formatPhone(phone)}
+                </Text>
+              </View>
+
+              <Text style={styles.title}>Enter the code</Text>
+              <View style={styles.otpSubRow}>
+                <Text style={styles.subtitle}>6-digit OTP · </Text>
+                <TouchableOpacity onPress={handleChangeNumber}>
+                  <Text style={styles.changeNumberText}>Change number</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.otpRow}>
+                {otp.map((digit, i) => (
+                  <TextInput
+                    key={i}
+                    ref={ref => (otpRefs.current[i] = ref)}
+                    style={styles.otpBox}
+                    value={digit}
+                    onChangeText={t => handleOtpChange(t, i)}
+                    onKeyPress={e => handleOtpKeyPress(e, i)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    textAlign="center"
+                  />
+                ))}
+              </View>
+
+              <View style={styles.resendRow}>
+                {resendIn > 0 ? (
+                  <Text style={styles.resendText}>
+                    Resend in{' '}
+                    <Text style={styles.resendTime}>{timerLabel}</Text>
+                  </Text>
+                ) : (
+                  <TouchableOpacity onPress={handleResend}>
+                    <Text style={styles.resendActiveText}>Resend OTP</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.footer}>
+          <PrimaryButton
+            label={stage === 'phone' ? 'Send OTP' : 'Verify & continue'}
+            onPress={stage === 'phone' ? handleSendOtp : handleVerify}
+            icon="arrowRight"
+            disabled={stage === 'phone' ? !isPhoneValid : !isOtpComplete}
+            style={styles.fullButton}
+          />
+          <Text style={styles.legalText}>
+            By continuing you agree to our{' '}
+            <Text style={styles.legalStrong}>Partner Terms</Text> &{' '}
+            <Text style={styles.legalStrong}>Privacy Policy</Text>.
+          </Text>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
+  );
+};
+
+export default LoginScreen;
+
+const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+  },
+  topRow: {
+    paddingTop: vscale(24),
+    paddingHorizontal: hscale(24),
+  },
+  backButton: {
+    width: hscale(40),
+    height: hscale(40),
+    borderRadius: hscale(14),
+    borderWidth: 1,
+    borderColor: Colors.line,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: hscale(28),
+    paddingTop: vscale(28),
+  },
+  appBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(6),
+    paddingVertical: vscale(5),
+    paddingHorizontal: hscale(10),
+    borderRadius: 99,
+    backgroundColor: 'rgba(200,242,96,0.18)',
+    marginBottom: vscale(16),
+  },
+  appBadgeDot: {
+    width: hscale(7),
+    height: hscale(7),
+    borderRadius: hscale(4),
+    backgroundColor: Colors.ink,
+  },
+  appBadgeText: {
+    fontSize: fscale(11.5),
+    fontWeight: '700',
+    color: Colors.ink,
+  },
+  title: {
+    fontSize: fscale(30),
+    fontWeight: '800',
+    letterSpacing: -1,
+    color: Colors.ink,
+    lineHeight: fscale(33),
+  },
+  subtitle: {
+    marginTop: vscale(10),
+    fontSize: fscale(14),
+    color: Colors.mute,
+    lineHeight: fscale(21),
+  },
+  fieldBlock: {
+    marginTop: vscale(32),
+  },
+  fieldLabel: {
+    fontSize: fscale(11),
+    fontWeight: '700',
+    color: Colors.mute,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: vscale(10),
+  },
+  phoneInputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(10),
+    paddingVertical: vscale(14),
+    paddingHorizontal: hscale(16),
+    borderRadius: hscale(18),
+    borderWidth: 1.5,
+    borderColor: Colors.ink,
+    backgroundColor: Colors.surface,
+  },
+  ccGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(7),
+  },
+  flag: {
+    fontSize: fscale(20),
+  },
+  ccText: {
+    fontSize: fscale(15),
+    fontWeight: '700',
+    color: Colors.ink,
+  },
+  divider: {
+    width: 1,
+    height: vscale(22),
+    backgroundColor: Colors.line,
+  },
+  phoneInput: {
+    flex: 1,
+    fontSize: fscale(18),
+    fontWeight: '700',
+    letterSpacing: 1,
+    color: Colors.ink,
+    padding: 0,
+  },
+  trustBanner: {
+    marginTop: vscale(16),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(10),
+    paddingVertical: vscale(12),
+    paddingHorizontal: hscale(14),
+    borderRadius: hscale(14),
+    backgroundColor: 'rgba(200,242,96,0.1)',
+  },
+  trustText: {
+    flex: 1,
+    fontSize: fscale(12.5),
+    color: Colors.ink2,
+    lineHeight: fscale(17),
+  },
+  otpBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(7),
+    paddingVertical: vscale(6),
+    paddingHorizontal: hscale(12),
+    borderRadius: 99,
+    backgroundColor: 'rgba(31,157,107,0.1)',
+    marginBottom: vscale(20),
+  },
+  otpBadgeDot: {
+    width: hscale(7),
+    height: hscale(7),
+    borderRadius: hscale(4),
+    backgroundColor: Colors.green,
+  },
+  otpBadgeText: {
+    fontSize: fscale(12),
+    fontWeight: '700',
+    color: Colors.green,
+  },
+  otpSubRow: {
+    marginTop: vscale(8),
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  changeNumberText: {
+    fontSize: fscale(14),
+    fontWeight: '600',
+    color: Colors.blue,
+  },
+  otpRow: {
+    marginTop: vscale(32),
+    flexDirection: 'row',
+    gap: hscale(8),
+  },
+  otpBox: {
+    flex: 1,
+    height: vscale(62),
+    borderRadius: hscale(18),
+    backgroundColor: Colors.ink,
+    fontSize: fscale(26),
+    fontWeight: '800',
+    color: Colors.lime,
+    padding: 0,
+  },
+  resendRow: {
+    marginTop: vscale(24),
+    alignItems: 'center',
+  },
+  resendText: {
+    fontSize: fscale(13.5),
+    color: Colors.mute,
+  },
+  resendTime: {
+    color: Colors.ink,
+    fontWeight: '700',
+  },
+  resendActiveText: {
+    fontSize: fscale(13.5),
+    color: Colors.blue,
+    fontWeight: '700',
+  },
+  footer: {
+    paddingHorizontal: hscale(24),
+    paddingBottom: vscale(44),
+    paddingTop: vscale(16),
+  },
+  fullButton: {
+    width: '100%',
+  },
+  legalText: {
+    marginTop: vscale(14),
+    fontSize: fscale(11.5),
+    color: Colors.mute2,
+    textAlign: 'center',
+    lineHeight: fscale(17),
+  },
+  legalStrong: {
+    color: Colors.ink,
+    fontWeight: '600',
+  },
+});

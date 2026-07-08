@@ -14,6 +14,7 @@ interface Props {
   label: string;
   onPress: () => void;
   icon?: 'arrowRight' | 'check' | 'none';
+  variant?: 'primary' | 'ghost';
   style?: ViewStyle;
   disabled?: boolean;
 }
@@ -22,24 +23,33 @@ const PrimaryButton: React.FC<Props> = ({
   label,
   onPress,
   icon = 'arrowRight',
+  variant = 'primary',
   style,
   disabled = false,
 }) => {
+  const isGhost = variant === 'ghost';
+  const textColor = isGhost ? Colors.ink : '#FFFFFF';
+
   return (
     <TouchableOpacity
       activeOpacity={0.85}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.button, disabled && styles.buttonDisabled, style]}
+      style={[
+        styles.button,
+        isGhost && styles.buttonGhost,
+        disabled && styles.buttonDisabled,
+        style,
+      ]}
     >
-      <Text style={[Typography.buttonLabel, { color: '#FFFFFF' }]}>
+      <Text style={[Typography.buttonLabel, { color: textColor }]}>
         {label}
       </Text>
       {icon === 'arrowRight' && (
-        <ArrowRightIcon size={18} color="#FFFFFF" strokeWidth={1.8} />
+        <ArrowRightIcon size={18} color={textColor} strokeWidth={1.8} />
       )}
       {icon === 'check' && (
-        <CheckIcon size={18} color="#FFFFFF" strokeWidth={1.8} />
+        <CheckIcon size={18} color={textColor} strokeWidth={1.8} />
       )}
     </TouchableOpacity>
   );
@@ -62,6 +72,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 14,
     elevation: 6,
+  },
+  buttonGhost: {
+    backgroundColor: 'transparent',
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonDisabled: {
     opacity: 0.5,

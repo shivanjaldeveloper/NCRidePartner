@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.cardWhite,
+    backgroundColor: Colors.surface,
     borderRadius: hscale(14),
     paddingVertical: vscale(14),
     paddingHorizontal: hscale(14),
@@ -44,6 +44,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fscale(13),
     fontWeight: '600',
-    color: Colors.textPrimary,
+    color: Colors.ink,
   },
 });

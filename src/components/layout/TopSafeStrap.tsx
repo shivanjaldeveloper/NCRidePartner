@@ -9,7 +9,7 @@ interface Props {
 }
 
 const TopSafeStrap: React.FC<Props> = ({
-  backgroundColor = Colors.background,
+  backgroundColor = Colors.bg,
   style,
 }) => {
   const insets = useSafeAreaInsets();
