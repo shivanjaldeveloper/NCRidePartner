@@ -10,6 +10,13 @@ import OnboardingScreen3 from '../screens/Onboarding/OnboardingScreen3';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import PermissionsScreen from '../screens/Permissions/PermissionsScreen';
 import VerificationScreen from '../screens/Verification/VerificationScreen';
+import HomeScreen from '../screens/Home/HomeScreen';
+import RideRequestScreen from '../screens/RideRequest/RideRequestScreen';
+import PickupNavScreen from '../screens/PickupNav/PickupNavScreen';
+import ArrivedScreen from '../screens/Arrived/ArrivedScreen';
+import LiveTripScreen from '../screens/LiveTrip/LiveTripScreen';
+import TripEarningsScreen from '../screens/TripEarnings/TripEarningsScreen';
+import PassengerRatingScreen from '../screens/PassengerRating/PassengerRatingScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -27,6 +34,16 @@ const RootNavigator = () => {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Permissions" component={PermissionsScreen} />
         <Stack.Screen name="Verification" component={VerificationScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="RideRequest" component={RideRequestScreen} />
+        <Stack.Screen name="PickupNav" component={PickupNavScreen} />
+        <Stack.Screen name="Arrived" component={ArrivedScreen} />
+        <Stack.Screen name="LiveTrip" component={LiveTripScreen} />
+        <Stack.Screen name="TripEarnings" component={TripEarningsScreen} />
+        <Stack.Screen
+          name="PassengerRating"
+          component={PassengerRatingScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

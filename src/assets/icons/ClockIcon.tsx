@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 interface Props {
   size?: number;
@@ -7,14 +7,15 @@ interface Props {
   strokeWidth?: number;
 }
 
-const CheckIcon: React.FC<Props> = ({
-  size = 16,
-  color = '#FFFFFF',
-  strokeWidth = 2.4,
+const ClockIcon: React.FC<Props> = ({
+  size = 17,
+  color = '#0F1115',
+  strokeWidth = 1.8,
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth={strokeWidth} />
     <Path
-      d="M4 12L9.5 17.5L20 6"
+      d="M12 7V12L15.5 14"
       stroke={color}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
@@ -23,4 +24,4 @@ const CheckIcon: React.FC<Props> = ({
   </Svg>
 );
 
-export default CheckIcon;
+export default ClockIcon;

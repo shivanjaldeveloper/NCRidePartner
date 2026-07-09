@@ -6,5 +6,11 @@ export type RootStackParamList = {
   Login: undefined;
   Permissions: undefined;
   Verification: undefined;
-  Home: undefined; // placeholder until Home stack is built
+  Home: undefined;
+  RideRequest: undefined;
+  PickupNav: undefined;
+  Arrived: undefined;
+  LiveTrip: undefined;
+  TripEarnings: undefined;
+  PassengerRating: undefined;
 };

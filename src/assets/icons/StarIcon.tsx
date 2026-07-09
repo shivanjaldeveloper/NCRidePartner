@@ -7,20 +7,19 @@ interface Props {
   strokeWidth?: number;
 }
 
-const CheckIcon: React.FC<Props> = ({
-  size = 16,
-  color = '#FFFFFF',
-  strokeWidth = 2.4,
+const StarIcon: React.FC<Props> = ({
+  size = 17,
+  color = '#0F1115',
+  strokeWidth = 1.8,
 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
-      d="M4 12L9.5 17.5L20 6"
+      d="M12 3L14.6 9L21 9.7L16.3 14L17.6 20.3L12 17.1L6.4 20.3L7.7 14L3 9.7L9.4 9L12 3Z"
       stroke={color}
       strokeWidth={strokeWidth}
-      strokeLinecap="round"
       strokeLinejoin="round"
     />
   </Svg>
 );
 
-export default CheckIcon;
+export default StarIcon;
