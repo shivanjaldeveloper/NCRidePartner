@@ -20,6 +20,9 @@ import PrimaryButton from '../../components/common/PrimaryButton';
 import ChevronLeftIcon from '../../assets/icons/ChevronLeftIcon';
 import ShieldIcon from '../../assets/icons/ShieldIcon';
 import { RootStackParamList } from '../../navigation/types';
+import { sendOtp, verifyOtp, resendOtp } from '../../services/api/authService';
+import { resolveProcessingStatus } from '../../services/api/partnerStatus';
+import { saveCookie } from '../../utils/session';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -39,6 +42,9 @@ const LoginScreen = () => {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [resendIn, setResendIn] = useState(RESEND_SECONDS);
+  const [otpTransaction, setOtpTransaction] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const otpRefs = useRef<Array<TextInput | null>>([]);
 
@@ -59,26 +65,63 @@ const LoginScreen = () => {
     }
   };
 
-  const handleSendOtp = () => {
-    if (!isPhoneValid) return;
-    setOtp(Array(OTP_LENGTH).fill(''));
-    setResendIn(RESEND_SECONDS);
-    setStage('otp');
-    setTimeout(() => otpRefs.current[0]?.focus(), 250);
+  const handleSendOtp = async () => {
+    if (!isPhoneValid || loading) return;
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const res = await sendOtp(phone.trim());
+      if (res.Result !== 'Success' || !res.OtpTransaction) {
+        // Covers banned/blocked numbers too — the API returns a
+        // non-Success Result with a Message explaining why, at this
+        // very first step, rather than a separate status field.
+        throw new Error(res.Message || 'Could not send OTP. Please try again.');
+      }
+      setOtpTransaction(res.OtpTransaction);
+      setOtp(Array(OTP_LENGTH).fill(''));
+      setResendIn(RESEND_SECONDS);
+      setStage('otp');
+      setTimeout(() => otpRefs.current[0]?.focus(), 250);
+    } catch (err: any) {
+      setErrorMessage(
+        err?.message || 'Something went wrong. Please try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChangeNumber = () => {
     setStage('phone');
+    setErrorMessage(null);
   };
 
-  const handleResend = () => {
-    if (resendIn > 0) return;
-    setOtp(Array(OTP_LENGTH).fill(''));
-    setResendIn(RESEND_SECONDS);
-    otpRefs.current[0]?.focus();
+  const handleResend = async () => {
+    if (resendIn > 0 || !otpTransaction || loading) return;
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const res = await resendOtp(otpTransaction);
+      if (res.Result !== 'Success') {
+        throw new Error(
+          res.Message || 'Could not resend OTP. Please try again.',
+        );
+      }
+      if (res.OtpTransaction) setOtpTransaction(res.OtpTransaction);
+      setOtp(Array(OTP_LENGTH).fill(''));
+      setResendIn(RESEND_SECONDS);
+      otpRefs.current[0]?.focus();
+    } catch (err: any) {
+      setErrorMessage(
+        err?.message || 'Could not resend OTP. Please try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOtpChange = (text: string, index: number) => {
+    if (errorMessage) setErrorMessage(null);
     const digit = text.replace(/[^0-9]/g, '').slice(-1);
     const next = [...otp];
     next[index] = digit;
@@ -97,9 +140,48 @@ const LoginScreen = () => {
     }
   };
 
-  const handleVerify = () => {
-    if (!isOtpComplete) return;
-    navigation.navigate('Permissions');
+  const handleVerify = async () => {
+    if (!isOtpComplete || !otpTransaction || loading) return;
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const res = await verifyOtp(otpTransaction, otp.join(''));
+      if (res.Result !== 'Success' || !res.Cookie) {
+        // Wrong/expired OTP — clear the boxes and refocus so the partner
+        // can immediately retype instead of editing stale digits.
+        setOtp(Array(OTP_LENGTH).fill(''));
+        setTimeout(() => otpRefs.current[0]?.focus(), 50);
+        throw new Error(res.Message || 'Invalid OTP. Please try again.');
+      }
+
+      const resolved = resolveProcessingStatus(res.ProcessingStatus);
+
+      if (resolved === 'Blocked') {
+        // Don't persist the cookie for a banned/rejected account.
+        setErrorMessage(
+          res.Message ||
+            'Your account is not eligible to continue. Please contact support.',
+        );
+        return;
+      }
+
+      await saveCookie(res.Cookie);
+
+      if (resolved === 'Home') {
+        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+      } else if (resolved === 'Verification') {
+        navigation.navigate('Verification');
+      } else {
+        // 'Permissions' — new partner / onboarding required. Basic Details
+        // and Documents screens from the flow diagram still need to be
+        // built; Permissions is the closest existing next step for now.
+        navigation.navigate('Permissions');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Invalid OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const timerLabel = `00:${resendIn.toString().padStart(2, '0')}`;
@@ -148,9 +230,10 @@ const LoginScreen = () => {
                   <TextInput
                     style={styles.phoneInput}
                     value={formatPhone(phone)}
-                    onChangeText={t =>
-                      setPhone(t.replace(/[^0-9]/g, '').slice(0, 10))
-                    }
+                    onChangeText={t => {
+                      if (errorMessage) setErrorMessage(null);
+                      setPhone(t.replace(/[^0-9]/g, '').slice(0, 10));
+                    }}
                     placeholder="98765 43210"
                     placeholderTextColor={Colors.mute2}
                     keyboardType="number-pad"
@@ -159,6 +242,10 @@ const LoginScreen = () => {
                   />
                 </View>
               </View>
+
+              {errorMessage && (
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              )}
 
               <View style={styles.trustBanner}>
                 <ShieldIcon size={17} color={Colors.green} strokeWidth={1.8} />
@@ -196,9 +283,15 @@ const LoginScreen = () => {
                     keyboardType="number-pad"
                     maxLength={1}
                     textAlign="center"
+                    textContentType={i === 0 ? 'oneTimeCode' : undefined}
+                    autoComplete={i === 0 ? 'sms-otp' : 'off'}
                   />
                 ))}
               </View>
+
+              {errorMessage && (
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              )}
 
               <View style={styles.resendRow}>
                 {resendIn > 0 ? (
@@ -207,8 +300,10 @@ const LoginScreen = () => {
                     <Text style={styles.resendTime}>{timerLabel}</Text>
                   </Text>
                 ) : (
-                  <TouchableOpacity onPress={handleResend}>
-                    <Text style={styles.resendActiveText}>Resend OTP</Text>
+                  <TouchableOpacity onPress={handleResend} disabled={loading}>
+                    <Text style={styles.resendActiveText}>
+                      {loading ? 'Resending…' : 'Resend OTP'}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -218,10 +313,20 @@ const LoginScreen = () => {
 
         <View style={styles.footer}>
           <PrimaryButton
-            label={stage === 'phone' ? 'Send OTP' : 'Verify & continue'}
+            label={
+              stage === 'phone'
+                ? loading
+                  ? 'Sending…'
+                  : 'Send OTP'
+                : loading
+                ? 'Verifying…'
+                : 'Verify & continue'
+            }
             onPress={stage === 'phone' ? handleSendOtp : handleVerify}
             icon="arrowRight"
-            disabled={stage === 'phone' ? !isPhoneValid : !isOtpComplete}
+            disabled={
+              loading || (stage === 'phone' ? !isPhoneValid : !isOtpComplete)
+            }
             style={styles.fullButton}
           />
           <Text style={styles.legalText}>
@@ -298,6 +403,12 @@ const styles = StyleSheet.create({
     fontSize: fscale(14),
     color: Colors.mute,
     lineHeight: fscale(21),
+  },
+  errorText: {
+    marginTop: vscale(10),
+    fontSize: fscale(12.5),
+    color: Colors.red,
+    fontWeight: '600',
   },
   fieldBlock: {
     marginTop: vscale(32),

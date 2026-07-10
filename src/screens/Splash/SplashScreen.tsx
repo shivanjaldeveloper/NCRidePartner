@@ -9,10 +9,14 @@ import { Typography } from '../../constants/Typography';
 import { hscale, vscale } from '../../theme/scale';
 import WheelLogoIcon from '../../assets/icons/WheelLogoIcon';
 import { RootStackParamList } from '../../navigation/types';
+import { getCookie, clearCookie } from '../../utils/session';
+import { verifyCookie } from '../../services/api/authService';
+import { resolveProcessingStatus } from '../../services/api/partnerStatus';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
 const LOGO_SIZE = 110;
+const MIN_SPLASH_MS = 1400; // keep the brand moment visible even on a fast/cached response
 
 // Builds a circle View, centered on (centerX, centerY), regardless of its own size —
 // stacking several of these with the same center + increasing opacity/decreasing
@@ -36,8 +40,58 @@ const SplashScreen = () => {
   const spin = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const t = setTimeout(() => navigation.replace('Onboarding1'), 2200);
-    return () => clearTimeout(t);
+    let cancelled = false;
+    const start = Date.now();
+
+    const finish = (route: keyof RootStackParamList) => {
+      const elapsed = Date.now() - start;
+      const wait = Math.max(0, MIN_SPLASH_MS - elapsed);
+      setTimeout(() => {
+        if (!cancelled) navigation.replace(route);
+      }, wait);
+    };
+
+    (async () => {
+      try {
+        const cookie = await getCookie();
+
+        if (!cookie) {
+          // First-time / logged-out: keep the existing onboarding intro.
+          finish('Onboarding1');
+          return;
+        }
+
+        const res = await verifyCookie(cookie);
+
+        if (res.Result !== 'Success') {
+          await clearCookie();
+          finish('Login');
+          return;
+        }
+
+        const resolved = resolveProcessingStatus(res.ProcessingStatus);
+
+        if (resolved === 'Home') {
+          finish('Home');
+        } else if (resolved === 'Blocked') {
+          // Banned/rejected — don't auto-log them back in.
+          await clearCookie();
+          finish('Login');
+        } else {
+          // 'Verification' / 'Permissions' — no Application Processing /
+          // Application Status screens yet, so both currently land on
+          // Login where the partner can pick the flow back up.
+          finish('Login');
+        }
+      } catch (err) {
+        console.warn('[Splash] VerifyCookie check failed:', err);
+        finish('Login');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [navigation]);
 
   useEffect(() => {
