@@ -9,7 +9,7 @@ import { Typography } from '../../constants/Typography';
 import { hscale, vscale } from '../../theme/scale';
 import WheelLogoIcon from '../../assets/icons/WheelLogoIcon';
 import { RootStackParamList } from '../../navigation/types';
-import { getCookie, clearCookie } from '../../utils/session';
+import { getCookie, saveCookie, clearCookie } from '../../utils/session';
 import { verifyCookie } from '../../services/api/authService';
 import { resolveProcessingStatus } from '../../services/api/partnerStatus';
 
@@ -61,7 +61,19 @@ const SplashScreen = () => {
           return;
         }
 
-        const res = await verifyCookie(cookie);
+        // A cold-start network blip shouldn't force a partner who's still
+        // validly logged in through OTP again — retry once before giving
+        // up and falling back to Login.
+        let res;
+        try {
+          res = await verifyCookie(cookie);
+        } catch (firstErr) {
+          console.warn(
+            '[Splash] VerifyCookie attempt 1 failed, retrying:',
+            firstErr,
+          );
+          res = await verifyCookie(cookie);
+        }
 
         if (res.Result !== 'Success') {
           await clearCookie();
@@ -69,22 +81,39 @@ const SplashScreen = () => {
           return;
         }
 
+        // The API rotates the cookie on every VerifyCookie call (the
+        // response's Cookie differs from the one we sent) — it's a
+        // single-use-ish token, so we MUST persist the new value or the
+        // next app launch will verify with an already-dead cookie and
+        // wrongly bounce the partner to Login.
+        if (res.Cookie) {
+          await saveCookie(res.Cookie);
+        }
+
         const resolved = resolveProcessingStatus(res.ProcessingStatus);
 
         if (resolved === 'Home') {
-          finish('Home');
+          finish('MainTabs');
+        } else if (resolved === 'Processing') {
+          // Cookie is still valid — no need to make them log in again,
+          // just show them where their application stands.
+          finish('ApplicationProcessing');
         } else if (resolved === 'Blocked') {
           // Banned/rejected — don't auto-log them back in.
           await clearCookie();
           finish('Login');
         } else {
-          // 'Verification' / 'Permissions' — no Application Processing /
-          // Application Status screens yet, so both currently land on
-          // Login where the partner can pick the flow back up.
-          finish('Login');
+          // 'BasicDetails' — mid-onboarding, valid cookie, pick up where
+          // they left off instead of re-doing OTP.
+          finish('BasicDetails');
         }
       } catch (err) {
-        console.warn('[Splash] VerifyCookie check failed:', err);
+        // Both the initial attempt and the retry failed — likely no
+        // connectivity at all. The cookie is left untouched (not cleared)
+        // so the next successful launch can pick the session back up;
+        // we only fall back to Login as a last resort so the partner
+        // isn't stuck staring at the splash screen.
+        console.warn('[Splash] VerifyCookie check failed after retry:', err);
         finish('Login');
       }
     })();

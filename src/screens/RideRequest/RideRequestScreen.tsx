@@ -33,7 +33,7 @@ const RideRequestScreen = () => {
       setTimer(prev => {
         if (prev <= 1) {
           if (intervalRef.current) clearInterval(intervalRef.current);
-          navigation.navigate('Home');
+          navigation.navigate('MainTabs');
           return 0;
         }
         return prev - 1;
@@ -47,7 +47,7 @@ const RideRequestScreen = () => {
   const pct = timer / TOTAL_SECONDS;
   const dashOffset = CIRCUMFERENCE * (1 - pct);
 
-  const handleReject = () => navigation.navigate('Home');
+  const handleReject = () => navigation.navigate('MainTabs');
   const handleAccept = () => navigation.navigate('PickupNav');
 
   return (

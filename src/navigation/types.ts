@@ -4,9 +4,12 @@ export type RootStackParamList = {
   Onboarding2: undefined;
   Onboarding3: undefined;
   Login: undefined;
+  BasicDetails: undefined;
+  PartnerDocuments: undefined;
+  ApplicationProcessing: undefined;
   Permissions: undefined;
   Verification: undefined;
-  Home: undefined;
+  MainTabs: undefined;
   RideRequest: undefined;
   PickupNav: undefined;
   Arrived: undefined;

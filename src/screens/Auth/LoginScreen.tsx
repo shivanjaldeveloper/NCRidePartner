@@ -169,13 +169,11 @@ const LoginScreen = () => {
 
       if (resolved === 'Home') {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-      } else if (resolved === 'Verification') {
-        navigation.navigate('Verification');
+      } else if (resolved === 'Processing') {
+        navigation.navigate('ApplicationProcessing');
       } else {
-        // 'Permissions' — new partner / onboarding required. Basic Details
-        // and Documents screens from the flow diagram still need to be
-        // built; Permissions is the closest existing next step for now.
-        navigation.navigate('Permissions');
+        // 'BasicDetails' — new partner / onboarding required.
+        navigation.navigate('BasicDetails');
       }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Invalid OTP. Please try again.');

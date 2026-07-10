@@ -46,7 +46,7 @@ const DOCUMENTS = [
 const VerificationScreen = () => {
   const navigation = useNavigation<NavProp>();
 
-  const handleStartEarning = () => navigation.navigate('Home');
+  const handleStartEarning = () => navigation.navigate('MainTabs');
 
   return (
     <View style={styles.container}>

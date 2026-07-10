@@ -6,8 +6,12 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  useNavigation,
+  CompositeNavigationProp,
+} from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -36,8 +40,12 @@ import {
   PARTNER_RIDE_REQUEST,
 } from './mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
+import { TabParamList } from '../../navigation/tabTypes';
 
-type NavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+type NavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'HomeTab'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 const HomeScreen = () => {
   const navigation = useNavigation<NavProp>();

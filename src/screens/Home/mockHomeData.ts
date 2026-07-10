@@ -5,6 +5,7 @@
 export interface PartnerProfile {
   initials: string;
   name: string;
+  phone: string;
 }
 
 export interface PartnerStats {
@@ -14,6 +15,7 @@ export interface PartnerStats {
   rating: number;
   acceptanceRate: number;
   cancellationRate: number;
+  totalTrips: number;
 }
 
 export interface DemandZone {
@@ -27,6 +29,7 @@ export interface Incentive {
   sub: string;
   current: number;
   target: number;
+  reward: number;
 }
 
 export interface Vehicle {
@@ -68,6 +71,7 @@ export interface RideRequest {
 export const PARTNER_PROFILE: PartnerProfile = {
   initials: 'RK',
   name: 'Rajesh Kumar',
+  phone: '+91 98765 43210',
 };
 
 export const PARTNER_STATS: PartnerStats = {
@@ -77,6 +81,7 @@ export const PARTNER_STATS: PartnerStats = {
   rating: 4.8,
   acceptanceRate: 92,
   cancellationRate: 3,
+  totalTrips: 2847,
 };
 
 export const PARTNER_DEMAND_ZONES: DemandZone[] = [
@@ -91,6 +96,7 @@ export const PARTNER_INCENTIVES: Incentive[] = [
     sub: 'Complete 60 trips this week for ₹500 bonus',
     current: 42,
     target: 60,
+    reward: 500,
   },
 ];
 
