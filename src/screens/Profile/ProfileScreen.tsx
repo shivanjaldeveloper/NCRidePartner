@@ -1,5 +1,11 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import {
+  useNavigation,
+  CompositeNavigationProp,
+} from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -21,16 +27,22 @@ import {
   PARTNER_VEHICLES,
   PARTNER_PAYOUTS,
 } from '../Home/mockHomeData';
+import { RootStackParamList } from '../../navigation/types';
+import { TabParamList } from '../../navigation/tabTypes';
+
+type NavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'AccountTab'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 const ProfileScreen = () => {
+  const navigation = useNavigation<NavProp>();
   const p = PARTNER_PROFILE;
   const s = PARTNER_STATS;
   const vehicle = PARTNER_VEHICLES[0];
   const payout = PARTNER_PAYOUTS[0];
 
-  // TODO: none of Vehicle, Documents, Earnings-deep-link, Payouts, Settings,
-  // Support, SOS, or Logout confirmation screens beyond this tab are fully
-  // wired yet — these log for now, wire up as each screen gets built.
+  // TODO: SOS and Logout-confirmation screens aren't built yet.
   const noop = (label: string) => () =>
     console.log(`TODO: navigate to ${label}`);
 
@@ -83,21 +95,21 @@ const ProfileScreen = () => {
               icon={<CarIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title="Vehicle details"
               sub={`${vehicle.number} · ${vehicle.type}`}
-              onPress={noop('Vehicle')}
+              onPress={() => navigation.navigate('Vehicle')}
               showDivider
             />
             <Row
               icon={<UserIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title="Documents"
               sub="All 7 verified"
-              onPress={noop('Documents')}
+              onPress={() => navigation.navigate('Verification')}
               showDivider
             />
             <Row
               icon={<CashIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title="Earnings"
               sub="₹72,800 this month"
-              onPress={noop('Earnings')}
+              onPress={() => navigation.navigate('EarningsTab')}
               showDivider
             />
             <Row
@@ -108,7 +120,7 @@ const ProfileScreen = () => {
               sub={`₹${payout.amount.toLocaleString('en-IN')} due ${
                 payout.date
               }`}
-              onPress={noop('Payouts')}
+              onPress={() => navigation.navigate('Payouts')}
             />
           </Card>
 
@@ -117,7 +129,7 @@ const ProfileScreen = () => {
               icon={<BellIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title="Notifications"
               sub="Ride requests, alerts"
-              onPress={noop('Settings')}
+              onPress={() => navigation.navigate('Settings')}
               showDivider
             />
             <Row
@@ -126,13 +138,13 @@ const ProfileScreen = () => {
               }
               title="App settings"
               sub="Language, preferences"
-              onPress={noop('Settings')}
+              onPress={() => navigation.navigate('Settings')}
               showDivider
             />
             <Row
               icon={<ChatIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title="Help & support"
-              onPress={noop('Support')}
+              onPress={() => navigation.navigate('SupportTab')}
               showDivider
             />
             <Row

@@ -36,11 +36,24 @@ export interface Vehicle {
   number: string;
   type: string;
   model: string;
+  color: string;
+  status: string;
+  service: string;
+  year: string;
 }
 
 export interface Payout {
+  id: string;
   amount: number;
   date: string;
+  trips: number;
+  status: 'Upcoming' | 'Paid';
+}
+
+export interface BankAccount {
+  bankName: string;
+  maskedNumber: string;
+  verified: boolean;
 }
 
 export interface Trip {
@@ -101,10 +114,53 @@ export const PARTNER_INCENTIVES: Incentive[] = [
 ];
 
 export const PARTNER_VEHICLES: Vehicle[] = [
-  { number: 'UP16 AB 4821', type: 'Sedan', model: 'Maruti Swift Dzire' },
+  {
+    number: 'UP16 AB 4821',
+    type: 'Sedan',
+    model: 'Maruti Swift Dzire',
+    color: 'White',
+    status: 'Verified',
+    service: 'Car · Sedan',
+    year: '2022',
+  },
 ];
 
-export const PARTNER_PAYOUTS: Payout[] = [{ amount: 8740, date: 'Monday' }];
+export const PARTNER_PAYOUTS: Payout[] = [
+  {
+    id: 'PO-2607-04',
+    amount: 8740,
+    date: 'Monday, 14 Jul',
+    trips: 42,
+    status: 'Upcoming',
+  },
+  {
+    id: 'PO-2606-27',
+    amount: 9210,
+    date: 'Monday, 7 Jul',
+    trips: 45,
+    status: 'Paid',
+  },
+  {
+    id: 'PO-2606-20',
+    amount: 8460,
+    date: 'Monday, 30 Jun',
+    trips: 39,
+    status: 'Paid',
+  },
+  {
+    id: 'PO-2606-13',
+    amount: 7890,
+    date: 'Monday, 23 Jun',
+    trips: 36,
+    status: 'Paid',
+  },
+];
+
+export const PARTNER_BANK_ACCOUNT: BankAccount = {
+  bankName: 'HDFC Bank',
+  maskedNumber: '••3421',
+  verified: true,
+};
 
 export const PARTNER_TRIPS: Trip[] = [
   {

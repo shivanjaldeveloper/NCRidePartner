@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: hscale(18),
     paddingTop: vscale(12),
-    paddingBottom: vscale(30),
+    paddingBottom: vscale(45),
     backgroundColor: Colors.bg,
     borderTopWidth: 0.5,
     borderTopColor: Colors.line,

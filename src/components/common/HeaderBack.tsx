@@ -8,9 +8,10 @@ interface Props {
   title: string;
   onBack: () => void;
   sub?: string;
+  right?: React.ReactNode;
 }
 
-const HeaderBack: React.FC<Props> = ({ title, onBack, sub }) => (
+const HeaderBack: React.FC<Props> = ({ title, onBack, sub, right }) => (
   <View style={styles.row}>
     <TouchableOpacity onPress={onBack} style={styles.backButton}>
       <ChevronLeftIcon size={20} color={Colors.ink} strokeWidth={2} />
@@ -19,6 +20,7 @@ const HeaderBack: React.FC<Props> = ({ title, onBack, sub }) => (
       <Text style={styles.title}>{title}</Text>
       {!!sub && <Text style={styles.sub}>{sub}</Text>}
     </View>
+    {right}
   </View>
 );
 

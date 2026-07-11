@@ -14,6 +14,11 @@ import ApplicationProcessingScreen from '../screens/ApplicationProcessing/Applic
 import PermissionsScreen from '../screens/Permissions/PermissionsScreen';
 import VerificationScreen from '../screens/Verification/VerificationScreen';
 import TabNavigator from './TabNavigator';
+import VehicleScreen from '../screens/Vehicle/VehicleScreen';
+import PayoutsScreen from '../screens/Payouts/PayoutsScreen';
+import WalletScreen from '../screens/Wallet/WalletScreen';
+import TripDetailScreen from '../screens/TripDetail/TripDetailScreen';
+import SettingsScreen from '../screens/Settings/SettingsScreen';
 import RideRequestScreen from '../screens/RideRequest/RideRequestScreen';
 import PickupNavScreen from '../screens/PickupNav/PickupNavScreen';
 import ArrivedScreen from '../screens/Arrived/ArrivedScreen';
@@ -47,6 +52,11 @@ const RootNavigator = () => {
         <Stack.Screen name="Permissions" component={PermissionsScreen} />
         <Stack.Screen name="Verification" component={VerificationScreen} />
         <Stack.Screen name="MainTabs" component={TabNavigator} />
+        <Stack.Screen name="Vehicle" component={VehicleScreen} />
+        <Stack.Screen name="Payouts" component={PayoutsScreen} />
+        <Stack.Screen name="Wallet" component={WalletScreen} />
+        <Stack.Screen name="TripDetail" component={TripDetailScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="RideRequest" component={RideRequestScreen} />
         <Stack.Screen name="PickupNav" component={PickupNavScreen} />
         <Stack.Screen name="Arrived" component={ArrivedScreen} />

@@ -10,6 +10,11 @@ export type RootStackParamList = {
   Permissions: undefined;
   Verification: undefined;
   MainTabs: undefined;
+  Vehicle: undefined;
+  Payouts: undefined;
+  Wallet: undefined;
+  TripDetail: { tripId: string };
+  Settings: undefined;
   RideRequest: undefined;
   PickupNav: undefined;
   Arrived: undefined;

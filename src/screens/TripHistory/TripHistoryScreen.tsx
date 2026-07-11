@@ -6,6 +6,12 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import {
+  useNavigation,
+  CompositeNavigationProp,
+} from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -13,6 +19,13 @@ import Card from '../../components/common/Card';
 import SegmentedTabs from '../../components/common/SegmentedTabs';
 import TaxiIcon from '../../assets/icons/TaxiIcon';
 import { PARTNER_TRIPS } from '../Home/mockHomeData';
+import { RootStackParamList } from '../../navigation/types';
+import { TabParamList } from '../../navigation/tabTypes';
+
+type NavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'TripsTab'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 type TripFilter = 'all' | 'completed' | 'cancelled';
 
@@ -23,6 +36,7 @@ const TAB_OPTIONS = [
 ];
 
 const TripHistoryScreen = () => {
+  const navigation = useNavigation<NavProp>();
   const [tab, setTab] = useState<TripFilter>('all');
 
   const filtered =
@@ -30,9 +44,8 @@ const TripHistoryScreen = () => {
       ? PARTNER_TRIPS
       : PARTNER_TRIPS.filter(t => t.status.toLowerCase() === tab);
 
-  // TODO: Trip Detail screen isn't built yet — wire this up once it exists.
   const openTripDetail = (tripId: string) =>
-    console.log('TODO: navigate to TripDetail', tripId);
+    navigation.navigate('TripDetail', { tripId });
 
   return (
     <View style={styles.container}>

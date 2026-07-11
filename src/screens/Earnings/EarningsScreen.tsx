@@ -6,6 +6,12 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import {
+  useNavigation,
+  CompositeNavigationProp,
+} from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -21,6 +27,13 @@ import {
   PARTNER_EARNINGS_MONTH,
 } from './mockEarningsData';
 import { PARTNER_INCENTIVES } from '../Home/mockHomeData';
+import { RootStackParamList } from '../../navigation/types';
+import { TabParamList } from '../../navigation/tabTypes';
+
+type NavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'EarningsTab'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 type EarningsTab = 'today' | 'week' | 'month';
 
@@ -31,6 +44,7 @@ const TAB_OPTIONS = [
 ];
 
 const EarningsScreen = () => {
+  const navigation = useNavigation<NavProp>();
   const [tab, setTab] = useState<EarningsTab>('today');
   const today = PARTNER_EARNINGS_TODAY;
   const week = PARTNER_EARNINGS_WEEK;
@@ -38,9 +52,8 @@ const EarningsScreen = () => {
   const incentive = PARTNER_INCENTIVES[0];
   const maxDay = Math.max(...week.days.map(d => d.amount), 1);
 
-  // TODO: Payouts and Wallet screens aren't built yet — wire these up once they exist.
-  const goToPayouts = () => console.log('TODO: navigate to Payouts');
-  const goToWallet = () => console.log('TODO: navigate to Wallet');
+  const goToPayouts = () => navigation.navigate('Payouts');
+  const goToWallet = () => navigation.navigate('Wallet');
 
   return (
     <View style={styles.container}>

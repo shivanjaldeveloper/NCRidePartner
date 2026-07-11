@@ -20,6 +20,7 @@ import CameraIcon from '../../assets/icons/CameraIcon';
 import UploadIcon from '../../assets/icons/UploadIcon';
 import { RootStackParamList } from '../../navigation/types';
 import { DocumentKey, PickedFile } from '../../services/api/documentsService';
+import ImageCropPicker from 'react-native-image-crop-picker';
 
 // ASSUMED DEPENDENCIES — not confirmed installed in this project yet:
 //   npm install react-native-image-picker @react-native-documents/picker
@@ -110,21 +111,47 @@ const PartnerDocumentsScreen = () => {
         });
         const asset = result.assets?.[0];
         if (!asset?.uri) return;
+
+        const cropped = await ImageCropPicker.openCropper({
+          path: asset.uri,
+          mediaType: 'photo',
+        });
+
         setFiles(prev => ({
           ...prev,
           selfPhoto: {
-            uri: asset.uri!,
+            uri: cropped.path,
             name: asset.fileName || 'self_photo.jpg',
-            type: asset.type || 'image/jpeg',
+            type: cropped.mime || asset.type || 'image/jpeg',
           },
         }));
         return;
       }
 
-      // ID/vehicle docs — allow either an image or a PDF.
+      // ID/vehicle docs — allow either an image or a PDF. Only images go
+      // through the cropper; PDFs are stored as-is.
       const [result] = await pick({
         type: [DocTypes.images, DocTypes.pdf],
       });
+
+      const isImage = (result.type || '').startsWith('image/');
+
+      if (isImage) {
+        const cropped = await ImageCropPicker.openCropper({
+          path: result.uri,
+          mediaType: 'photo',
+        });
+        setFiles(prev => ({
+          ...prev,
+          [row.key]: {
+            uri: cropped.path,
+            name: result.name || `${row.key}.jpg`,
+            type: cropped.mime || result.type || 'image/jpeg',
+          },
+        }));
+        return;
+      }
+
       setFiles(prev => ({
         ...prev,
         [row.key]: {
@@ -134,9 +161,11 @@ const PartnerDocumentsScreen = () => {
         },
       }));
     } catch (err: any) {
-      // The user backing out of the picker isn't an error worth showing;
-      // anything else is worth surfacing.
+      // Backing out of the picker or the cropper isn't worth surfacing.
       if (isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED) {
+        return;
+      }
+      if (err?.code === 'E_PICKER_CANCELLED') {
         return;
       }
       setErrorMessage('Could not open the picker. Please try again.');
@@ -424,7 +453,7 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: hscale(18),
     paddingTop: vscale(12),
-    paddingBottom: vscale(30),
+    paddingBottom: vscale(45),
     backgroundColor: Colors.bg,
     borderTopWidth: 0.5,
     borderTopColor: Colors.line,
