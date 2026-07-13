@@ -33,7 +33,7 @@ const PassengerRatingScreen = () => {
     );
   };
 
-  const handleDone = () => navigation.navigate('Home');
+  const handleDone = () => navigation.navigate('MainTabs');
 
   return (
     <View style={styles.container}>

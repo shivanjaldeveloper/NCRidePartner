@@ -7,6 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +18,9 @@ import TopSafeStrap from '../../components/layout/TopSafeStrap';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import ChevronLeftIcon from '../../assets/icons/ChevronLeftIcon';
 import { RootStackParamList } from '../../navigation/types';
+import { updateOnboardingProfile } from '../../services/api/authService';
+import { updateReferredBy } from '../../services/api/onboardingService';
+import { getCookie } from '../../utils/session';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'BasicDetails'>;
 
@@ -27,6 +31,7 @@ const BasicDetailsScreen = () => {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [referredBy, setReferredBy] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -34,27 +39,49 @@ const BasicDetailsScreen = () => {
   const isEmailValid = EMAIL_RE.test(email.trim());
   const isValid = isNameValid && isEmailValid;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!isValid || loading) return;
     setLoading(true);
     setErrorMessage(null);
+    try {
+      const cookie = await getCookie();
+      if (!cookie) {
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+        return;
+      }
 
-    // FLOW-ONLY FOR NOW — UpdatePartnerProfile returned HTTP 500, meaning
-    // that endpoint isn't live/correct yet. Skipping the network call so
-    // the onboarding flow can still be walked/demoed. Once you get the
-    // real endpoint + params confirmed, swap this block back to:
-    //
-    //   const cookie = await getCookie();
-    //   if (!cookie) { navigation.reset({ index: 0, routes: [{ name: 'Login' }] }); return; }
-    //   const res = await updateProfile(cookie, name.trim(), email.trim());
-    //   if (res.Result !== 'Success') throw new Error(res.Message || '...');
-    //
-    // (import { updateProfile } from '../../services/api/authService';
-    //  import { getCookie } from '../../utils/session';)
-    setTimeout(() => {
-      setLoading(false);
+      const res = await updateOnboardingProfile(
+        cookie,
+        name.trim(),
+        email.trim(),
+      );
+      if (res.Result !== 'Success') {
+        throw new Error(
+          res.Message || 'Could not save your details. Please try again.',
+        );
+      }
+
+      // Referral code is optional — a failure here shouldn't block the
+      // rest of onboarding, just surface it and let them continue.
+      if (referredBy.trim()) {
+        try {
+          const refRes = await updateReferredBy(cookie, referredBy.trim());
+          if (refRes.Result !== 'Success') {
+            console.warn('[BasicDetails] Referral update failed:', refRes.Message);
+          }
+        } catch (refErr) {
+          console.warn('[BasicDetails] Referral update failed:', refErr);
+        }
+      }
+
       navigation.navigate('PartnerDocuments');
-    }, 300);
+    } catch (err: any) {
+      setErrorMessage(
+        err?.message || 'Something went wrong. Please try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -75,7 +102,12 @@ const BasicDetailsScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.content}>
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.stepBadge}>
             <View style={styles.stepBadgeDot} />
             <Text style={styles.stepBadgeText}>Step 1 of 2 · Onboarding</Text>
@@ -123,8 +155,23 @@ const BasicDetailsScreen = () => {
             </View>
           </View>
 
+          <View style={styles.fieldBlock}>
+            <Text style={styles.fieldLabel}>Referral code (optional)</Text>
+            <View style={styles.inputBox}>
+              <TextInput
+                style={styles.input}
+                value={referredBy}
+                onChangeText={setReferredBy}
+                placeholder="Partner ID who referred you"
+                placeholderTextColor={Colors.mute2}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+
           {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
-        </View>
+        </ScrollView>
 
         <View style={styles.footer}>
           <PrimaryButton
@@ -163,9 +210,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    flex: 1,
     paddingHorizontal: hscale(28),
     paddingTop: vscale(28),
+    paddingBottom: vscale(20),
   },
   stepBadge: {
     alignSelf: 'flex-start',

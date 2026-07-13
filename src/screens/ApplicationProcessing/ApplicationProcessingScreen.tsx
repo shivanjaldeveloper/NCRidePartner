@@ -8,9 +8,9 @@ import { hscale, vscale, fscale } from '../../theme/scale';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import ClockIcon from '../../assets/icons/ClockIcon';
 import { RootStackParamList } from '../../navigation/types';
-// import { getCookie, clearCookie } from '../../utils/session';
-// import { verifyCookie } from '../../services/api/authService';
-// import { resolveProcessingStatus } from '../../services/api/partnerStatus';
+import { getCookie, clearCookie } from '../../utils/session';
+import { getProcessingDetails } from '../../services/api/onboardingService';
+import { resolveProcessingStatus } from '../../services/api/partnerStatus';
 
 type NavProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -27,9 +27,38 @@ const ApplicationProcessingScreen = () => {
     setChecking(true);
     setNote(null);
     try {
-      // TEMP: bypass status API until backend is ready
-      await new Promise(resolve => setTimeout(resolve, 600));
-      navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+      const cookie = await getCookie();
+      if (!cookie) {
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+        return;
+      }
+
+      const res = await getProcessingDetails(cookie);
+      if (res.Result !== 'Success') {
+        await clearCookie();
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+        return;
+      }
+
+      const resolved = resolveProcessingStatus(res.ProcessingStatus);
+      if (resolved === 'Home') {
+        navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+      } else if (resolved === 'Blocked') {
+        await clearCookie();
+        setNote(
+          res.Remark
+            ? `Application rejected: ${res.Remark}`
+            : 'Your application was not approved. Contact support for details.',
+        );
+      } else {
+        setNote(
+          res.Remark
+            ? `Still under review — ${res.Remark}`
+            : 'Still under review — check back soon.',
+        );
+      }
+    } catch {
+      setNote('Could not check status. Please try again.');
     } finally {
       setChecking(false);
     }

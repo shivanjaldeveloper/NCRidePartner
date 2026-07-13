@@ -5,6 +5,7 @@ import { Typography } from '../../constants/Typography';
 import { hscale } from '../../theme/scale';
 import ArrowRightIcon from '../../assets/icons/ArrowRightIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
+import EditIcon from '../../assets/icons/EditIcon';
 
 // Mirrors Btn({ variant: 'primary', size: 'lg' }) from the design source exactly:
 // sizes.lg = { h: 56, px: 22, fs: 16, r: 18 }
@@ -13,8 +14,8 @@ import CheckIcon from '../../assets/icons/CheckIcon';
 interface Props {
   label: string;
   onPress: () => void;
-  icon?: 'arrowRight' | 'check' | 'none';
-  variant?: 'primary' | 'ghost';
+  icon?: 'arrowRight' | 'check' | 'edit' | 'none';
+  variant?: 'primary' | 'ghost' | 'danger';
   style?: ViewStyle;
   disabled?: boolean;
 }
@@ -28,6 +29,7 @@ const PrimaryButton: React.FC<Props> = ({
   disabled = false,
 }) => {
   const isGhost = variant === 'ghost';
+  const isDanger = variant === 'danger';
   const textColor = isGhost ? Colors.ink : '#FFFFFF';
 
   return (
@@ -38,6 +40,7 @@ const PrimaryButton: React.FC<Props> = ({
       style={[
         styles.button,
         isGhost && styles.buttonGhost,
+        isDanger && styles.buttonDanger,
         disabled && styles.buttonDisabled,
         style,
       ]}
@@ -50,6 +53,9 @@ const PrimaryButton: React.FC<Props> = ({
       )}
       {icon === 'check' && (
         <CheckIcon size={18} color={textColor} strokeWidth={1.8} />
+      )}
+      {icon === 'edit' && (
+        <EditIcon size={17} color={textColor} strokeWidth={1.8} />
       )}
     </TouchableOpacity>
   );
@@ -78,6 +84,10 @@ const styles = StyleSheet.create({
     shadowColor: 'transparent',
     shadowOpacity: 0,
     elevation: 0,
+  },
+  buttonDanger: {
+    backgroundColor: Colors.red,
+    shadowColor: Colors.red,
   },
   buttonDisabled: {
     opacity: 0.5,

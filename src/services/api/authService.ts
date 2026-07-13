@@ -51,14 +51,15 @@ export const verifyCookie = (cookie: string) =>
 export const getProfile = verifyCookie;
 
 /**
- * Basic Details step (see flow diagram: "API: UpdatePartnerProfile").
- * NOT yet confirmed against a real curl/response — the method name matches
- * the diagram exactly, and the params follow the same `cookie` pattern as
- * every other confirmed endpoint, but the exact field names could differ.
- * Send a real request/response for this step and I'll lock it in.
+ * Basic Details step. Confirmed via real curl/response —
+ * response is just { Result, Message, ResponseDateTime }.
  */
-export const updateProfile = (cookie: string, name: string, email: string) =>
-  postAuthForm<UpdateProfileResponse>('UpdatePartnerProfile', {
+export const updateOnboardingProfile = (
+  cookie: string,
+  name: string,
+  email: string,
+) =>
+  postAuthForm<UpdateProfileResponse>('OnboardingUserProfileUpdate', {
     cookie,
     name,
     email,

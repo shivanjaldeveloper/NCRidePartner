@@ -31,10 +31,6 @@ type Stage = 'phone' | 'otp';
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 38;
 
-// Formats raw digits as "98765 43210"
-const formatPhone = (digits: string) =>
-  digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : digits;
-
 const LoginScreen = () => {
   const navigation = useNavigation<NavProp>();
 
@@ -169,13 +165,11 @@ const LoginScreen = () => {
 
       if (resolved === 'Home') {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
-      } else if (resolved === 'Verification') {
-        navigation.navigate('Verification');
+      } else if (resolved === 'Processing') {
+        navigation.navigate('ApplicationProcessing');
       } else {
-        // 'Permissions' — new partner / onboarding required. Basic Details
-        // and Documents screens from the flow diagram still need to be
-        // built; Permissions is the closest existing next step for now.
-        navigation.navigate('Permissions');
+        // 'BasicDetails' — new partner / onboarding required.
+        navigation.navigate('BasicDetails');
       }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Invalid OTP. Please try again.');
@@ -229,15 +223,15 @@ const LoginScreen = () => {
                   <View style={styles.divider} />
                   <TextInput
                     style={styles.phoneInput}
-                    value={formatPhone(phone)}
+                    value={phone}
                     onChangeText={t => {
                       if (errorMessage) setErrorMessage(null);
                       setPhone(t.replace(/[^0-9]/g, '').slice(0, 10));
                     }}
-                    placeholder="98765 43210"
+                    placeholder="9876543210"
                     placeholderTextColor={Colors.mute2}
                     keyboardType="number-pad"
-                    maxLength={11}
+                    maxLength={10}
                     autoFocus
                   />
                 </View>

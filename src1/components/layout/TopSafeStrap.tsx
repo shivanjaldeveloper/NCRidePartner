@@ -13,7 +13,7 @@ const TopSafeStrap: React.FC<Props> = ({
   style,
 }) => {
   const insets = useSafeAreaInsets();
-  return <View style={[{ height: insets.top, backgroundColor }, style]} />;
+  return <View style={[{ height: insets.top + 10, backgroundColor }, style]} />;
 };
 
 export default TopSafeStrap;

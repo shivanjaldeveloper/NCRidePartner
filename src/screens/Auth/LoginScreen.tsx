@@ -31,10 +31,6 @@ type Stage = 'phone' | 'otp';
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 38;
 
-// Formats raw digits as "98765 43210"
-const formatPhone = (digits: string) =>
-  digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : digits;
-
 const LoginScreen = () => {
   const navigation = useNavigation<NavProp>();
 
@@ -168,7 +164,7 @@ const LoginScreen = () => {
       await saveCookie(res.Cookie);
 
       if (resolved === 'Home') {
-        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+        navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
       } else if (resolved === 'Processing') {
         navigation.navigate('ApplicationProcessing');
       } else {
@@ -227,15 +223,15 @@ const LoginScreen = () => {
                   <View style={styles.divider} />
                   <TextInput
                     style={styles.phoneInput}
-                    value={formatPhone(phone)}
+                    value={phone}
                     onChangeText={t => {
                       if (errorMessage) setErrorMessage(null);
                       setPhone(t.replace(/[^0-9]/g, '').slice(0, 10));
                     }}
-                    placeholder="98765 43210"
+                    placeholder="9876543210"
                     placeholderTextColor={Colors.mute2}
                     keyboardType="number-pad"
-                    maxLength={11}
+                    maxLength={10}
                     autoFocus
                   />
                 </View>
@@ -256,9 +252,7 @@ const LoginScreen = () => {
             <View>
               <View style={styles.otpBadge}>
                 <View style={styles.otpBadgeDot} />
-                <Text style={styles.otpBadgeText}>
-                  OTP sent to +91 {formatPhone(phone)}
-                </Text>
+                <Text style={styles.otpBadgeText}>OTP sent to +91 {phone}</Text>
               </View>
 
               <Text style={styles.title}>Enter the code</Text>
