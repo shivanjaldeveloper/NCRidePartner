@@ -15,6 +15,10 @@ export type RootStackParamList = {
   Wallet: undefined;
   TripDetail: { tripId: string };
   Settings: undefined;
+  SOS: undefined;
+  Logout: undefined;
+  Documents: undefined;
+  DocumentDetail: { docId: string };
   RideRequest: undefined;
   PickupNav: undefined;
   Arrived: undefined;

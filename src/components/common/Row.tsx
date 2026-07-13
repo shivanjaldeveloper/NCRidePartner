@@ -12,6 +12,7 @@ interface Props {
   danger?: boolean;
   showDivider?: boolean;
   showChevron?: boolean;
+  right?: React.ReactNode;
 }
 
 const Row: React.FC<Props> = ({
@@ -22,6 +23,7 @@ const Row: React.FC<Props> = ({
   danger = false,
   showDivider = false,
   showChevron = true,
+  right,
 }) => (
   <TouchableOpacity
     activeOpacity={onPress ? 0.7 : 1}
@@ -34,9 +36,11 @@ const Row: React.FC<Props> = ({
       <Text style={[styles.title, danger && styles.dangerText]}>{title}</Text>
       {!!sub && <Text style={styles.sub}>{sub}</Text>}
     </View>
-    {showChevron && (
-      <ChevronRightIcon size={16} color={Colors.mute2} strokeWidth={2} />
-    )}
+    {right !== undefined
+      ? right
+      : showChevron && (
+          <ChevronRightIcon size={16} color={Colors.mute2} strokeWidth={2} />
+        )}
   </TouchableOpacity>
 );
 

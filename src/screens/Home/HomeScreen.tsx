@@ -86,9 +86,12 @@ const HomeScreen = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.avatar}>
+          <TouchableOpacity
+            style={styles.avatar}
+            onPress={() => navigation.navigate('AccountTab')}
+          >
             <Text style={styles.avatarText}>{PARTNER_PROFILE.initials}</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.headerTextWrap}>
             <Text style={styles.greeting}>Good morning</Text>
             <Text style={styles.name}>{PARTNER_PROFILE.name}</Text>
@@ -120,7 +123,10 @@ const HomeScreen = () => {
               {online ? 'Online' : 'Offline'}
             </Text>
           </View>
-          <TouchableOpacity style={styles.sosButton}>
+          <TouchableOpacity
+            style={styles.sosButton}
+            onPress={() => navigation.navigate('SOS')}
+          >
             <SosIcon size={20} color={Colors.red} strokeWidth={1.8} />
           </TouchableOpacity>
         </View>
@@ -229,7 +235,11 @@ const HomeScreen = () => {
 
         {/* Active vehicle */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.vehicleRow} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.vehicleRow}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('Vehicle')}
+          >
             <View style={styles.vehicleIconWrap}>
               <CarIcon size={22} color={Colors.ink} strokeWidth={1.8} />
             </View>
@@ -273,7 +283,11 @@ const HomeScreen = () => {
 
         {/* Next payout */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.payoutRow} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.payoutRow}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('Payouts')}
+          >
             <View style={styles.payoutIconWrap}>
               <WalletIcon size={20} color={Colors.lime} strokeWidth={1.8} />
             </View>
@@ -296,7 +310,7 @@ const HomeScreen = () => {
         <View style={styles.section}>
           <View style={styles.tripsHeaderRow}>
             <Text style={styles.tripsHeaderLabel}>Recent trips</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('TripsTab')}>
               <Text style={styles.tripsSeeAll}>See all</Text>
             </TouchableOpacity>
           </View>
@@ -305,6 +319,9 @@ const HomeScreen = () => {
               <TouchableOpacity
                 key={trip.id}
                 activeOpacity={0.7}
+                onPress={() =>
+                  navigation.navigate('TripDetail', { tripId: trip.id })
+                }
                 style={[styles.tripRow, i < 2 && styles.tripRowDivider]}
               >
                 <View style={styles.tripIconWrap}>

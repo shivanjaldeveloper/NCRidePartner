@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     paddingBottom: vscale(30),
   },
   header: {
-    paddingTop: vscale(24),
+    paddingTop: vscale(45),
     paddingHorizontal: hscale(18),
   },
   title: {

@@ -6,6 +6,12 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import {
+  useNavigation,
+  CompositeNavigationProp,
+} from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -18,6 +24,13 @@ import UserIcon from '../../assets/icons/UserIcon';
 import SettingsIcon from '../../assets/icons/SettingsIcon';
 import ChevronRightIcon from '../../assets/icons/ChevronRightIcon';
 import { PARTNER_SUPPORT_ITEMS, SupportItem } from './mockSupportData';
+import { RootStackParamList } from '../../navigation/types';
+import { TabParamList } from '../../navigation/tabTypes';
+
+type NavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<TabParamList, 'SupportTab'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 const ISSUE_ICONS: Record<
   SupportItem['icon'],
@@ -30,8 +43,8 @@ const ISSUE_ICONS: Record<
 };
 
 const SupportScreen = () => {
-  // TODO: SOS screen and live-chat integration aren't built yet.
-  const openSos = () => console.log('TODO: navigate to SOS');
+  const navigation = useNavigation<NavProp>();
+  const openSos = () => navigation.navigate('SOS');
   const openChat = () => console.log('TODO: open live chat');
 
   return (
@@ -145,7 +158,7 @@ const styles = StyleSheet.create({
     paddingBottom: vscale(30),
   },
   header: {
-    paddingTop: vscale(24),
+    paddingTop: vscale(45),
     paddingHorizontal: hscale(18),
   },
   title: {

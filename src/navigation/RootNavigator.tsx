@@ -19,6 +19,10 @@ import PayoutsScreen from '../screens/Payouts/PayoutsScreen';
 import WalletScreen from '../screens/Wallet/WalletScreen';
 import TripDetailScreen from '../screens/TripDetail/TripDetailScreen';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
+import SOSScreen from '../screens/SOS/SOSScreen';
+import LogoutScreen from '../screens/Logout/LogoutScreen';
+import DocumentsScreen from '../screens/Documents/DocumentsScreen';
+import DocumentDetailScreen from '../screens/Documents/DocumentDetailScreen';
 import RideRequestScreen from '../screens/RideRequest/RideRequestScreen';
 import PickupNavScreen from '../screens/PickupNav/PickupNavScreen';
 import ArrivedScreen from '../screens/Arrived/ArrivedScreen';
@@ -57,6 +61,17 @@ const RootNavigator = () => {
         <Stack.Screen name="Wallet" component={WalletScreen} />
         <Stack.Screen name="TripDetail" component={TripDetailScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="SOS" component={SOSScreen} />
+        <Stack.Screen
+          name="Logout"
+          component={LogoutScreen}
+          options={{
+            presentation: 'transparentModal',
+            animation: 'fade',
+          }}
+        />
+        <Stack.Screen name="Documents" component={DocumentsScreen} />
+        <Stack.Screen name="DocumentDetail" component={DocumentDetailScreen} />
         <Stack.Screen name="RideRequest" component={RideRequestScreen} />
         <Stack.Screen name="PickupNav" component={PickupNavScreen} />
         <Stack.Screen name="Arrived" component={ArrivedScreen} />

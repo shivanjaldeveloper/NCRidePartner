@@ -28,7 +28,7 @@ export default HeaderBack;
 
 const styles = StyleSheet.create({
   row: {
-    paddingTop: vscale(24),
+    paddingTop: vscale(45),
     paddingHorizontal: hscale(18),
     paddingBottom: vscale(10),
     flexDirection: 'row',

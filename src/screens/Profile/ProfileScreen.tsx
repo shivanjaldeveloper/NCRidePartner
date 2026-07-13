@@ -42,10 +42,6 @@ const ProfileScreen = () => {
   const vehicle = PARTNER_VEHICLES[0];
   const payout = PARTNER_PAYOUTS[0];
 
-  // TODO: SOS and Logout-confirmation screens aren't built yet.
-  const noop = (label: string) => () =>
-    console.log(`TODO: navigate to ${label}`);
-
   return (
     <View style={styles.container}>
       <ScrollView
@@ -102,7 +98,7 @@ const ProfileScreen = () => {
               icon={<UserIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title="Documents"
               sub="All 7 verified"
-              onPress={() => navigation.navigate('Verification')}
+              onPress={() => navigation.navigate('Documents')}
               showDivider
             />
             <Row
@@ -151,7 +147,7 @@ const ProfileScreen = () => {
               icon={<SosIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title="Emergency SOS"
               sub="Quick access contacts"
-              onPress={noop('SOS')}
+              onPress={() => navigation.navigate('SOS')}
               showDivider
             />
             <Row
@@ -160,7 +156,7 @@ const ProfileScreen = () => {
               }
               title="Log out"
               danger
-              onPress={noop('Logout')}
+              onPress={() => navigation.navigate('Logout')}
             />
           </Card>
 
@@ -187,7 +183,7 @@ const styles = StyleSheet.create({
     paddingBottom: vscale(30),
   },
   header: {
-    paddingTop: vscale(24),
+    paddingTop: vscale(45),
     paddingHorizontal: hscale(18),
   },
   title: {
