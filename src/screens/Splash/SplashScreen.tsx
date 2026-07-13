@@ -12,6 +12,7 @@ import { RootStackParamList } from '../../navigation/types';
 import { getCookie, saveCookie, clearCookie } from '../../utils/session';
 import { verifyCookie } from '../../services/api/authService';
 import { resolveProcessingStatus } from '../../services/api/partnerStatus';
+import { refineOnboardingRoute } from '../../services/api/resolveOnboardingRoute';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
@@ -54,6 +55,7 @@ const SplashScreen = () => {
     (async () => {
       try {
         const cookie = await getCookie();
+        console.log('[Splash] Stored cookie:', cookie);
 
         if (!cookie) {
           // First-time / logged-out: keep the existing onboarding intro.
@@ -90,7 +92,11 @@ const SplashScreen = () => {
           await saveCookie(res.Cookie);
         }
 
-        const resolved = resolveProcessingStatus(res.ProcessingStatus);
+        const initialResolved = resolveProcessingStatus(res.ProcessingStatus);
+        const resolved = await refineOnboardingRoute(
+          res.Cookie || cookie,
+          initialResolved,
+        );
 
         if (resolved === 'Home') {
           finish('MainTabs');

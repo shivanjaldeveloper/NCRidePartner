@@ -22,6 +22,7 @@ import ShieldIcon from '../../assets/icons/ShieldIcon';
 import { RootStackParamList } from '../../navigation/types';
 import { sendOtp, verifyOtp, resendOtp } from '../../services/api/authService';
 import { resolveProcessingStatus } from '../../services/api/partnerStatus';
+import { refineOnboardingRoute } from '../../services/api/resolveOnboardingRoute';
 import { saveCookie } from '../../utils/session';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -30,6 +31,10 @@ type Stage = 'phone' | 'otp';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 38;
+
+// Formats raw digits as "98765 43210"
+const formatPhone = (digits: string) =>
+  digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : digits;
 
 const LoginScreen = () => {
   const navigation = useNavigation<NavProp>();
@@ -150,9 +155,9 @@ const LoginScreen = () => {
         throw new Error(res.Message || 'Invalid OTP. Please try again.');
       }
 
-      const resolved = resolveProcessingStatus(res.ProcessingStatus);
+      const initialResolved = resolveProcessingStatus(res.ProcessingStatus);
 
-      if (resolved === 'Blocked') {
+      if (initialResolved === 'Blocked') {
         // Don't persist the cookie for a banned/rejected account.
         setErrorMessage(
           res.Message ||
@@ -162,6 +167,8 @@ const LoginScreen = () => {
       }
 
       await saveCookie(res.Cookie);
+
+      const resolved = await refineOnboardingRoute(res.Cookie, initialResolved);
 
       if (resolved === 'Home') {
         navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
@@ -223,15 +230,15 @@ const LoginScreen = () => {
                   <View style={styles.divider} />
                   <TextInput
                     style={styles.phoneInput}
-                    value={phone}
+                    value={formatPhone(phone)}
                     onChangeText={t => {
                       if (errorMessage) setErrorMessage(null);
                       setPhone(t.replace(/[^0-9]/g, '').slice(0, 10));
                     }}
-                    placeholder="9876543210"
+                    placeholder="98765 43210"
                     placeholderTextColor={Colors.mute2}
                     keyboardType="number-pad"
-                    maxLength={10}
+                    maxLength={11}
                     autoFocus
                   />
                 </View>
@@ -252,7 +259,9 @@ const LoginScreen = () => {
             <View>
               <View style={styles.otpBadge}>
                 <View style={styles.otpBadgeDot} />
-                <Text style={styles.otpBadgeText}>OTP sent to +91 {phone}</Text>
+                <Text style={styles.otpBadgeText}>
+                  OTP sent to +91 {formatPhone(phone)}
+                </Text>
               </View>
 
               <Text style={styles.title}>Enter the code</Text>
