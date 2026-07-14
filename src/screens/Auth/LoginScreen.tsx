@@ -29,12 +29,8 @@ type NavProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
 type Stage = 'phone' | 'otp';
 
-const OTP_LENGTH = 6;
+const OTP_LENGTH = 4;
 const RESEND_SECONDS = 38;
-
-// Formats raw digits as "98765 43210"
-const formatPhone = (digits: string) =>
-  digits.length > 5 ? `${digits.slice(0, 5)} ${digits.slice(5)}` : digits;
 
 const LoginScreen = () => {
   const navigation = useNavigation<NavProp>();
@@ -217,7 +213,7 @@ const LoginScreen = () => {
                 Welcome, partner.{'\n'}Sign in to start driving.
               </Text>
               <Text style={styles.subtitle}>
-                We'll send a 6-digit OTP to verify your number.
+                We'll send a 4-digit OTP to verify your number.
               </Text>
 
               <View style={styles.fieldBlock}>
@@ -230,15 +226,15 @@ const LoginScreen = () => {
                   <View style={styles.divider} />
                   <TextInput
                     style={styles.phoneInput}
-                    value={formatPhone(phone)}
+                    value={phone}
                     onChangeText={t => {
                       if (errorMessage) setErrorMessage(null);
                       setPhone(t.replace(/[^0-9]/g, '').slice(0, 10));
                     }}
-                    placeholder="98765 43210"
+                    placeholder="0000000000"
                     placeholderTextColor={Colors.mute2}
                     keyboardType="number-pad"
-                    maxLength={11}
+                    maxLength={10}
                     autoFocus
                   />
                 </View>
@@ -259,14 +255,12 @@ const LoginScreen = () => {
             <View>
               <View style={styles.otpBadge}>
                 <View style={styles.otpBadgeDot} />
-                <Text style={styles.otpBadgeText}>
-                  OTP sent to +91 {formatPhone(phone)}
-                </Text>
+                <Text style={styles.otpBadgeText}>OTP sent to +91 {phone}</Text>
               </View>
 
               <Text style={styles.title}>Enter the code</Text>
               <View style={styles.otpSubRow}>
-                <Text style={styles.subtitle}>6-digit OTP · </Text>
+                <Text style={styles.subtitle}>4-digit OTP · </Text>
                 <TouchableOpacity onPress={handleChangeNumber}>
                   <Text style={styles.changeNumberText}>Change number</Text>
                 </TouchableOpacity>

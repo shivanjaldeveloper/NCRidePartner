@@ -38,8 +38,17 @@ export interface UpdateProfileResponse {
 export const sendOtp = (mobile: string) =>
   postAuthForm<SendOtpResponse>('VerifyNumber', { mobile });
 
+/**
+ * The UI only collects 4 digits from the partner, but the backend still
+ * expects a 6-digit OTP — '56' is appended here as a fixed suffix before
+ * the request goes out, so every caller can just pass the 4 digits the
+ * user typed.
+ */
 export const verifyOtp = (otpTransaction: string, otp: string) =>
-  postAuthForm<VerifyOtpResponse>('VerifyOtp', { otpTransaction, otp });
+  postAuthForm<VerifyOtpResponse>('VerifyOtp', {
+    otpTransaction,
+    otp: `${otp}56`,
+  });
 
 export const resendOtp = (otpTransaction: string) =>
   postAuthForm<SendOtpResponse>('ReSendOtp', { otpTransaction });
