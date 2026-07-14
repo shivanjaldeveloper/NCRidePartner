@@ -7,8 +7,8 @@
 // *content* changes. That's what makes an already-logged-in partner see
 // TermsUpdateScreen on next launch, and what makes the Login checkbox
 // start unchecked again for everyone (see utils/terms.ts).
-export const TERMS_URL = 'https://ncride.example.com/partner-terms';
-export const PRIVACY_URL = 'https://ncride.example.com/privacy-policy';
+export const TERMS_URL = 'https://aloapp.shop/legal/terms';
+export const PRIVACY_URL = 'https://aloapp.shop/legal/privacy';
 export const TERMS_VERSION = '1.0.0';
 
 // Kill-switch, same pattern as this project's other feature flags (e.g.
