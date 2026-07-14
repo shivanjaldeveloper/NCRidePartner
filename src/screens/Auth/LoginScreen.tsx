@@ -9,6 +9,7 @@ import {
   Platform,
   NativeSyntheticEvent,
   TextInputKeyPressEventData,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,11 +20,14 @@ import TopSafeStrap from '../../components/layout/TopSafeStrap';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import ChevronLeftIcon from '../../assets/icons/ChevronLeftIcon';
 import ShieldIcon from '../../assets/icons/ShieldIcon';
+import CheckIcon from '../../assets/icons/CheckIcon';
 import { RootStackParamList } from '../../navigation/types';
 import { sendOtp, verifyOtp, resendOtp } from '../../services/api/authService';
 import { resolveProcessingStatus } from '../../services/api/partnerStatus';
 import { refineOnboardingRoute } from '../../services/api/resolveOnboardingRoute';
 import { saveCookie } from '../../utils/session';
+import { TERMS_URL, PRIVACY_URL } from '../../constants/legal';
+import { acceptTerms, hasAcceptedCurrentTerms } from '../../utils/terms';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -42,6 +46,7 @@ const LoginScreen = () => {
   const [otpTransaction, setOtpTransaction] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const otpRefs = useRef<Array<TextInput | null>>([]);
 
@@ -50,6 +55,20 @@ const LoginScreen = () => {
     const t = setInterval(() => setResendIn(prev => prev - 1), 1000);
     return () => clearInterval(t);
   }, [stage, resendIn]);
+
+  useEffect(() => {
+    // Pre-check only if this device already accepted the *current* terms
+    // version before (e.g. same partner logging back in) — first-time
+    // devices and anyone whose accepted version is stale start unchecked.
+    let cancelled = false;
+    (async () => {
+      const accepted = await hasAcceptedCurrentTerms();
+      if (!cancelled && accepted) setTermsAccepted(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const isPhoneValid = phone.length === 10;
   const isOtpComplete = otp.every(d => d.length === 1);
@@ -63,7 +82,7 @@ const LoginScreen = () => {
   };
 
   const handleSendOtp = async () => {
-    if (!isPhoneValid || loading) return;
+    if (!isPhoneValid || !termsAccepted || loading) return;
     setLoading(true);
     setErrorMessage(null);
     try {
@@ -163,6 +182,7 @@ const LoginScreen = () => {
       }
 
       await saveCookie(res.Cookie);
+      await acceptTerms(res.Cookie);
 
       const resolved = await refineOnboardingRoute(res.Cookie, initialResolved);
 
@@ -250,6 +270,39 @@ const LoginScreen = () => {
                   Your number is used only for partner verification.
                 </Text>
               </View>
+
+              <TouchableOpacity
+                style={styles.termsRow}
+                activeOpacity={0.8}
+                onPress={() => setTermsAccepted(prev => !prev)}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    termsAccepted && styles.checkboxChecked,
+                  ]}
+                >
+                  {termsAccepted && (
+                    <CheckIcon size={12} color="#FFFFFF" strokeWidth={2.6} />
+                  )}
+                </View>
+                <Text style={styles.termsText}>
+                  I agree to the{' '}
+                  <Text
+                    style={styles.termsLink}
+                    onPress={() => Linking.openURL(TERMS_URL)}
+                  >
+                    Partner Terms
+                  </Text>{' '}
+                  &{' '}
+                  <Text
+                    style={styles.termsLink}
+                    onPress={() => Linking.openURL(PRIVACY_URL)}
+                  >
+                    Privacy Policy
+                  </Text>
+                </Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View>
@@ -320,14 +373,29 @@ const LoginScreen = () => {
             onPress={stage === 'phone' ? handleSendOtp : handleVerify}
             icon="arrowRight"
             disabled={
-              loading || (stage === 'phone' ? !isPhoneValid : !isOtpComplete)
+              loading ||
+              (stage === 'phone'
+                ? !isPhoneValid || !termsAccepted
+                : !isOtpComplete)
             }
             style={styles.fullButton}
           />
           <Text style={styles.legalText}>
             By continuing you agree to our{' '}
-            <Text style={styles.legalStrong}>Partner Terms</Text> &{' '}
-            <Text style={styles.legalStrong}>Privacy Policy</Text>.
+            <Text
+              style={styles.legalStrong}
+              onPress={() => Linking.openURL(TERMS_URL)}
+            >
+              Partner Terms
+            </Text>{' '}
+            &{' '}
+            <Text
+              style={styles.legalStrong}
+              onPress={() => Linking.openURL(PRIVACY_URL)}
+            >
+              Privacy Policy
+            </Text>
+            .
           </Text>
         </View>
       </View>
@@ -468,6 +536,37 @@ const styles = StyleSheet.create({
     fontSize: fscale(12.5),
     color: Colors.ink2,
     lineHeight: fscale(17),
+  },
+  termsRow: {
+    marginTop: vscale(16),
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: hscale(10),
+  },
+  checkbox: {
+    width: hscale(20),
+    height: hscale(20),
+    borderRadius: hscale(6),
+    borderWidth: 1.5,
+    borderColor: Colors.line,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: vscale(1),
+  },
+  checkboxChecked: {
+    backgroundColor: Colors.ink,
+    borderColor: Colors.ink,
+  },
+  termsText: {
+    flex: 1,
+    fontSize: fscale(12.5),
+    color: Colors.ink2,
+    lineHeight: fscale(18),
+  },
+  termsLink: {
+    color: Colors.blue,
+    fontWeight: '600',
   },
   otpBadge: {
     alignSelf: 'flex-start',

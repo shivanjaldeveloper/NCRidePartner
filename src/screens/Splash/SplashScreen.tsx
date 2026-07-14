@@ -13,6 +13,7 @@ import { getCookie, saveCookie, clearCookie } from '../../utils/session';
 import { verifyCookie } from '../../services/api/authService';
 import { resolveProcessingStatus } from '../../services/api/partnerStatus';
 import { refineOnboardingRoute } from '../../services/api/resolveOnboardingRoute';
+import { hasAcceptedCurrentTerms } from '../../utils/terms';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
@@ -99,7 +100,11 @@ const SplashScreen = () => {
         );
 
         if (resolved === 'Home') {
-          finish('MainTabs');
+          // Valid session, but the Terms/Privacy content may have changed
+          // since this partner last agreed (TERMS_VERSION bumped) — make
+          // them re-consent before Home rather than silently skipping it.
+          const accepted = await hasAcceptedCurrentTerms();
+          finish(accepted ? 'MainTabs' : 'TermsUpdate');
         } else if (resolved === 'Processing') {
           // Cookie is still valid — no need to make them log in again,
           // just show them where their application stands.

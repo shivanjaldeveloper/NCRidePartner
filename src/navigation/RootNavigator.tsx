@@ -8,6 +8,7 @@ import OnboardingScreen1 from '../screens/Onboarding/OnboardingScreen1';
 import OnboardingScreen2 from '../screens/Onboarding/OnboardingScreen2';
 import OnboardingScreen3 from '../screens/Onboarding/OnboardingScreen3';
 import LoginScreen from '../screens/Auth/LoginScreen';
+import TermsUpdateScreen from '../screens/Auth/TermsUpdateScreen';
 import BasicDetailsScreen from '../screens/BasicDetails/BasicDetailsScreen';
 import PartnerDocumentsScreen from '../screens/PartnerDocuments/PartnerDocumentsScreen';
 import ApplicationProcessingScreen from '../screens/ApplicationProcessing/ApplicationProcessingScreen';
@@ -44,6 +45,7 @@ const RootNavigator = () => {
         <Stack.Screen name="Onboarding2" component={OnboardingScreen2} />
         <Stack.Screen name="Onboarding3" component={OnboardingScreen3} />
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="TermsUpdate" component={TermsUpdateScreen} />
         <Stack.Screen name="BasicDetails" component={BasicDetailsScreen} />
         <Stack.Screen
           name="PartnerDocuments"

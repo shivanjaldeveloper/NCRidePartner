@@ -73,3 +73,17 @@ export const updateOnboardingProfile = (
     name,
     email,
   });
+
+/**
+ * NOT a confirmed endpoint — no AcceptTerms-style method has been shared
+ * for partnerauth.asmx yet, so 'AcceptTerms' below is a guessed method
+ * name. This is only ever called from utils/terms.ts, and only when
+ * TERMS_SYNC_ENABLED (constants/legal.ts) is true, so it's a no-op today.
+ * Once the real endpoint is confirmed, fix the method name/params here —
+ * no other file needs to change.
+ */
+export const acceptTermsRemote = (cookie: string, termsVersion: string) =>
+  postAuthForm<UpdateProfileResponse>('AcceptTerms', {
+    cookie,
+    termsVersion,
+  });
