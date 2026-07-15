@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import {
   useNavigation,
+  useFocusEffect,
   CompositeNavigationProp,
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -41,6 +42,11 @@ import {
 } from './mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
+import {
+  getActiveCredit,
+  formatTimeLeft,
+  ActiveCredit,
+} from '../../utils/credit';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'HomeTab'>,
@@ -52,11 +58,35 @@ const HomeScreen = () => {
 
   const [online, setOnline] = useState(false);
   const [showRidePopup, setShowRidePopup] = useState(false);
+  const [creditInfo, setCreditInfo] = useState<ActiveCredit | null>(null);
   const rideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const creditTickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const vehicle = PARTNER_VEHICLES[0];
   const payout = PARTNER_PAYOUTS[0];
   const incentive = PARTNER_INCENTIVES[0];
+
+  const refreshCredit = useCallback(async () => {
+    const active = await getActiveCredit();
+    setCreditInfo(active);
+    // Credit window ran out — can't stay online without active credit.
+    setOnline(prevOnline => (prevOnline && !active ? false : prevOnline));
+  }, []);
+
+  // Re-check whenever Home regains focus (e.g. coming back from BuyCredit).
+  useFocusEffect(
+    useCallback(() => {
+      refreshCredit();
+    }, [refreshCredit]),
+  );
+
+  // Keep the "time left" readout ticking down while Home is mounted.
+  useEffect(() => {
+    creditTickRef.current = setInterval(refreshCredit, 30000);
+    return () => {
+      if (creditTickRef.current) clearInterval(creditTickRef.current);
+    };
+  }, [refreshCredit]);
 
   useEffect(() => {
     return () => {
@@ -64,8 +94,17 @@ const HomeScreen = () => {
     };
   }, []);
 
-  const handleGoOnline = () => {
+  const handleGoOnline = async () => {
     if (online) return; // once online, stays online — matches source behavior
+
+    const active = await getActiveCredit();
+    setCreditInfo(active);
+    if (!active) {
+      // No active credit — send them to buy one before they can go online.
+      navigation.navigate('BuyCredit');
+      return;
+    }
+
     setOnline(true);
     rideTimerRef.current = setTimeout(() => setShowRidePopup(true), 3000);
   };
@@ -158,6 +197,27 @@ const HomeScreen = () => {
             </Text>
             {online && <Text style={styles.onlineSub}>Sector 62, Noida</Text>}
           </TouchableOpacity>
+
+          {creditInfo ? (
+            <View style={styles.creditRow}>
+              <ClockIcon size={13} color={Colors.mute} strokeWidth={2} />
+              <Text style={styles.creditRowText}>
+                Credit active · {formatTimeLeft(creditInfo.msLeft)}
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.creditRow}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('BuyCredit')}
+            >
+              <WalletIcon size={13} color={Colors.mute} strokeWidth={1.8} />
+              <Text style={styles.creditRowText}>
+                No active credit — tap to buy
+              </Text>
+              <ChevronRightIcon size={12} color={Colors.mute} strokeWidth={2} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Today's stats */}
@@ -510,6 +570,19 @@ const styles = StyleSheet.create({
   onlineSub: {
     fontSize: fscale(12),
     color: 'rgba(255,255,255,0.65)',
+  },
+  creditRow: {
+    marginTop: vscale(10),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: hscale(6),
+    paddingVertical: vscale(4),
+  },
+  creditRowText: {
+    fontSize: fscale(12),
+    fontWeight: '600',
+    color: Colors.mute,
   },
   sectionLabel: {
     fontSize: fscale(12),

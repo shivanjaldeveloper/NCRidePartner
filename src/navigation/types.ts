@@ -5,6 +5,7 @@ export type RootStackParamList = {
   Onboarding3: undefined;
   Login: undefined;
   TermsUpdate: undefined;
+  BuyCredit: undefined;
   BasicDetails: undefined;
   PartnerDocuments: undefined;
   ApplicationProcessing: undefined;
