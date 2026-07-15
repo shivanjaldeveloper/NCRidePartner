@@ -22,6 +22,13 @@ export interface VerifyOtpResponse {
   Email?: string;
   /** Confirmed field — drives post-login routing. 'NEW' confirmed so far. */
   ProcessingStatus?: string;
+  /**
+   * Confirmed on VerifyCookie: when Result is "Error" (e.g. admin
+   * disabled the partner / session revoked), the server sends
+   * { Result: "Error", Error: "Invalid session", ErrorDetail: "" }.
+   */
+  Error?: string;
+  ErrorDetail?: string;
   ResponseDateTime?: string;
   [key: string]: any;
 }

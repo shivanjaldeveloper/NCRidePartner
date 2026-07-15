@@ -2,6 +2,8 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './types';
+import { navigationRef } from './navigationRef';
+import { useSessionWatcher } from '../utils/sessionWatcher';
 
 import SplashScreen from '../screens/Splash/SplashScreen';
 import OnboardingScreen1 from '../screens/Onboarding/OnboardingScreen1';
@@ -35,8 +37,10 @@ import PassengerRatingScreen from '../screens/PassengerRating/PassengerRatingScr
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const RootNavigator = () => {
+  useSessionWatcher();
+
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{ headerShown: false, animation: 'fade' }}

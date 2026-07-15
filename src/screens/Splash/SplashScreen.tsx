@@ -14,6 +14,7 @@ import { verifyCookie } from '../../services/api/authService';
 import { resolveProcessingStatus } from '../../services/api/partnerStatus';
 import { refineOnboardingRoute } from '../../services/api/resolveOnboardingRoute';
 import { hasAcceptedCurrentTerms } from '../../utils/terms';
+import { hasSeenOnboarding } from '../../utils/onboarding';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
@@ -59,8 +60,12 @@ const SplashScreen = () => {
         console.log('[Splash] Stored cookie:', cookie);
 
         if (!cookie) {
-          // First-time / logged-out: keep the existing onboarding intro.
-          finish('Onboarding1');
+          // Onboarding should only ever appear once per install — not on
+          // every logout/restart. hasSeenOnboarding() persists across
+          // logout (that only clears the cookie, not this flag) and is
+          // only ever unset again by a real uninstall/reinstall.
+          const seenOnboarding = await hasSeenOnboarding();
+          finish(seenOnboarding ? 'Login' : 'Onboarding1');
           return;
         }
 
@@ -201,10 +206,8 @@ const SplashScreen = () => {
           <WheelLogoIcon size={hscale(64)} color="#C8F260" />
         </View>
 
-        <Text style={styles.title}>NCRide Partner</Text>
-        <Text style={styles.subtitle}>
-          Drive · Earn · Grow across Delhi NCR
-        </Text>
+        <Text style={styles.title}>Alo Alo Partner</Text>
+        <Text style={styles.subtitle}>Drive · Earn · Grow across India</Text>
       </View>
 
       <View style={styles.footer}>
@@ -232,7 +235,7 @@ const SplashScreen = () => {
             />
           </Svg>
         </Animated.View>
-        <Text style={styles.footerCaption}>PARTNER · NCR</Text>
+        <Text style={styles.footerCaption}>PARTNER · INDIA</Text>
       </View>
     </View>
   );

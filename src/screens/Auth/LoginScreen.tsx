@@ -226,7 +226,7 @@ const LoginScreen = () => {
             <View>
               <View style={styles.appBadge}>
                 <View style={styles.appBadgeDot} />
-                <Text style={styles.appBadgeText}>NCRide Partner App</Text>
+                <Text style={styles.appBadgeText}>Alo Alo Partner App</Text>
               </View>
 
               <Text style={styles.title}>
