@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -13,7 +7,6 @@ import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import ClockIcon from '../../assets/icons/ClockIcon';
-import LogoutIcon from '../../assets/icons/LogoutIcon';
 import { RootStackParamList } from '../../navigation/types';
 import { getCookie, clearCookie } from '../../utils/session';
 import { getProcessingDetails } from '../../services/api/onboardingService';
@@ -72,17 +65,6 @@ const ApplicationProcessingScreen = () => {
   };
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.logoutButton}
-          activeOpacity={0.8}
-          onPress={() => navigation.navigate('Logout')}
-        >
-          <LogoutIcon size={15} color={Colors.red} strokeWidth={1.8} />
-          <Text style={styles.logoutText}>Log out</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.content}>
         <View style={styles.iconRing}>
           <ClockIcon size={30} color={Colors.ink} strokeWidth={1.8} />
@@ -124,28 +106,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.bg,
-  },
-  topBar: {
-    paddingTop: vscale(45),
-    paddingHorizontal: hscale(20),
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: hscale(6),
-    paddingVertical: vscale(8),
-    paddingHorizontal: hscale(14),
-    borderRadius: hscale(12),
-    backgroundColor: Colors.surface,
-    borderWidth: 0.5,
-    borderColor: Colors.line,
-  },
-  logoutText: {
-    fontSize: fscale(12.5),
-    fontWeight: '700',
-    color: Colors.red,
   },
   content: {
     flex: 1,
