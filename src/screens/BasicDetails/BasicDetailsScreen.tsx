@@ -20,7 +20,7 @@ import ChevronLeftIcon from '../../assets/icons/ChevronLeftIcon';
 import { RootStackParamList } from '../../navigation/types';
 import { updateOnboardingProfile } from '../../services/api/authService';
 import { updateReferredBy } from '../../services/api/onboardingService';
-import { getCookie } from '../../utils/session';
+import { getCookie, clearCookie } from '../../utils/session';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'BasicDetails'>;
 
@@ -67,7 +67,10 @@ const BasicDetailsScreen = () => {
         try {
           const refRes = await updateReferredBy(cookie, referredBy.trim());
           if (refRes.Result !== 'Success') {
-            console.warn('[BasicDetails] Referral update failed:', refRes.Message);
+            console.warn(
+              '[BasicDetails] Referral update failed:',
+              refRes.Message,
+            );
           }
         } catch (refErr) {
           console.warn('[BasicDetails] Referral update failed:', refErr);
@@ -94,7 +97,16 @@ const BasicDetailsScreen = () => {
 
         <View style={styles.topRow}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={async () => {
+              // A cookie already exists at this point (set right after
+              // OTP verify), and the server still sees this partner as
+              // mid-onboarding — so on its own, a restart would just land
+              // back here again via Splash's routing. Clearing the cookie
+              // here means "back" really means back: next launch goes to
+              // Login, not straight back into BasicDetails.
+              await clearCookie();
+              navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+            }}
             style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >

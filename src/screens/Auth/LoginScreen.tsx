@@ -18,7 +18,6 @@ import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import TopSafeStrap from '../../components/layout/TopSafeStrap';
 import PrimaryButton from '../../components/common/PrimaryButton';
-import ChevronLeftIcon from '../../assets/icons/ChevronLeftIcon';
 import ShieldIcon from '../../assets/icons/ShieldIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import { RootStackParamList } from '../../navigation/types';
@@ -72,14 +71,6 @@ const LoginScreen = () => {
 
   const isPhoneValid = phone.length === 10;
   const isOtpComplete = otp.every(d => d.length === 1);
-
-  const handleBack = () => {
-    if (stage === 'otp') {
-      setStage('phone');
-    } else {
-      navigation.goBack();
-    }
-  };
 
   const handleSendOtp = async () => {
     if (!isPhoneValid || !termsAccepted || loading) return;
@@ -210,16 +201,6 @@ const LoginScreen = () => {
     >
       <View style={styles.container}>
         <TopSafeStrap backgroundColor={Colors.surface} />
-
-        <View style={styles.topRow}>
-          <TouchableOpacity
-            onPress={handleBack}
-            style={styles.backButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <ChevronLeftIcon size={20} color={Colors.ink} strokeWidth={2} />
-          </TouchableOpacity>
-        </View>
 
         <View style={styles.content}>
           {stage === 'phone' ? (
