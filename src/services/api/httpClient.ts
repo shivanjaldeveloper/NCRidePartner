@@ -13,8 +13,11 @@ export class ApiError extends Error {
 }
 
 /**
- * Posts a WebMethod endpoint under partnerauth.asmx as
- * application/x-www-form-urlencoded, matching the curl samples exactly.
+ * Posts a WebMethod endpoint as application/x-www-form-urlencoded, matching
+ * the curl samples exactly. Defaults to the partnerauth.asmx base, but any
+ * .asmx service on the same host (e.g. partnerplans.asmx) can be targeted by
+ * passing `baseUrl` — this is the only change from the original signature,
+ * so every existing call site keeps working untouched.
  *
  * Confirmed response shape: plain JSON (not XML, not wrapped in `{"d": ...}`)
  * with PascalCase fields — `Result`, `Message`, `OtpTransaction`, `Cookie`,
@@ -27,6 +30,7 @@ const REQUEST_TIMEOUT_MS = 15000;
 export async function postAuthForm<T = any>(
   method: string,
   params: Record<string, string | number | undefined>,
+  baseUrl: string = API_BASE_URL,
 ): Promise<T> {
   const body = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -41,7 +45,7 @@ export async function postAuthForm<T = any>(
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/${method}`, {
+    response = await fetch(`${baseUrl}/${method}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

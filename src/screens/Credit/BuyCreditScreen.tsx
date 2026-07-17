@@ -1,8 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import HeaderBack from '../../components/common/HeaderBack';
@@ -11,38 +18,86 @@ import PrimaryButton from '../../components/common/PrimaryButton';
 import ClockIcon from '../../assets/icons/ClockIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import { RootStackParamList } from '../../navigation/types';
-import { CREDIT_PLANS, CreditPlan, ratePerHour } from '../../constants/credit';
+import { getCookie } from '../../utils/session';
 import {
   activateCreditDemo,
   getActiveCredit,
   formatTimeLeft,
   ActiveCredit,
 } from '../../utils/credit';
+import {
+  getPartnerPlanList,
+  PartnerPlan,
+} from '../../services/api/plansService';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'BuyCredit'>;
 
-/**
- * Shown when the partner taps "Go Online" on Home with no active credit.
- * No billing API exists yet — "Buy Now" activates a local demo credit
- * window via utils/credit.ts (see that file for the swap point once a
- * real payment endpoint exists). Prices/hours come from constants/credit.ts.
- */
+const ratePerHour = (plan: PartnerPlan) => {
+  const rate = Number(plan.PlanRate) / Number(plan.PlanTime || 1);
+  return Number.isFinite(rate) ? Math.round(rate) : 0;
+};
+
 const BuyCreditScreen = () => {
   const navigation = useNavigation<NavProp>();
+
   const [active, setActive] = useState<ActiveCredit | null>(null);
+  const [plans, setPlans] = useState<PartnerPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [buyingId, setBuyingId] = useState<string | null>(null);
-  const [justActivated, setJustActivated] = useState<CreditPlan | null>(null);
+  const [justActivated, setJustActivated] = useState<PartnerPlan | null>(null);
+
+  const loadPlans = useCallback(async (isRefresh = false) => {
+    isRefresh ? setRefreshing(true) : setLoading(true);
+    setError(null);
+    try {
+      const cookie = await getCookie();
+      if (!cookie) {
+        setError('Session not found. Please log in again.');
+        return;
+      }
+      const res = await getPartnerPlanList(cookie);
+      if (res.Result !== 'Success' || !res.Plans) {
+        setError(res.Message || 'Could not load plans right now.');
+        return;
+      }
+      const sorted = [...res.Plans].sort(
+        (a, b) => Number(a.PlanTime) - Number(b.PlanTime),
+      );
+      setPlans(sorted);
+    } catch (err: any) {
+      setError(err?.message || 'Could not load plans right now.');
+    } finally {
+      isRefresh ? setRefreshing(false) : setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     getActiveCredit().then(setActive);
-  }, []);
+    loadPlans();
+  }, [loadPlans]);
 
-  const handleBuy = async (plan: CreditPlan) => {
+  const bestValueId = useMemo(() => {
+    if (!plans.length) return null;
+    return plans.reduce((best, p) =>
+      ratePerHour(p) < ratePerHour(best) ? p : best,
+    ).PlanTransaction;
+  }, [plans]);
+
+  const handleBuy = async (plan: PartnerPlan) => {
     if (buyingId) return;
-    setBuyingId(plan.id);
+    setBuyingId(plan.PlanTransaction);
     try {
-      // DEMO: no payment flow yet — this just activates the window locally.
-      const result = await activateCreditDemo(plan.id, plan.hours);
+      // DEMO: PartnerPlanList only lists plans — there's no confirmed
+      // purchase/payment endpoint yet, so this just activates the window
+      // locally, same as before. Swap this for a real "buy" API call once
+      // one exists; the plan's PlanTransaction id is already threaded
+      // through and ready to send.
+      const result = await activateCreditDemo(
+        plan.PlanTransaction,
+        Number(plan.PlanTime),
+      );
       setActive(result);
       setJustActivated(plan);
     } finally {
@@ -62,6 +117,13 @@ const BuyCreditScreen = () => {
         style={styles.flex}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadPlans(true)}
+            tintColor={Colors.ink}
+          />
+        }
       >
         {active && (
           <Card pad={16} style={styles.activeCard}>
@@ -71,7 +133,7 @@ const BuyCreditScreen = () => {
             <View style={styles.flex}>
               <Text style={styles.activeTitle}>
                 {justActivated
-                  ? `${justActivated.label} credit activated`
+                  ? `${justActivated.PlanName} credit activated`
                   : 'Credit active'}
               </Text>
               <Text style={styles.activeSub}>
@@ -81,55 +143,114 @@ const BuyCreditScreen = () => {
           </Card>
         )}
 
-        <Text style={styles.sectionLabel}>Available plans</Text>
+        <View style={styles.sectionHeadRow}>
+          <Text style={styles.sectionLabel}>
+            {plans.length ? `Plans in ${plans[0].Region}` : 'Available plans'}
+          </Text>
+          {plans.length > 0 && (
+            <Text style={styles.sectionCount}>
+              {plans.length} option{plans.length === 1 ? '' : 's'}
+            </Text>
+          )}
+        </View>
 
-        {CREDIT_PLANS.map(plan => {
-          const isActivePlan = active?.planId === plan.id;
-          const isBuying = buyingId === plan.id;
-          return (
-            <Card key={plan.id} pad={18} style={styles.planCard}>
-              <View style={styles.planTopRow}>
-                <View style={styles.planIconWrap}>
-                  <ClockIcon size={19} color={Colors.ink} strokeWidth={1.8} />
-                </View>
-                {isActivePlan && (
-                  <View style={styles.activeBadge}>
-                    <CheckIcon size={11} color={Colors.green} strokeWidth={2.6} />
-                    <Text style={styles.activeBadgeText}>Active</Text>
+        {loading && (
+          <View style={styles.stateBox}>
+            <ActivityIndicator color={Colors.ink} size="small" />
+            <Text style={styles.stateText}>Loading plans…</Text>
+          </View>
+        )}
+
+        {!loading && error && (
+          <View style={styles.stateBox}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              activeOpacity={0.85}
+              onPress={() => loadPlans()}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!loading &&
+          !error &&
+          plans.map(plan => {
+            const isActivePlan = active?.planId === plan.PlanTransaction;
+            const isBuying = buyingId === plan.PlanTransaction;
+            const isBestValue = plan.PlanTransaction === bestValueId;
+            const rate = ratePerHour(plan);
+
+            return (
+              <Card
+                key={plan.PlanTransaction}
+                pad={14}
+                style={[
+                  styles.planCard,
+                  isBestValue && styles.planCardHighlighted,
+                ]}
+              >
+                <View style={styles.planRow}>
+                  <View style={styles.planIconWrap}>
+                    <ClockIcon size={17} color={Colors.ink} strokeWidth={1.8} />
                   </View>
-                )}
-              </View>
 
-              <Text style={styles.planHours}>{plan.label}</Text>
-              <Text style={styles.planRate}>
-                ≈ ₹{ratePerHour(plan)}/hr · demo rate
-              </Text>
+                  <View style={styles.planInfo}>
+                    <View style={styles.planNameRow}>
+                      <Text style={styles.planName}>{plan.PlanName}</Text>
+                      {isBestValue && !isActivePlan && (
+                        <View style={styles.bestValueBadge}>
+                          <Text style={styles.bestValueBadgeText}>
+                            Best value
+                          </Text>
+                        </View>
+                      )}
+                      {isActivePlan && (
+                        <View style={styles.activeBadge}>
+                          <CheckIcon
+                            size={10}
+                            color={Colors.green}
+                            strokeWidth={2.8}
+                          />
+                          <Text style={styles.activeBadgeText}>Active</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.planMeta}>
+                      {plan.PlanTime} hr{Number(plan.PlanTime) === 1 ? '' : 's'}{' '}
+                      · {plan.PlanRideCount} rides · ₹{rate}/hr
+                    </Text>
+                  </View>
+                </View>
 
-              <View style={styles.planPriceRow}>
-                <Text style={styles.planPrice}>₹{plan.price}</Text>
-                <TouchableOpacity
-                  style={[
-                    styles.buyButton,
-                    (isBuying || (buyingId && !isBuying)) &&
-                      styles.buyButtonDisabled,
-                  ]}
-                  activeOpacity={0.85}
-                  disabled={!!buyingId}
-                  onPress={() => handleBuy(plan)}
-                >
-                  <Text style={styles.buyButtonText}>
-                    {isBuying ? 'Activating…' : 'Buy Now'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
-          );
-        })}
+                <View style={styles.planPriceRow}>
+                  <Text style={styles.planPrice}>₹{plan.PlanRate}</Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.buyButton,
+                      (isBuying || (buyingId && !isBuying)) &&
+                        styles.buyButtonDisabled,
+                    ]}
+                    activeOpacity={0.85}
+                    disabled={!!buyingId}
+                    onPress={() => handleBuy(plan)}
+                  >
+                    <Text style={styles.buyButtonText}>
+                      {isBuying ? 'Activating…' : 'Buy Now'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+            );
+          })}
 
-        <Text style={styles.footNote}>
-          Demo pricing — real plans, rates and payment will connect once the
-          billing API is ready.
-        </Text>
+        {!loading && !error && plans.length > 0 && (
+          <Text style={styles.footNote}>
+            Prices and hours shown are live from your region's active plans.
+            Payment on tap is a demo activation until the billing API is ready.
+          </Text>
+        )}
       </ScrollView>
 
       {active && (
@@ -160,14 +281,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: hscale(18),
     paddingBottom: vscale(24),
   },
+  sectionHeadRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    marginTop: vscale(8),
+    marginBottom: vscale(10),
+  },
   sectionLabel: {
     fontSize: fscale(12),
     fontWeight: '700',
     color: Colors.mute,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    marginTop: vscale(8),
-    marginBottom: vscale(10),
+  },
+  sectionCount: {
+    fontSize: fscale(11.5),
+    color: Colors.mute2,
   },
   activeCard: {
     flexDirection: 'row',
@@ -196,79 +326,133 @@ const styles = StyleSheet.create({
     color: Colors.mute,
     marginTop: vscale(2),
   },
-  planCard: {
-    marginBottom: vscale(14),
+  stateBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: vscale(36),
+    gap: vscale(10),
   },
-  planTopRow: {
+  stateText: {
+    fontSize: fscale(12.5),
+    color: Colors.mute,
+  },
+  errorText: {
+    fontSize: fscale(13),
+    color: Colors.mute,
+    textAlign: 'center',
+    paddingHorizontal: hscale(12),
+  },
+  retryButton: {
+    marginTop: vscale(4),
+    paddingVertical: vscale(9),
+    paddingHorizontal: hscale(20),
+    borderRadius: hscale(12),
+    backgroundColor: Colors.ink,
+  },
+  retryButtonText: {
+    fontSize: fscale(13),
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // Compact list card — everything in two tight rows instead of four.
+  planCard: {
+    marginBottom: vscale(10),
+  },
+  planCardHighlighted: {
+    borderColor: Colors.green,
+    borderWidth: 1.2,
+  },
+  planRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
   planIconWrap: {
-    width: hscale(40),
-    height: hscale(40),
-    borderRadius: hscale(13),
+    width: hscale(34),
+    height: hscale(34),
+    borderRadius: hscale(11),
     backgroundColor: Colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: hscale(11),
+  },
+  planInfo: {
+    flex: 1,
+  },
+  planNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: hscale(6),
+  },
+  planName: {
+    fontSize: fscale(15.5),
+    fontWeight: '800',
+    color: Colors.ink,
+    letterSpacing: -0.2,
+  },
+  planMeta: {
+    fontSize: fscale(11.5),
+    color: Colors.mute,
+    marginTop: vscale(2),
+  },
+  bestValueBadge: {
+    paddingVertical: vscale(2),
+    paddingHorizontal: hscale(7),
+    borderRadius: hscale(6),
+    backgroundColor: '#E9F8E4',
+  },
+  bestValueBadgeText: {
+    fontSize: fscale(9.5),
+    fontWeight: '700',
+    color: Colors.green,
   },
   activeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: hscale(4),
-    paddingVertical: vscale(4),
-    paddingHorizontal: hscale(8),
-    borderRadius: hscale(8),
+    gap: hscale(3),
+    paddingVertical: vscale(2),
+    paddingHorizontal: hscale(7),
+    borderRadius: hscale(6),
     backgroundColor: '#E9F8E4',
   },
   activeBadgeText: {
-    fontSize: fscale(10.5),
+    fontSize: fscale(9.5),
     fontWeight: '700',
     color: Colors.green,
   },
-  planHours: {
-    fontSize: fscale(19),
-    fontWeight: '800',
-    color: Colors.ink,
-    letterSpacing: -0.4,
-    marginTop: vscale(12),
-  },
-  planRate: {
-    fontSize: fscale(12),
-    color: Colors.mute,
-    marginTop: vscale(2),
-  },
   planPriceRow: {
-    marginTop: vscale(16),
+    marginTop: vscale(12),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   planPrice: {
-    fontSize: fscale(24),
+    fontSize: fscale(19),
     fontWeight: '800',
     color: Colors.ink,
-    letterSpacing: -0.6,
+    letterSpacing: -0.4,
   },
   buyButton: {
-    paddingVertical: vscale(11),
-    paddingHorizontal: hscale(22),
-    borderRadius: hscale(14),
+    paddingVertical: vscale(9),
+    paddingHorizontal: hscale(18),
+    borderRadius: hscale(12),
     backgroundColor: Colors.ink,
   },
   buyButtonDisabled: {
     opacity: 0.5,
   },
   buyButtonText: {
-    fontSize: fscale(13.5),
+    fontSize: fscale(12.5),
     fontWeight: '700',
     color: '#FFFFFF',
   },
+
   footNote: {
     fontSize: fscale(11.5),
     color: Colors.mute2,
     textAlign: 'center',
-    marginTop: vscale(6),
+    marginTop: vscale(10),
     lineHeight: fscale(17),
   },
   footer: {
