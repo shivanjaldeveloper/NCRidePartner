@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -12,24 +13,29 @@ import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'PassengerRating'>;
 
+// key is the stable identity used for selection state; labelKey resolves
+// through the active language at render time.
 const TAGS = [
-  'Polite',
-  'On time',
-  'Clean pickup area',
-  'Safe ride',
-  'Easy to find',
+  { key: 'polite', labelKey: 'passengerRating.tags.polite' },
+  { key: 'onTime', labelKey: 'passengerRating.tags.onTime' },
+  { key: 'cleanPickupArea', labelKey: 'passengerRating.tags.cleanPickupArea' },
+  { key: 'safeRide', labelKey: 'passengerRating.tags.safeRide' },
+  { key: 'easyToFind', labelKey: 'passengerRating.tags.easyToFind' },
 ];
 
 const PassengerRatingScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
 
   const [rating, setRating] = useState(5);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const toggleTag = (tag: string) => {
+  const toggleTag = (tagKey: string) => {
     setSelectedTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
+      prev.includes(tagKey)
+        ? prev.filter(k => k !== tagKey)
+        : [...prev, tagKey],
     );
   };
 
@@ -67,17 +73,17 @@ const PassengerRatingScreen = () => {
 
         <View style={styles.tagsRow}>
           {TAGS.map(tag => {
-            const selected = selectedTags.includes(tag);
+            const selected = selectedTags.includes(tag.key);
             return (
               <TouchableOpacity
-                key={tag}
-                onPress={() => toggleTag(tag)}
+                key={tag.key}
+                onPress={() => toggleTag(tag.key)}
                 style={[styles.tagChip, selected && styles.tagChipSelected]}
               >
                 <Text
                   style={[styles.tagText, selected && styles.tagTextSelected]}
                 >
-                  {tag}
+                  {t(tag.labelKey)}
                 </Text>
               </TouchableOpacity>
             );
@@ -86,14 +92,14 @@ const PassengerRatingScreen = () => {
 
         <View style={styles.actionsRow}>
           <PrimaryButton
-            label="Skip"
+            label={t('common.skip')}
             onPress={handleDone}
             icon="none"
             variant="ghost"
             style={styles.actionButton}
           />
           <PrimaryButton
-            label="Submit rating"
+            label={t('passengerRating.submit')}
             onPress={handleDone}
             icon="none"
             style={styles.actionButton}

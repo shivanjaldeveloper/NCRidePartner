@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { hscale, vscale } from '../../theme/scale';
@@ -27,6 +28,7 @@ const OnboardingTemplate: React.FC<Props> = ({
   onSkip,
   last = false,
 }) => {
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
       <TopSafeStrap backgroundColor={Colors.bg} />
@@ -47,7 +49,7 @@ const OnboardingTemplate: React.FC<Props> = ({
       <View style={styles.bottomRow}>
         <Dots total={3} activeIndex={step} />
         <PrimaryButton
-          label={last ? 'Get started' : 'Next'}
+          label={last ? t('common.getStarted') : t('common.next')}
           onPress={onNext}
           icon={last ? 'check' : 'arrowRight'}
         />

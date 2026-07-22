@@ -2,9 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
-import { hscale, vscale, fscale } from '../../theme/scale';
+import { hscale, vscale, fscale, safeLineHeight } from '../../theme/scale';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import PermissionMapIllustration from '../../components/permissions/illustrations/PermissionMapIllustration';
 import PulsingLocationPin from '../../components/permissions/PulsingLocationPin';
@@ -15,25 +16,27 @@ import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Permissions'>;
 
+// Translation keys instead of static text; icon stays static since it's
+// purely visual and unrelated to language.
 const PERMISSION_ITEMS: {
   icon: 'locate' | 'bell' | 'shield';
-  title: string;
-  sub: string;
+  titleKey: string;
+  subKey: string;
 }[] = [
   {
     icon: 'locate',
-    title: 'Precise location',
-    sub: 'For accurate pickup & navigation',
+    titleKey: 'permissions.items.location.title',
+    subKey: 'permissions.items.location.sub',
   },
   {
     icon: 'bell',
-    title: 'Notifications',
-    sub: 'New ride requests & alerts',
+    titleKey: 'permissions.items.notifications.title',
+    subKey: 'permissions.items.notifications.sub',
   },
   {
     icon: 'shield',
-    title: 'Background location',
-    sub: 'Required when app is minimised',
+    titleKey: 'permissions.items.background.title',
+    subKey: 'permissions.items.background.sub',
   },
 ];
 
@@ -47,6 +50,7 @@ const PermissionIcon = ({ name }: { name: 'locate' | 'bell' | 'shield' }) => {
 
 const PermissionsScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
 
   const handleContinue = () => navigation.navigate('Verification');
 
@@ -61,21 +65,18 @@ const PermissionsScreen = () => {
         </View>
 
         <View style={styles.textBlock}>
-          <Text style={styles.title}>Allow location access</Text>
-          <Text style={styles.subtitle}>
-            NCRide Partner uses your location for ride matching, navigation, and
-            trip tracking. Required to go online.
-          </Text>
+          <Text style={styles.title}>{t('permissions.title')}</Text>
+          <Text style={styles.subtitle}>{t('permissions.subtitle')}</Text>
 
           <View style={styles.list}>
             {PERMISSION_ITEMS.map(item => (
-              <View key={item.title} style={styles.listRow}>
+              <View key={item.titleKey} style={styles.listRow}>
                 <View style={styles.iconWrap}>
                   <PermissionIcon name={item.icon} />
                 </View>
                 <View style={styles.listTextWrap}>
-                  <Text style={styles.listTitle}>{item.title}</Text>
-                  <Text style={styles.listSub}>{item.sub}</Text>
+                  <Text style={styles.listTitle}>{t(item.titleKey)}</Text>
+                  <Text style={styles.listSub}>{t(item.subKey)}</Text>
                 </View>
               </View>
             ))}
@@ -85,13 +86,13 @@ const PermissionsScreen = () => {
 
       <View style={styles.footer}>
         <PrimaryButton
-          label="Allow all permissions"
+          label={t('permissions.allowAll')}
           onPress={handleContinue}
           icon="none"
           style={styles.fullButton}
         />
         <PrimaryButton
-          label="Not now"
+          label={t('permissions.notNow')}
           onPress={handleContinue}
           icon="none"
           variant="ghost"
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.8,
     color: Colors.ink,
-    lineHeight: fscale(32),
+    lineHeight: safeLineHeight(fscale(28)),
   },
   subtitle: {
     marginTop: vscale(10),

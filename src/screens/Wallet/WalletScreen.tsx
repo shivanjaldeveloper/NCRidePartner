@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -29,6 +30,7 @@ const TXN_ICONS = { cash: CashIcon, taxi: TaxiIcon };
 
 const WalletScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const [wholeRupees, paise] = PARTNER_WALLET_BALANCE.toFixed(2).split('.');
 
   return (
@@ -49,7 +51,7 @@ const WalletScreen = () => {
           <View style={styles.balanceCardInner}>
             <View style={styles.balanceRow}>
               <View>
-                <Text style={styles.eyebrow}>Wallet balance</Text>
+                <Text style={styles.eyebrow}>{t('wallet.balanceLabel')}</Text>
                 <Text style={styles.balanceAmount}>
                   ₹ {Number(wholeRupees).toLocaleString('en-IN')}
                   <Text style={styles.balancePaise}>.{paise}</Text>
@@ -64,13 +66,17 @@ const WalletScreen = () => {
               activeOpacity={0.85}
               onPress={() => navigation.navigate('Payouts')}
             >
-              <Text style={styles.viewPayoutsLabel}>View payouts</Text>
+              <Text style={styles.viewPayoutsLabel}>
+                {t('wallet.viewPayouts')}
+              </Text>
               <ArrowRightIcon size={16} color={Colors.ink} strokeWidth={2} />
             </TouchableOpacity>
           </View>
         </Card>
 
-        <Text style={styles.sectionLabel}>Recent transactions</Text>
+        <Text style={styles.sectionLabel}>
+          {t('wallet.recentTransactions')}
+        </Text>
         <Card pad={4}>
           {PARTNER_WALLET_TRANSACTIONS.map((tr, i) => {
             const IconComponent = TXN_ICONS[tr.icon];

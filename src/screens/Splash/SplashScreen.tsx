@@ -3,18 +3,20 @@ import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Svg, { Circle } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { hscale, vscale } from '../../theme/scale';
 import WheelLogoIcon from '../../assets/icons/WheelLogoIcon';
-import { RootStackParamList } from '../../navigation/types';
+import { RootStackParamList, SplashDestination } from '../../navigation/types';
 import { getCookie, saveCookie, clearCookie } from '../../utils/session';
 import { verifyCookie } from '../../services/api/authService';
 import { resolveProcessingStatus } from '../../services/api/partnerStatus';
 import { refineOnboardingRoute } from '../../services/api/resolveOnboardingRoute';
 import { hasAcceptedCurrentTerms } from '../../utils/terms';
 import { hasSeenOnboarding } from '../../utils/onboarding';
+import { hasChosenLanguage } from '../../utils/language';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
@@ -40,17 +42,28 @@ const ring = (
 
 const SplashScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const spin = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let cancelled = false;
     const start = Date.now();
 
-    const finish = (route: keyof RootStackParamList) => {
+    const finish = (route: SplashDestination) => {
       const elapsed = Date.now() - start;
       const wait = Math.max(0, MIN_SPLASH_MS - elapsed);
-      setTimeout(() => {
-        if (!cancelled) navigation.replace(route);
+      setTimeout(async () => {
+        if (cancelled) return;
+        // First launch ever (or first launch since the partner hasn't yet
+        // confirmed a language) — detour through the picker, which then
+        // continues on to whatever route Splash already resolved above.
+        // Every subsequent launch skips straight past this.
+        const chosen = await hasChosenLanguage();
+        if (!chosen) {
+          navigation.replace('LanguageSelect', { nextRoute: route });
+        } else {
+          navigation.replace(route);
+        }
       }, wait);
     };
 
@@ -206,8 +219,8 @@ const SplashScreen = () => {
           <WheelLogoIcon size={hscale(64)} color="#C8F260" />
         </View>
 
-        <Text style={styles.title}>Alo Alo Partner</Text>
-        <Text style={styles.subtitle}>Drive · Earn · Grow across India</Text>
+        <Text style={styles.title}>{t('splash.title')}</Text>
+        <Text style={styles.subtitle}>{t('splash.subtitle')}</Text>
       </View>
 
       <View style={styles.footer}>
@@ -235,7 +248,7 @@ const SplashScreen = () => {
             />
           </Svg>
         </Animated.View>
-        <Text style={styles.footerCaption}>PARTNER · INDIA</Text>
+        <Text style={styles.footerCaption}>{t('splash.footerCaption')}</Text>
       </View>
     </View>
   );

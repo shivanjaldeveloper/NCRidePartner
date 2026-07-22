@@ -1,0 +1,417 @@
+{
+  "common": {
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get started"
+  },
+  "onboarding": {
+    "screen1": {
+      "title": "Drive. Earn. Grow in NCR.",
+      "sub": "Join thousands of NCRide partners driving across Noida, Delhi, and Gurugram. Set your own hours and earn more."
+    },
+    "screen2": {
+      "title": "All vehicles. All zones.",
+      "sub": "Drive a car, auto, e-rickshaw, or bike taxi. Cover NCR from Noida to Gurugram — on your terms."
+    },
+    "screen3": {
+      "title": "Earnings on time. Always.",
+      "sub": "Track daily earnings, weekly payouts, and bonuses in real-time. NCRide Partner pays every Monday."
+    }
+  },
+  "permissions": {
+    "title": "Allow location access",
+    "subtitle": "NCRide Partner uses your location for ride matching, navigation, and trip tracking. Required to go online.",
+    "items": {
+      "location": {
+        "title": "Precise location",
+        "sub": "For accurate pickup & navigation"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "sub": "New ride requests & alerts"
+      },
+      "background": {
+        "title": "Background location",
+        "sub": "Required when app is minimised"
+      }
+    },
+    "allowAll": "Allow all permissions",
+    "notNow": "Not now"
+  },
+  "splash": {
+    "title": "Alo Alo Partner",
+    "subtitle": "Drive · Earn · Grow across India",
+    "footerCaption": "PARTNER · INDIA"
+  },
+  "auth": {
+    "appBadge": "Alo Alo Partner App",
+    "phone": {
+      "title": "Welcome, partner.\nSign in to start driving.",
+      "subtitle": "We'll send a 4-digit OTP to verify your number.",
+      "fieldLabel": "Mobile number",
+      "placeholder": "0000000000",
+      "trustText": "Your number is used only for partner verification.",
+      "termsPrefix": "I agree to the",
+      "termsLink": "Partner Terms",
+      "and": "&",
+      "privacyLink": "Privacy Policy"
+    },
+    "otp": {
+      "sentTo": "OTP sent to +91 {{phone}}",
+      "title": "Enter the code",
+      "subtitle": "4-digit OTP · ",
+      "changeNumber": "Change number",
+      "resendIn": "Resend in ",
+      "resendOtp": "Resend OTP",
+      "resending": "Resending…"
+    },
+    "buttons": {
+      "sendOtp": "Send OTP",
+      "sending": "Sending…",
+      "verify": "Verify & continue",
+      "verifying": "Verifying…"
+    },
+    "legal": {
+      "prefix": "By continuing you agree to our",
+      "termsLink": "Partner Terms",
+      "and": "&",
+      "privacyLink": "Privacy Policy",
+      "suffix": "."
+    },
+    "errors": {
+      "sendOtpFailed": "Could not send OTP. Please try again.",
+      "genericRetry": "Something went wrong. Please try again.",
+      "resendFailed": "Could not resend OTP. Please try again.",
+      "invalidOtp": "Invalid OTP. Please try again.",
+      "notEligible": "Your account is not eligible to continue. Please contact support."
+    }
+  },
+  "basicDetails": {
+    "stepBadge": "Step 1 of 2 · Onboarding",
+    "title": "Tell us about you",
+    "subtitle": "We'll use these details on your partner profile.",
+    "fields": {
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Your full name",
+      "email": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "referral": "Referral code (optional)",
+      "referralPlaceholder": "Partner ID who referred you"
+    },
+    "continue": "Continue",
+    "saving": "Saving…",
+    "errors": {
+      "saveFailed": "Could not save your details. Please try again.",
+      "genericRetry": "Something went wrong. Please try again."
+    }
+  },
+  "verification": {
+    "eyebrow": "Partner onboarding",
+    "title": "Document status",
+    "bannerEyebrow": "Verification status",
+    "bannerTitle": "All documents verified ✓",
+    "bannerSub": "You can go online and start earning right now.",
+    "documents": {
+      "dl": {
+        "title": "Driving License",
+        "sub": "DL-0420110012345"
+      },
+      "rc": {
+        "title": "Vehicle RC",
+        "sub": "UP16 AB 4821"
+      },
+      "aadhaar": {
+        "title": "Aadhaar Card",
+        "sub": "Identity proof"
+      },
+      "insurance": {
+        "title": "Insurance Certificate",
+        "sub": "Valid till Mar 2027"
+      },
+      "photo": {
+        "title": "Profile Photo",
+        "sub": "Face verification"
+      }
+    },
+    "statusVerified": "Verified",
+    "startEarning": "Start earning"
+  },
+  "applicationProcessing": {
+    "logout": "Log out",
+    "title": "Application processing",
+    "message": "Your documents have been submitted successfully and are under verification.\n\nWe will notify you once your account has been approved.",
+    "checkStatus": "Check status",
+    "checking": "Checking…",
+    "notes": {
+      "rejected": "Application rejected: {{remark}}",
+      "notApproved": "Your application was not approved. Contact support for details.",
+      "underReview": "Still under review — {{remark}}",
+      "underReviewDefault": "Still under review — check back soon.",
+      "checkFailed": "Could not check status. Please try again."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "profile": "Partner profile",
+      "preferences": "Preferences",
+      "service": "Service preferences",
+      "legal": "Privacy & legal"
+    },
+    "rows": {
+      "personalInfo": {
+        "title": "Personal info",
+        "sub": "Name, photo, address"
+      },
+      "mobile": {
+        "title": "Mobile",
+        "sub": "{{phone}} · Verified"
+      },
+      "kyc": {
+        "title": "KYC verification",
+        "sub": "Aadhaar · PAN · DL verified"
+      },
+      "vehicleType": {
+        "title": "Vehicle type",
+        "sub": "Sedan · Car service"
+      },
+      "intercity": {
+        "title": "Intercity trips",
+        "sub": "Enabled · NCR outstation"
+      },
+      "serviceArea": {
+        "title": "Service area",
+        "sub": "Noida · Delhi · Gurugram"
+      },
+      "language": {
+        "title": "Language"
+      },
+      "privacyPolicy": {
+        "title": "Privacy policy"
+      },
+      "partnerAgreement": {
+        "title": "Partner agreement"
+      },
+      "deleteAccount": {
+        "title": "Delete account"
+      }
+    },
+    "preferences": {
+      "push": "Push notifications",
+      "rideRequests": "New ride requests",
+      "payoutAlerts": "Earnings & payout alerts",
+      "bgLocation": "Background location",
+      "sound": "Sound for ride requests",
+      "showEarnings": "Show earnings on home"
+    },
+    "footer": "Alo Alo Partner · v {{version}} (build {{build}}) · Marathwada, India",
+    "languageSheet": {
+      "title": "Choose language",
+      "subtitle": "Select the language you'd like to use across the app.",
+      "done": "Done"
+    }
+  },
+  "logout": {
+    "confirmTitle": "Log out of Alo Alo Partner?",
+    "confirmSubtitle": "You can sign back in anytime. Your earnings, documents and vehicle info stay safe.",
+    "stayLoggedIn": "Stay logged in",
+    "logOut": "Log out"
+  },
+  "passengerRating": {
+    "rate": "Rate {{name}}",
+    "howWas": "How was this passenger?",
+    "submit": "Submit rating",
+    "tags": {
+      "polite": "Polite",
+      "onTime": "On time",
+      "cleanPickupArea": "Clean pickup area",
+      "safeRide": "Safe ride",
+      "easyToFind": "Easy to find"
+    }
+  },
+  "termsUpdate": {
+    "title": "Our terms have been updated",
+    "subtitle": "Please review and accept the latest Partner Terms and Privacy Policy to keep using the app.",
+    "agreePrefix": "I agree to the updated",
+    "termsLink": "Partner Terms",
+    "and": "&",
+    "privacyLink": "Privacy Policy",
+    "saving": "Saving…",
+    "acceptContinue": "Accept & continue",
+    "declineLogout": "Not now, log me out"
+  },
+  "sos": {
+    "headerTitle": "Emergency & SOS",
+    "tapHoldTitle": "Tap & Hold for SOS",
+    "tapHoldSub": "Live location sent to police + emergency contacts",
+    "alertSent": "ALERT SENT · HELP IS ON THE WAY",
+    "holdToAlert": "HOLD 3 SECONDS TO ALERT",
+    "emergencyContacts": "Emergency contacts",
+    "addContact": "Add contact",
+    "partnerSafety": "Partner safety",
+    "reportUnsafe": {
+      "title": "Report unsafe passenger",
+      "sub": "Behaviour concern"
+    },
+    "accidentSupport": {
+      "title": "Accident support",
+      "sub": "Road accident, vehicle damage"
+    },
+    "callSupport": {
+      "title": "Call partner support",
+      "sub": "1800 200 ALO-P · 24×7"
+    }
+  },
+  "documents": {
+    "headerTitle": "Document centre",
+    "headerSub": "Partner KYC & vehicle docs",
+    "allVerified": "All documents verified",
+    "somePending": "Some documents pending",
+    "eligibleToDrive": "You are eligible to drive across NCR",
+    "privacyNote": "Documents are encrypted and stored securely. Alo Alo Partner is DPDP Act compliant.",
+    "preview": "Document preview",
+    "detailsLabel": "Details",
+    "updateDocument": "Update document",
+    "status": {
+      "verified": "Verified",
+      "pending": "Pending"
+    },
+    "detail": {
+      "status": "Status",
+      "docNumber": "Document no.",
+      "verifiedOn": "Verified on",
+      "validTill": "Valid till",
+      "linkedTo": "Linked to"
+    },
+    "items": {
+      "dl": {
+        "title": "Driving License"
+      },
+      "rc": {
+        "title": "Vehicle RC"
+      },
+      "aadhaar": {
+        "title": "Aadhaar Card"
+      },
+      "insurance": {
+        "title": "Insurance Certificate"
+      },
+      "permit": {
+        "title": "Vehicle Permit"
+      }
+    }
+  },
+  "trips": {
+    "title": "Trips",
+    "subtitle": "All trips as an Alo Alo Partner",
+    "status": {
+      "all": "All",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "emptyFor": "No {{filter}} trips yet."
+  },
+  "wallet": {
+    "headerTitle": "Wallet",
+    "headerSub": "Partner earnings balance",
+    "balanceLabel": "Wallet balance",
+    "viewPayouts": "View payouts",
+    "recentTransactions": "Recent transactions"
+  },
+  "payouts": {
+    "status": {
+      "paid": "Paid",
+      "upcoming": "Upcoming"
+    }
+  },
+  "partnerDocuments": {
+    "stepBadge": "Step 2 of 2 · Onboarding",
+    "title": "Partner documents",
+    "subtitle": "Upload these so we can verify your account.",
+    "personalDocsLabel": "Personal documents",
+    "vehicleDetailsLabel": "Vehicle details",
+    "vehicleDocsLabel": "Vehicle documents",
+    "fields": {
+      "registrationNumber": "Vehicle registration number",
+      "registrationPlaceholder": "UP16 AB 4821",
+      "vehicleType": "Vehicle type",
+      "vehicleModel": "Vehicle model",
+      "vehicleModelPlaceholder": "e.g. Hero Splendor"
+    },
+    "vehicleTypes": {
+      "BIKE": "Bike",
+      "AUTO": "Auto",
+      "CAR": "Car"
+    },
+    "saveVehicleDetails": "Save vehicle details",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "submitApplication": "Submit application",
+    "submitting": "Submitting…",
+    "docStatus": {
+      "uploading": "Uploading",
+      "added": "Added",
+      "retry": "Retry",
+      "upload": "Upload"
+    },
+    "docSub": {
+      "uploadFailed": "Upload failed — tap to retry",
+      "uploaded": "Uploaded"
+    },
+    "errors": {
+      "uploadFailed": "Could not upload {{title}}.",
+      "uploadFailedRetry": "Could not upload {{title}}. Please try again.",
+      "pickerFailed": "Could not open the picker. Please try again.",
+      "saveVehicleFailed": "Could not save vehicle details.",
+      "saveVehicleFailedRetry": "Could not save vehicle details. Please try again.",
+      "submitFailed": "Could not submit your application.",
+      "genericRetry": "Something went wrong. Please try again."
+    },
+    "docs": {
+      "PersonalSelfPhoto": {
+        "title": "Personal Self Photo",
+        "sub": "Clear face photo, taken now"
+      },
+      "PersonalAadhaarCard": {
+        "title": "Personal Aadhaar Card",
+        "sub": "Identity proof"
+      },
+      "PersonalPANCard": {
+        "title": "Personal PAN Card",
+        "sub": "Identity proof"
+      },
+      "PersonalDrivingLicence": {
+        "title": "Personal Driving Licence",
+        "sub": "Front & back, clearly visible"
+      },
+      "VehicleRC": {
+        "title": "Vehicle RC",
+        "sub": "Registration certificate"
+      },
+      "VehicleInsurance": {
+        "title": "Vehicle Insurance",
+        "sub": "Valid insurance copy"
+      },
+      "VehiclePUC": {
+        "title": "Vehicle PUC",
+        "sub": "Pollution certificate"
+      },
+      "VehicleFitness": {
+        "title": "Vehicle Fitness",
+        "sub": "Fitness certificate"
+      },
+      "VehiclePermit": {
+        "title": "Vehicle Permit",
+        "sub": "Commercial permit"
+      },
+      "VehicleNumberPlatePhoto": {
+        "title": "Vehicle Number Plate Photo",
+        "sub": "Clear photo of plate"
+      },
+      "VehicleFrontPhoto": {
+        "title": "Vehicle Front Photo",
+        "sub": "Full front view"
+      }
+    }
+  }
+}

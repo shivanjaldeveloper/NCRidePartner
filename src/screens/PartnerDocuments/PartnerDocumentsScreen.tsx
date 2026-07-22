@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -48,28 +49,89 @@ type NavProp = NativeStackNavigationProp<
 
 interface DocRow {
   key: DocumentKey;
+  // Point at partnerDocuments.docs.<key>.title/.sub in the locale files —
+  // render via t(row.titleKey) / t(row.subKey), never row.title/.sub raw.
+  titleKey: string;
+  subKey: string;
   title: string;
-  sub: string;
 }
 
 // Titles match the wording OnboardingConfirmSubmission uses in its
 // ErrorDetail message ("Please complete the following: Personal Self
-// Photo, ...") so a partner who hits that error recognizes the row.
+// Photo, ...") so a partner who hits that error recognizes the row. That
+// English wording comes from the backend regardless of app language, so
+// `title` (used only inside error-message interpolation) stays English on
+// purpose — it's matching an API string, not UI chrome.
 const PERSONAL_DOCS: DocRow[] = [
-  { key: 'PersonalSelfPhoto', title: 'Personal Self Photo', sub: 'Clear face photo, taken now' },
-  { key: 'PersonalAadhaarCard', title: 'Personal Aadhaar Card', sub: 'Identity proof' },
-  { key: 'PersonalPANCard', title: 'Personal PAN Card', sub: 'Identity proof' },
-  { key: 'PersonalDrivingLicence', title: 'Personal Driving Licence', sub: 'Front & back, clearly visible' },
+  {
+    key: 'PersonalSelfPhoto',
+    title: 'Personal Self Photo',
+    titleKey: 'partnerDocuments.docs.PersonalSelfPhoto.title',
+    subKey: 'partnerDocuments.docs.PersonalSelfPhoto.sub',
+  },
+  {
+    key: 'PersonalAadhaarCard',
+    title: 'Personal Aadhaar Card',
+    titleKey: 'partnerDocuments.docs.PersonalAadhaarCard.title',
+    subKey: 'partnerDocuments.docs.PersonalAadhaarCard.sub',
+  },
+  {
+    key: 'PersonalPANCard',
+    title: 'Personal PAN Card',
+    titleKey: 'partnerDocuments.docs.PersonalPANCard.title',
+    subKey: 'partnerDocuments.docs.PersonalPANCard.sub',
+  },
+  {
+    key: 'PersonalDrivingLicence',
+    title: 'Personal Driving Licence',
+    titleKey: 'partnerDocuments.docs.PersonalDrivingLicence.title',
+    subKey: 'partnerDocuments.docs.PersonalDrivingLicence.sub',
+  },
 ];
 
 const VEHICLE_DOCS: DocRow[] = [
-  { key: 'VehicleRC', title: 'Vehicle RC', sub: 'Registration certificate' },
-  { key: 'VehicleInsurance', title: 'Vehicle Insurance', sub: 'Valid insurance copy' },
-  { key: 'VehiclePUC', title: 'Vehicle PUC', sub: 'Pollution certificate' },
-  { key: 'VehicleFitness', title: 'Vehicle Fitness', sub: 'Fitness certificate' },
-  { key: 'VehiclePermit', title: 'Vehicle Permit', sub: 'Commercial permit' },
-  { key: 'VehicleNumberPlatePhoto', title: 'Vehicle Number Plate Photo', sub: 'Clear photo of plate' },
-  { key: 'VehicleFrontPhoto', title: 'Vehicle Front Photo', sub: 'Full front view' },
+  {
+    key: 'VehicleRC',
+    title: 'Vehicle RC',
+    titleKey: 'partnerDocuments.docs.VehicleRC.title',
+    subKey: 'partnerDocuments.docs.VehicleRC.sub',
+  },
+  {
+    key: 'VehicleInsurance',
+    title: 'Vehicle Insurance',
+    titleKey: 'partnerDocuments.docs.VehicleInsurance.title',
+    subKey: 'partnerDocuments.docs.VehicleInsurance.sub',
+  },
+  {
+    key: 'VehiclePUC',
+    title: 'Vehicle PUC',
+    titleKey: 'partnerDocuments.docs.VehiclePUC.title',
+    subKey: 'partnerDocuments.docs.VehiclePUC.sub',
+  },
+  {
+    key: 'VehicleFitness',
+    title: 'Vehicle Fitness',
+    titleKey: 'partnerDocuments.docs.VehicleFitness.title',
+    subKey: 'partnerDocuments.docs.VehicleFitness.sub',
+  },
+  {
+    key: 'VehiclePermit',
+    title: 'Vehicle Permit',
+    titleKey: 'partnerDocuments.docs.VehiclePermit.title',
+    subKey: 'partnerDocuments.docs.VehiclePermit.sub',
+  },
+  {
+    key: 'VehicleNumberPlatePhoto',
+    title: 'Vehicle Number Plate Photo',
+    titleKey: 'partnerDocuments.docs.VehicleNumberPlatePhoto.title',
+    subKey: 'partnerDocuments.docs.VehicleNumberPlatePhoto.sub',
+  },
+  {
+    key: 'VehicleFrontPhoto',
+    title: 'Vehicle Front Photo',
+    titleKey: 'partnerDocuments.docs.VehicleFrontPhoto.title',
+    subKey: 'partnerDocuments.docs.VehicleFrontPhoto.sub',
+  },
 ];
 
 const ALL_DOCS = [...PERSONAL_DOCS, ...VEHICLE_DOCS];
@@ -84,10 +146,13 @@ type DocStatus = 'idle' | 'uploading' | 'done' | 'error';
 
 const PartnerDocumentsScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
 
   const [loadingDetails, setLoadingDetails] = useState(true);
   const [docStatus, setDocStatus] = useState<Record<string, DocStatus>>({});
-  const [docUrl, setDocUrl] = useState<Partial<Record<DocumentKey, string>>>({});
+  const [docUrl, setDocUrl] = useState<Partial<Record<DocumentKey, string>>>(
+    {},
+  );
 
   const [vehicleRegistration, setVehicleRegistration] = useState('');
   const [vehicleType, setVehicleType] = useState('');
@@ -122,12 +187,16 @@ const PartnerDocumentsScreen = () => {
           });
           setDocStatus(nextStatus);
           setDocUrl(nextUrl);
-          if (res.VehicleRegistration) setVehicleRegistration(res.VehicleRegistration);
+          if (res.VehicleRegistration)
+            setVehicleRegistration(res.VehicleRegistration);
           if (res.VehicleType) setVehicleType(res.VehicleType);
           if (res.VehicleModel) setVehicleModel(res.VehicleModel);
         }
       } catch (err) {
-        console.warn('[PartnerDocuments] Failed to load processing details:', err);
+        console.warn(
+          '[PartnerDocuments] Failed to load processing details:',
+          err,
+        );
       } finally {
         setLoadingDetails(false);
       }
@@ -151,7 +220,12 @@ const PartnerDocumentsScreen = () => {
       }
       const res = await uploadPartnerDocument(cookie, row.key, file);
       if (res.Result !== 'Success') {
-        throw new Error(res.Message || `Could not upload ${row.title}.`);
+        throw new Error(
+          res.Message ||
+            t('partnerDocuments.errors.uploadFailed', {
+              title: t(row.titleKey),
+            }),
+        );
       }
       setDocStatus(prev => ({ ...prev, [row.key]: 'done' }));
       if (res.ImagePath) {
@@ -159,7 +233,12 @@ const PartnerDocumentsScreen = () => {
       }
     } catch (err: any) {
       setDocStatus(prev => ({ ...prev, [row.key]: 'error' }));
-      setErrorMessage(err?.message || `Could not upload ${row.title}. Please try again.`);
+      setErrorMessage(
+        err?.message ||
+          t('partnerDocuments.errors.uploadFailedRetry', {
+            title: t(row.titleKey),
+          }),
+      );
     }
   };
 
@@ -209,9 +288,10 @@ const PartnerDocumentsScreen = () => {
       });
     } catch (err: any) {
       // Backing out of the picker or the cropper isn't worth surfacing.
-      if (isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED) return;
+      if (isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED)
+        return;
       if (err?.code === 'E_PICKER_CANCELLED') return;
-      setErrorMessage('Could not open the picker. Please try again.');
+      setErrorMessage(t('partnerDocuments.errors.pickerFailed'));
     }
   };
 
@@ -233,11 +313,15 @@ const PartnerDocumentsScreen = () => {
         vehicleModel.trim(),
       );
       if (res.Result !== 'Success') {
-        throw new Error(res.Message || 'Could not save vehicle details.');
+        throw new Error(
+          res.Message || t('partnerDocuments.errors.saveVehicleFailed'),
+        );
       }
       setVehicleSaved(true);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Could not save vehicle details. Please try again.');
+      setErrorMessage(
+        err?.message || t('partnerDocuments.errors.saveVehicleFailedRetry'),
+      );
     } finally {
       setSavingVehicle(false);
     }
@@ -264,7 +348,9 @@ const PartnerDocumentsScreen = () => {
           vehicleModel.trim(),
         );
         if (vRes.Result !== 'Success') {
-          throw new Error(vRes.Message || 'Could not save vehicle details.');
+          throw new Error(
+            vRes.Message || t('partnerDocuments.errors.saveVehicleFailed'),
+          );
         }
       }
 
@@ -272,12 +358,21 @@ const PartnerDocumentsScreen = () => {
       if (res.Result !== 'Success') {
         // The API already returns a friendly, specific message here
         // ("Please complete the following: ...") — show it as-is.
-        throw new Error(res.ErrorDetail || res.Error || 'Could not submit your application.');
+        throw new Error(
+          res.ErrorDetail ||
+            res.Error ||
+            t('partnerDocuments.errors.submitFailed'),
+        );
       }
 
-      navigation.reset({ index: 0, routes: [{ name: 'ApplicationProcessing' }] });
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'ApplicationProcessing' }],
+      });
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Something went wrong. Please try again.');
+      setErrorMessage(
+        err?.message || t('partnerDocuments.errors.genericRetry'),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -309,9 +404,13 @@ const PartnerDocumentsScreen = () => {
           )}
         </View>
         <View style={styles.docTextWrap}>
-          <Text style={styles.docTitle}>{row.title}</Text>
+          <Text style={styles.docTitle}>{t(row.titleKey)}</Text>
           <Text style={styles.docSub} numberOfLines={1}>
-            {errored ? 'Upload failed — tap to retry' : done ? 'Uploaded' : row.sub}
+            {errored
+              ? t('partnerDocuments.docSub.uploadFailed')
+              : done
+              ? t('partnerDocuments.docSub.uploaded')
+              : t(row.subKey)}
           </Text>
         </View>
         <View
@@ -328,7 +427,13 @@ const PartnerDocumentsScreen = () => {
               errored && styles.docStatusTextError,
             ]}
           >
-            {uploading ? 'Uploading' : done ? 'Added' : errored ? 'Retry' : 'Upload'}
+            {uploading
+              ? t('partnerDocuments.docStatus.uploading')
+              : done
+              ? t('partnerDocuments.docStatus.added')
+              : errored
+              ? t('partnerDocuments.docStatus.retry')
+              : t('partnerDocuments.docStatus.upload')}
           </Text>
         </View>
       </TouchableOpacity>
@@ -353,68 +458,89 @@ const PartnerDocumentsScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.eyebrow}>Step 2 of 2 · Onboarding</Text>
-          <Text style={styles.title}>Partner documents</Text>
-          <Text style={styles.subtitle}>
-            Upload these so we can verify your account.
-          </Text>
+          <Text style={styles.eyebrow}>{t('partnerDocuments.stepBadge')}</Text>
+          <Text style={styles.title}>{t('partnerDocuments.title')}</Text>
+          <Text style={styles.subtitle}>{t('partnerDocuments.subtitle')}</Text>
         </View>
 
         <View style={styles.body}>
-          <Text style={styles.sectionLabel}>Personal documents</Text>
+          <Text style={styles.sectionLabel}>
+            {t('partnerDocuments.personalDocsLabel')}
+          </Text>
           <Card pad={4} style={styles.docCard}>
-            {PERSONAL_DOCS.map((row, i) => renderDocRow(row, i === PERSONAL_DOCS.length - 1))}
+            {PERSONAL_DOCS.map((row, i) =>
+              renderDocRow(row, i === PERSONAL_DOCS.length - 1),
+            )}
           </Card>
 
-          <Text style={styles.sectionLabel}>Vehicle details</Text>
+          <Text style={styles.sectionLabel}>
+            {t('partnerDocuments.vehicleDetailsLabel')}
+          </Text>
           <Card pad={16} style={styles.vehicleCard}>
-            <Text style={styles.fieldLabel}>Vehicle registration number</Text>
+            <Text style={styles.fieldLabel}>
+              {t('partnerDocuments.fields.registrationNumber')}
+            </Text>
             <TextInput
               style={styles.input}
               value={vehicleRegistration}
-              onChangeText={t => {
+              onChangeText={val => {
                 if (errorMessage) setErrorMessage(null);
                 setVehicleSaved(false);
-                setVehicleRegistration(t.toUpperCase());
+                setVehicleRegistration(val.toUpperCase());
               }}
-              placeholder="UP16 AB 4821"
+              placeholder={t('partnerDocuments.fields.registrationPlaceholder')}
               placeholderTextColor={Colors.mute2}
               autoCapitalize="characters"
             />
 
-            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Vehicle type</Text>
+            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>
+              {t('partnerDocuments.fields.vehicleType')}
+            </Text>
             <View style={styles.chipRow}>
-              {VEHICLE_TYPES.map(t => (
+              {VEHICLE_TYPES.map(vt => (
                 <TouchableOpacity
-                  key={t}
+                  key={vt}
                   onPress={() => {
                     setVehicleSaved(false);
-                    setVehicleType(t);
+                    setVehicleType(vt);
                   }}
-                  style={[styles.chip, vehicleType === t && styles.chipActive]}
+                  style={[styles.chip, vehicleType === vt && styles.chipActive]}
                 >
-                  <Text style={[styles.chipText, vehicleType === t && styles.chipTextActive]}>
-                    {t}
+                  <Text
+                    style={[
+                      styles.chipText,
+                      vehicleType === vt && styles.chipTextActive,
+                    ]}
+                  >
+                    {t(`partnerDocuments.vehicleTypes.${vt}`)}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>Vehicle model</Text>
+            <Text style={[styles.fieldLabel, styles.fieldLabelSpaced]}>
+              {t('partnerDocuments.fields.vehicleModel')}
+            </Text>
             <TextInput
               style={styles.input}
               value={vehicleModel}
-              onChangeText={t => {
+              onChangeText={val => {
                 if (errorMessage) setErrorMessage(null);
                 setVehicleSaved(false);
-                setVehicleModel(t);
+                setVehicleModel(val);
               }}
-              placeholder="e.g. Hero Splendor"
+              placeholder={t('partnerDocuments.fields.vehicleModelPlaceholder')}
               placeholderTextColor={Colors.mute2}
             />
 
             <PrimaryButton
-              label={savingVehicle ? 'Saving…' : vehicleSaved ? 'Saved' : 'Save vehicle details'}
+              label={
+                savingVehicle
+                  ? t('partnerDocuments.saving')
+                  : vehicleSaved
+                  ? t('partnerDocuments.saved')
+                  : t('partnerDocuments.saveVehicleDetails')
+              }
               onPress={handleSaveVehicleDetails}
               icon={vehicleSaved ? 'check' : 'none'}
               variant="ghost"
@@ -423,9 +549,13 @@ const PartnerDocumentsScreen = () => {
             />
           </Card>
 
-          <Text style={styles.sectionLabel}>Vehicle documents</Text>
+          <Text style={styles.sectionLabel}>
+            {t('partnerDocuments.vehicleDocsLabel')}
+          </Text>
           <Card pad={4} style={styles.docCard}>
-            {VEHICLE_DOCS.map((row, i) => renderDocRow(row, i === VEHICLE_DOCS.length - 1))}
+            {VEHICLE_DOCS.map((row, i) =>
+              renderDocRow(row, i === VEHICLE_DOCS.length - 1),
+            )}
           </Card>
 
           {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
@@ -434,7 +564,11 @@ const PartnerDocumentsScreen = () => {
 
       <View style={styles.footer}>
         <PrimaryButton
-          label={submitting ? 'Submitting…' : 'Submit application'}
+          label={
+            submitting
+              ? t('partnerDocuments.submitting')
+              : t('partnerDocuments.submitApplication')
+          }
           onPress={handleSubmit}
           icon="arrowRight"
           disabled={submitting || !isValid}

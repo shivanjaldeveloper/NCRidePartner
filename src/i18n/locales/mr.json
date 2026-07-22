@@ -1,0 +1,417 @@
+{
+  "common": {
+    "skip": "वगळा",
+    "next": "पुढे",
+    "getStarted": "सुरुवात करा"
+  },
+  "onboarding": {
+    "screen1": {
+      "title": "ड्राइव्ह करा. कमवा. NCR मध्ये वाढ करा.",
+      "sub": "नोएडा, दिल्ली आणि गुरुग्राममध्ये हजारो NCRide पार्टनर्ससोबत सामील व्हा. तुमचे तास स्वतः ठरवा आणि जास्त कमवा."
+    },
+    "screen2": {
+      "title": "सर्व वाहने. सर्व झोन.",
+      "sub": "कार, ऑटो, ई-रिक्षा किंवा बाईक टॅक्सी चालवा. नोएडा ते गुरुग्राम संपूर्ण NCR कव्हर करा — तुमच्या अटींवर."
+    },
+    "screen3": {
+      "title": "वेळेवर कमाई. नेहमी.",
+      "sub": "दैनंदिन कमाई, साप्ताहिक पेआउट आणि बोनस रिअल-टाइममध्ये ट्रॅक करा. NCRide पार्टनर दर सोमवारी पेमेंट करते."
+    }
+  },
+  "permissions": {
+    "title": "लोकेशन अ‍ॅक्सेसला परवानगी द्या",
+    "subtitle": "NCRide पार्टनर तुमच्या लोकेशनचा वापर राईड मॅचिंग, नेव्हिगेशन आणि ट्रिप ट्रॅकिंगसाठी करते. ऑनलाइन जाण्यासाठी हे आवश्यक आहे.",
+    "items": {
+      "location": {
+        "title": "अचूक लोकेशन",
+        "sub": "अचूक पिकअप आणि नेव्हिगेशनसाठी"
+      },
+      "notifications": {
+        "title": "नोटिफिकेशन्स",
+        "sub": "नवीन राईड रिक्वेस्ट आणि अलर्ट"
+      },
+      "background": {
+        "title": "बॅकग्राउंड लोकेशन",
+        "sub": "अ‍ॅप मिनिमाइझ असताना आवश्यक"
+      }
+    },
+    "allowAll": "सर्व परवानग्या द्या",
+    "notNow": "आत्ता नाही"
+  },
+  "splash": {
+    "title": "Alo Alo Partner",
+    "subtitle": "ड्राइव्ह · कमवा · संपूर्ण भारतात वाढ करा",
+    "footerCaption": "पार्टनर · भारत"
+  },
+  "auth": {
+    "appBadge": "Alo Alo Partner App",
+    "phone": {
+      "title": "स्वागत आहे, पार्टनर.\nड्रायव्हिंग सुरू करण्यासाठी साइन इन करा.",
+      "subtitle": "तुमचा नंबर पडताळण्यासाठी आम्ही 4 अंकी OTP पाठवू.",
+      "fieldLabel": "मोबाइल नंबर",
+      "placeholder": "0000000000",
+      "trustText": "तुमचा नंबर फक्त पार्टनर पडताळणीसाठी वापरला जातो.",
+      "termsPrefix": "मी सहमत आहे",
+      "termsLink": "पार्टनर अटी व शर्ती",
+      "and": "आणि",
+      "privacyLink": "गोपनीयता धोरण"
+    },
+    "otp": {
+      "sentTo": "OTP पाठवला +91 {{phone}}",
+      "title": "कोड टाका",
+      "subtitle": "4 अंकी OTP · ",
+      "changeNumber": "नंबर बदला",
+      "resendIn": "पुन्हा पाठवा ",
+      "resendOtp": "OTP पुन्हा पाठवा",
+      "resending": "पुन्हा पाठवत आहे…"
+    },
+    "buttons": {
+      "sendOtp": "OTP पाठवा",
+      "sending": "पाठवत आहे…",
+      "verify": "पडताळा आणि पुढे जा",
+      "verifying": "पडताळत आहे…"
+    },
+    "legal": {
+      "prefix": "पुढे सुरू ठेवून तुम्ही आमच्या",
+      "termsLink": "पार्टनर अटी व शर्ती",
+      "and": "आणि",
+      "privacyLink": "गोपनीयता धोरणा",
+      "suffix": "शी सहमत आहात."
+    },
+    "errors": {
+      "sendOtpFailed": "OTP पाठवता आला नाही. कृपया पुन्हा प्रयत्न करा.",
+      "genericRetry": "काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा.",
+      "resendFailed": "OTP पुन्हा पाठवता आला नाही. कृपया पुन्हा प्रयत्न करा.",
+      "invalidOtp": "चुकीचा OTP. कृपया पुन्हा प्रयत्न करा.",
+      "notEligible": "तुमचे खाते सुरू ठेवण्यास पात्र नाही. कृपया सपोर्टशी संपर्क साधा."
+    }
+  },
+  "basicDetails": {
+    "stepBadge": "पायरी 1 / 2 · ऑनबोर्डिंग",
+    "title": "तुमच्याबद्दल सांगा",
+    "subtitle": "ही माहिती तुमच्या पार्टनर प्रोफाइलवर वापरली जाईल.",
+    "fields": {
+      "fullName": "पूर्ण नाव",
+      "fullNamePlaceholder": "तुमचे पूर्ण नाव",
+      "email": "ईमेल पत्ता",
+      "emailPlaceholder": "you@example.com",
+      "referral": "रेफरल कोड (ऐच्छिक)",
+      "referralPlaceholder": "ज्या पार्टनरने रेफर केले त्याचा ID"
+    },
+    "continue": "सुरू ठेवा",
+    "saving": "सेव्ह करत आहे…",
+    "errors": {
+      "saveFailed": "तुमची माहिती सेव्ह करता आली नाही. कृपया पुन्हा प्रयत्न करा.",
+      "genericRetry": "काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा."
+    }
+  },
+  "verification": {
+    "eyebrow": "पार्टनर ऑनबोर्डिंग",
+    "title": "कागदपत्रांची स्थिती",
+    "bannerEyebrow": "पडताळणी स्थिती",
+    "bannerTitle": "सर्व कागदपत्रे पडताळली ✓",
+    "bannerSub": "तुम्ही आत्ताच ऑनलाइन जाऊन कमाई सुरू करू शकता.",
+    "documents": {
+      "dl": {
+        "title": "ड्रायव्हिंग लायसन्स",
+        "sub": "DL-0420110012345"
+      },
+      "rc": {
+        "title": "वाहन RC",
+        "sub": "UP16 AB 4821"
+      },
+      "aadhaar": {
+        "title": "आधार कार्ड",
+        "sub": "ओळख पुरावा"
+      },
+      "insurance": {
+        "title": "विमा प्रमाणपत्र",
+        "sub": "मार्च 2027 पर्यंत वैध"
+      },
+      "photo": {
+        "title": "प्रोफाइल फोटो",
+        "sub": "फेस पडताळणी"
+      }
+    },
+    "statusVerified": "पडताळले",
+    "startEarning": "कमाई सुरू करा"
+  },
+  "applicationProcessing": {
+    "logout": "लॉग आउट",
+    "title": "अर्जावर प्रक्रिया सुरू आहे",
+    "message": "तुमची कागदपत्रे यशस्वीरित्या सबमिट झाली असून पडताळणीसाठी आहेत.\n\nखाते मंजूर झाल्यावर आम्ही तुम्हाला कळवू.",
+    "checkStatus": "स्थिती तपासा",
+    "checking": "तपासत आहे…",
+    "notes": {
+      "rejected": "अर्ज नाकारला: {{remark}}",
+      "notApproved": "तुमचा अर्ज मंजूर झाला नाही. तपशीलांसाठी सपोर्टशी संपर्क साधा.",
+      "underReview": "अजून पुनरावलोकनात आहे — {{remark}}",
+      "underReviewDefault": "अजून पुनरावलोकनात आहे — थोड्या वेळाने पुन्हा तपासा.",
+      "checkFailed": "स्थिती तपासता आली नाही. कृपया पुन्हा प्रयत्न करा."
+    }
+  },
+  "settings": {
+    "title": "सेटिंग्ज",
+    "sections": {
+      "profile": "पार्टनर प्रोफाइल",
+      "preferences": "प्राधान्ये",
+      "service": "सेवा प्राधान्ये",
+      "legal": "गोपनीयता आणि कायदेशीर"
+    },
+    "rows": {
+      "personalInfo": {
+        "title": "वैयक्तिक माहिती",
+        "sub": "नाव, फोटो, पत्ता"
+      },
+      "mobile": {
+        "title": "मोबाइल",
+        "sub": "{{phone}} · पडताळले"
+      },
+      "kyc": {
+        "title": "KYC पडताळणी",
+        "sub": "आधार · पॅन · DL पडताळले"
+      },
+      "vehicleType": {
+        "title": "वाहन प्रकार",
+        "sub": "सेडान · कार सेवा"
+      },
+      "intercity": {
+        "title": "इंटरसिटी ट्रिप",
+        "sub": "सक्षम · NCR आउटस्टेशन"
+      },
+      "serviceArea": {
+        "title": "सेवा क्षेत्र",
+        "sub": "नोएडा · दिल्ली · गुरुग्राम"
+      },
+      "language": {
+        "title": "भाषा"
+      },
+      "privacyPolicy": {
+        "title": "गोपनीयता धोरण"
+      },
+      "partnerAgreement": {
+        "title": "पार्टनर करार"
+      },
+      "deleteAccount": {
+        "title": "खाते हटवा"
+      }
+    },
+    "preferences": {
+      "push": "पुश नोटिफिकेशन्स",
+      "rideRequests": "नवीन राईड रिक्वेस्ट",
+      "payoutAlerts": "कमाई आणि पेआउट अलर्ट",
+      "bgLocation": "बॅकग्राउंड लोकेशन",
+      "sound": "राईड रिक्वेस्टसाठी आवाज",
+      "showEarnings": "होमवर कमाई दाखवा"
+    },
+    "footer": "Alo Alo Partner · v {{version}} (बिल्ड {{build}}) · मराठवाडा, भारत",
+    "languageSheet": {
+      "title": "भाषा निवडा",
+      "subtitle": "अ‍ॅपमध्ये वापरण्यासाठी भाषा निवडा.",
+      "done": "झाले"
+    }
+  },
+  "logout": {
+    "confirmTitle": "Alo Alo Partner मधून लॉग आउट करायचे आहे का?",
+    "confirmSubtitle": "तुम्ही कधीही परत साइन इन करू शकता. तुमची कमाई, कागदपत्रे आणि वाहन माहिती सुरक्षित राहील.",
+    "stayLoggedIn": "लॉग इन राहा",
+    "logOut": "लॉग आउट करा"
+  },
+  "passengerRating": {
+    "rate": "{{name}} यांना रेट करा",
+    "howWas": "हा प्रवासी कसा होता?",
+    "submit": "रेटिंग सबमिट करा",
+    "tags": {
+      "polite": "विनम्र",
+      "onTime": "वेळेवर",
+      "cleanPickupArea": "स्वच्छ पिकअप जागा",
+      "safeRide": "सुरक्षित राईड",
+      "easyToFind": "शोधण्यास सोपे"
+    }
+  },
+  "termsUpdate": {
+    "title": "आमच्या अटी व शर्ती अद्ययावत झाल्या आहेत",
+    "subtitle": "अ‍ॅप वापरणे सुरू ठेवण्यासाठी कृपया नवीनतम पार्टनर अटी व शर्ती आणि गोपनीयता धोरण पुनरावलोकन करून स्वीकारा.",
+    "agreePrefix": "मी अद्ययावत",
+    "termsLink": "पार्टनर अटी व शर्ती",
+    "and": "आणि",
+    "privacyLink": "गोपनीयता धोरणा",
+    "saving": "सेव्ह करत आहे…",
+    "acceptContinue": "स्वीकारा आणि सुरू ठेवा",
+    "declineLogout": "आत्ता नाही, मला लॉग आउट करा"
+  },
+  "sos": {
+    "headerTitle": "आणीबाणी आणि SOS",
+    "tapHoldTitle": "SOS साठी टॅप करून होल्ड करा",
+    "tapHoldSub": "लाइव्ह लोकेशन पोलीस + आणीबाणी संपर्कांना पाठवले जाते",
+    "alertSent": "अलर्ट पाठवला · मदत येत आहे",
+    "holdToAlert": "अलर्टसाठी 3 सेकंद होल्ड करा",
+    "emergencyContacts": "आणीबाणी संपर्क",
+    "addContact": "संपर्क जोडा",
+    "partnerSafety": "पार्टनर सुरक्षा",
+    "reportUnsafe": {
+      "title": "असुरक्षित प्रवाशाची तक्रार करा",
+      "sub": "वर्तनाबद्दल चिंता"
+    },
+    "accidentSupport": {
+      "title": "अपघात सहाय्य",
+      "sub": "रस्ता अपघात, वाहन नुकसान"
+    },
+    "callSupport": {
+      "title": "पार्टनर सपोर्टला कॉल करा",
+      "sub": "1800 200 ALO-P · 24×7"
+    }
+  },
+  "documents": {
+    "headerTitle": "कागदपत्र केंद्र",
+    "headerSub": "पार्टनर KYC आणि वाहन कागदपत्रे",
+    "allVerified": "सर्व कागदपत्रे पडताळली",
+    "somePending": "काही कागदपत्रे प्रलंबित आहेत",
+    "eligibleToDrive": "तुम्ही संपूर्ण NCR मध्ये ड्राइव्ह करण्यास पात्र आहात",
+    "privacyNote": "कागदपत्रे एन्क्रिप्टेड आणि सुरक्षितपणे साठवली जातात. Alo Alo Partner DPDP कायद्याचे पालन करते.",
+    "preview": "कागदपत्र पूर्वावलोकन",
+    "detailsLabel": "तपशील",
+    "updateDocument": "कागदपत्र अद्ययावत करा",
+    "status": {
+      "verified": "पडताळले",
+      "pending": "प्रलंबित"
+    },
+    "detail": {
+      "status": "स्थिती",
+      "docNumber": "कागदपत्र क्रमांक",
+      "verifiedOn": "पडताळणी तारीख",
+      "validTill": "वैध तारीख",
+      "linkedTo": "याच्याशी लिंक"
+    },
+    "items": {
+      "dl": {
+        "title": "ड्रायव्हिंग लायसन्स"
+      },
+      "rc": {
+        "title": "वाहन RC"
+      },
+      "aadhaar": {
+        "title": "आधार कार्ड"
+      },
+      "insurance": {
+        "title": "विमा प्रमाणपत्र"
+      },
+      "permit": {
+        "title": "वाहन परवाना"
+      }
+    }
+  },
+  "trips": {
+    "title": "ट्रिप्स",
+    "subtitle": "Alo Alo Partner म्हणून सर्व ट्रिप्स",
+    "status": {
+      "all": "सर्व",
+      "completed": "पूर्ण",
+      "cancelled": "रद्द"
+    },
+    "emptyFor": "अजून {{filter}} ट्रिप नाही."
+  },
+  "wallet": {
+    "headerTitle": "वॉलेट",
+    "headerSub": "पार्टनर कमाई शिल्लक",
+    "balanceLabel": "वॉलेट बॅलन्स",
+    "viewPayouts": "पेआउट पहा",
+    "recentTransactions": "अलीकडील व्यवहार"
+  },
+  "payouts": {
+    "status": {
+      "paid": "पेड",
+      "upcoming": "आगामी"
+    }
+  },
+  "partnerDocuments": {
+    "stepBadge": "पायरी 2 / 2 · ऑनबोर्डिंग",
+    "title": "पार्टनर कागदपत्रे",
+    "subtitle": "तुमचे खाते पडताळण्यासाठी ही अपलोड करा.",
+    "personalDocsLabel": "वैयक्तिक कागदपत्रे",
+    "vehicleDetailsLabel": "वाहन तपशील",
+    "vehicleDocsLabel": "वाहन कागदपत्रे",
+    "fields": {
+      "registrationNumber": "वाहन नोंदणी क्रमांक",
+      "registrationPlaceholder": "UP16 AB 4821",
+      "vehicleType": "वाहन प्रकार",
+      "vehicleModel": "वाहन मॉडेल",
+      "vehicleModelPlaceholder": "उदा. Hero Splendor"
+    },
+    "vehicleTypes": {
+      "BIKE": "बाईक",
+      "AUTO": "ऑटो",
+      "CAR": "कार"
+    },
+    "saveVehicleDetails": "वाहन तपशील सेव्ह करा",
+    "saving": "सेव्ह करत आहे…",
+    "saved": "सेव्ह झाले",
+    "submitApplication": "अर्ज सबमिट करा",
+    "submitting": "सबमिट होत आहे…",
+    "docStatus": {
+      "uploading": "अपलोड होत आहे",
+      "added": "जोडले",
+      "retry": "पुन्हा प्रयत्न करा",
+      "upload": "अपलोड करा"
+    },
+    "docSub": {
+      "uploadFailed": "अपलोड अयशस्वी — पुन्हा प्रयत्नासाठी टॅप करा",
+      "uploaded": "अपलोड झाले"
+    },
+    "errors": {
+      "uploadFailed": "{{title}} अपलोड करता आले नाही.",
+      "uploadFailedRetry": "{{title}} अपलोड करता आले नाही. कृपया पुन्हा प्रयत्न करा.",
+      "pickerFailed": "पिकर उघडता आले नाही. कृपया पुन्हा प्रयत्न करा.",
+      "saveVehicleFailed": "वाहन तपशील सेव्ह करता आला नाही.",
+      "saveVehicleFailedRetry": "वाहन तपशील सेव्ह करता आला नाही. कृपया पुन्हा प्रयत्न करा.",
+      "submitFailed": "तुमचा अर्ज सबमिट करता आला नाही.",
+      "genericRetry": "काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा."
+    },
+    "docs": {
+      "PersonalSelfPhoto": {
+        "title": "वैयक्तिक सेल्फ फोटो",
+        "sub": "आत्ता काढलेला स्पष्ट चेहऱ्याचा फोटो"
+      },
+      "PersonalAadhaarCard": {
+        "title": "वैयक्तिक आधार कार्ड",
+        "sub": "ओळख पुरावा"
+      },
+      "PersonalPANCard": {
+        "title": "वैयक्तिक पॅन कार्ड",
+        "sub": "ओळख पुरावा"
+      },
+      "PersonalDrivingLicence": {
+        "title": "वैयक्तिक ड्रायव्हिंग लायसन्स",
+        "sub": "पुढील आणि मागील बाजू, स्पष्ट दिसणारी"
+      },
+      "VehicleRC": {
+        "title": "वाहन RC",
+        "sub": "नोंदणी प्रमाणपत्र"
+      },
+      "VehicleInsurance": {
+        "title": "वाहन विमा",
+        "sub": "वैध विमा प्रत"
+      },
+      "VehiclePUC": {
+        "title": "वाहन PUC",
+        "sub": "प्रदूषण प्रमाणपत्र"
+      },
+      "VehicleFitness": {
+        "title": "वाहन फिटनेस",
+        "sub": "फिटनेस प्रमाणपत्र"
+      },
+      "VehiclePermit": {
+        "title": "वाहन परवाना",
+        "sub": "व्यावसायिक परवाना"
+      },
+      "VehicleNumberPlatePhoto": {
+        "title": "वाहन नंबर प्लेट फोटो",
+        "sub": "प्लेटचा स्पष्ट फोटो"
+      },
+      "VehicleFrontPhoto": {
+        "title": "वाहन फ्रंट फोटो",
+        "sub": "पूर्ण समोरचा दृश्य"
+      }
+    }
+  }
+}

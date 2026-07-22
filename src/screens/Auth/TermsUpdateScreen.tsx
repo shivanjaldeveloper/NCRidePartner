@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Linking,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
-import { hscale, vscale, fscale } from '../../theme/scale';
+import { hscale, vscale, fscale, safeLineHeight } from '../../theme/scale';
 import TopSafeStrap from '../../components/layout/TopSafeStrap';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import CheckIcon from '../../assets/icons/CheckIcon';
@@ -24,6 +31,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList, 'TermsUpdate'>;
  */
 const TermsUpdateScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -55,11 +63,8 @@ const TermsUpdateScreen = () => {
           <ShieldIcon size={30} color={Colors.green} strokeWidth={1.8} />
         </View>
 
-        <Text style={styles.title}>Our terms have been updated</Text>
-        <Text style={styles.subtitle}>
-          Please review and accept the latest Partner Terms and Privacy
-          Policy to keep using the app.
-        </Text>
+        <Text style={styles.title}>{t('termsUpdate.title')}</Text>
+        <Text style={styles.subtitle}>{t('termsUpdate.subtitle')}</Text>
 
         <TouchableOpacity
           style={styles.checkRow}
@@ -67,22 +72,24 @@ const TermsUpdateScreen = () => {
           onPress={() => setChecked(c => !c)}
         >
           <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-            {checked && <CheckIcon size={13} color="#FFFFFF" strokeWidth={2.6} />}
+            {checked && (
+              <CheckIcon size={13} color="#FFFFFF" strokeWidth={2.6} />
+            )}
           </View>
           <Text style={styles.checkText}>
-            I agree to the updated{' '}
+            {t('termsUpdate.agreePrefix')}{' '}
             <Text
               style={styles.checkLink}
               onPress={() => Linking.openURL(TERMS_URL)}
             >
-              Partner Terms
+              {t('termsUpdate.termsLink')}
             </Text>{' '}
-            &{' '}
+            {t('termsUpdate.and')}{' '}
             <Text
               style={styles.checkLink}
               onPress={() => Linking.openURL(PRIVACY_URL)}
             >
-              Privacy Policy
+              {t('termsUpdate.privacyLink')}
             </Text>
           </Text>
         </TouchableOpacity>
@@ -90,7 +97,9 @@ const TermsUpdateScreen = () => {
 
       <View style={styles.footer}>
         <PrimaryButton
-          label={loading ? 'Saving…' : 'Accept & continue'}
+          label={
+            loading ? t('termsUpdate.saving') : t('termsUpdate.acceptContinue')
+          }
           onPress={handleAccept}
           icon="arrowRight"
           disabled={!checked || loading}
@@ -101,7 +110,9 @@ const TermsUpdateScreen = () => {
           disabled={loading}
           style={styles.declineButton}
         >
-          <Text style={styles.declineText}>Not now, log me out</Text>
+          <Text style={styles.declineText}>
+            {t('termsUpdate.declineLogout')}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -134,7 +145,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.8,
     color: Colors.ink,
-    lineHeight: fscale(31),
+    lineHeight: safeLineHeight(fscale(26)),
   },
   subtitle: {
     marginTop: vscale(10),

@@ -208,3 +208,13 @@ export const PARTNER_RIDE_REQUEST: RideRequest = {
   passengerRating: 4.8,
   service: 'Car · Sedan',
 };
+
+// Status literals (Trip['status'], Payout['status']) stay untranslated data —
+// they're also used for filtering/colour branching (e.g. TripHistoryScreen's
+// tab filter, PayoutsScreen's chip colour). Resolve to a translation key at
+// render time instead of translating the stored value itself.
+export const tripStatusKey = (status: Trip['status']) =>
+  status === 'Completed' ? 'trips.status.completed' : 'trips.status.cancelled';
+
+export const payoutStatusKey = (status: Payout['status']) =>
+  status === 'Paid' ? 'payouts.status.paid' : 'payouts.status.upcoming';

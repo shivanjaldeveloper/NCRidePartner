@@ -6,6 +6,7 @@ import { navigationRef } from './navigationRef';
 import { useSessionWatcher } from '../utils/sessionWatcher';
 
 import SplashScreen from '../screens/Splash/SplashScreen';
+import LanguageSelectScreen from '../screens/LanguageSelect/LanguageSelectScreen';
 import OnboardingScreen1 from '../screens/Onboarding/OnboardingScreen1';
 import OnboardingScreen2 from '../screens/Onboarding/OnboardingScreen2';
 import OnboardingScreen3 from '../screens/Onboarding/OnboardingScreen3';
@@ -46,6 +47,7 @@ const RootNavigator = () => {
         screenOptions={{ headerShown: false, animation: 'fade' }}
       >
         <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="LanguageSelect" component={LanguageSelectScreen} />
         <Stack.Screen name="Onboarding1" component={OnboardingScreen1} />
         <Stack.Screen name="Onboarding2" component={OnboardingScreen2} />
         <Stack.Screen name="Onboarding3" component={OnboardingScreen3} />

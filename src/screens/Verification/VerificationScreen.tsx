@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -15,36 +16,38 @@ type NavProp = NativeStackNavigationProp<RootStackParamList, 'Verification'>;
 
 // Static in place of window.PARTNER_DOCUMENTS from the design source —
 // swap this out once the real document-status API response shape is known.
+// titleKey/subKey point at translation strings; id/status stay as data.
 const DOCUMENTS = [
   {
     id: 'dl',
-    title: 'Driving License',
-    sub: 'DL-0420110012345',
-    status: 'Verified',
+    titleKey: 'verification.documents.dl.title',
+    subKey: 'verification.documents.dl.sub',
   },
-  { id: 'rc', title: 'Vehicle RC', sub: 'UP16 AB 4821', status: 'Verified' },
+  {
+    id: 'rc',
+    titleKey: 'verification.documents.rc.title',
+    subKey: 'verification.documents.rc.sub',
+  },
   {
     id: 'aadhaar',
-    title: 'Aadhaar Card',
-    sub: 'Identity proof',
-    status: 'Verified',
+    titleKey: 'verification.documents.aadhaar.title',
+    subKey: 'verification.documents.aadhaar.sub',
   },
   {
     id: 'insurance',
-    title: 'Insurance Certificate',
-    sub: 'Valid till Mar 2027',
-    status: 'Verified',
+    titleKey: 'verification.documents.insurance.title',
+    subKey: 'verification.documents.insurance.sub',
   },
   {
     id: 'photo',
-    title: 'Profile Photo',
-    sub: 'Face verification',
-    status: 'Verified',
+    titleKey: 'verification.documents.photo.title',
+    subKey: 'verification.documents.photo.sub',
   },
 ];
 
 const VerificationScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
 
   const handleStartEarning = () => navigation.navigate('MainTabs');
 
@@ -58,18 +61,20 @@ const VerificationScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.eyebrow}>Partner onboarding</Text>
-          <Text style={styles.title}>Document status</Text>
+          <Text style={styles.eyebrow}>{t('verification.eyebrow')}</Text>
+          <Text style={styles.title}>{t('verification.title')}</Text>
         </View>
 
         <View style={styles.body}>
           <View style={styles.statusBanner}>
             <View style={styles.bannerDecoration} />
-            <Text style={styles.bannerEyebrow}>Verification status</Text>
-            <Text style={styles.bannerTitle}>All documents verified ✓</Text>
-            <Text style={styles.bannerSub}>
-              You can go online and start earning right now.
+            <Text style={styles.bannerEyebrow}>
+              {t('verification.bannerEyebrow')}
             </Text>
+            <Text style={styles.bannerTitle}>
+              {t('verification.bannerTitle')}
+            </Text>
+            <Text style={styles.bannerSub}>{t('verification.bannerSub')}</Text>
           </View>
 
           <Card pad={4} style={styles.docCard}>
@@ -85,11 +90,13 @@ const VerificationScreen = () => {
                   <CheckIcon size={17} color={Colors.green} strokeWidth={2.2} />
                 </View>
                 <View style={styles.docTextWrap}>
-                  <Text style={styles.docTitle}>{doc.title}</Text>
-                  <Text style={styles.docSub}>{doc.sub}</Text>
+                  <Text style={styles.docTitle}>{t(doc.titleKey)}</Text>
+                  <Text style={styles.docSub}>{t(doc.subKey)}</Text>
                 </View>
                 <View style={styles.docStatusChip}>
-                  <Text style={styles.docStatusText}>{doc.status}</Text>
+                  <Text style={styles.docStatusText}>
+                    {t('verification.statusVerified')}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -99,7 +106,7 @@ const VerificationScreen = () => {
 
       <View style={styles.footer}>
         <PrimaryButton
-          label="Start earning"
+          label={t('verification.startEarning')}
           onPress={handleStartEarning}
           icon="arrowRight"
           style={styles.fullButton}

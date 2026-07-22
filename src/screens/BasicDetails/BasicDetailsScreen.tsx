@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -28,6 +29,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const BasicDetailsScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -56,9 +58,7 @@ const BasicDetailsScreen = () => {
         email.trim(),
       );
       if (res.Result !== 'Success') {
-        throw new Error(
-          res.Message || 'Could not save your details. Please try again.',
-        );
+        throw new Error(res.Message || t('basicDetails.errors.saveFailed'));
       }
 
       // Referral code is optional — a failure here shouldn't block the
@@ -79,9 +79,7 @@ const BasicDetailsScreen = () => {
 
       navigation.navigate('PartnerDocuments');
     } catch (err: any) {
-      setErrorMessage(
-        err?.message || 'Something went wrong. Please try again.',
-      );
+      setErrorMessage(err?.message || t('basicDetails.errors.genericRetry'));
     } finally {
       setLoading(false);
     }
@@ -122,25 +120,27 @@ const BasicDetailsScreen = () => {
         >
           <View style={styles.stepBadge}>
             <View style={styles.stepBadgeDot} />
-            <Text style={styles.stepBadgeText}>Step 1 of 2 · Onboarding</Text>
+            <Text style={styles.stepBadgeText}>
+              {t('basicDetails.stepBadge')}
+            </Text>
           </View>
 
-          <Text style={styles.title}>Tell us about you</Text>
-          <Text style={styles.subtitle}>
-            We'll use these details on your partner profile.
-          </Text>
+          <Text style={styles.title}>{t('basicDetails.title')}</Text>
+          <Text style={styles.subtitle}>{t('basicDetails.subtitle')}</Text>
 
           <View style={styles.fieldBlock}>
-            <Text style={styles.fieldLabel}>Full name</Text>
+            <Text style={styles.fieldLabel}>
+              {t('basicDetails.fields.fullName')}
+            </Text>
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.input}
                 value={name}
-                onChangeText={t => {
+                onChangeText={val => {
                   if (errorMessage) setErrorMessage(null);
-                  setName(t);
+                  setName(val);
                 }}
-                placeholder="Your full name"
+                placeholder={t('basicDetails.fields.fullNamePlaceholder')}
                 placeholderTextColor={Colors.mute2}
                 autoCapitalize="words"
                 autoFocus
@@ -149,16 +149,18 @@ const BasicDetailsScreen = () => {
           </View>
 
           <View style={styles.fieldBlock}>
-            <Text style={styles.fieldLabel}>Email address</Text>
+            <Text style={styles.fieldLabel}>
+              {t('basicDetails.fields.email')}
+            </Text>
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.input}
                 value={email}
-                onChangeText={t => {
+                onChangeText={val => {
                   if (errorMessage) setErrorMessage(null);
-                  setEmail(t);
+                  setEmail(val);
                 }}
-                placeholder="you@example.com"
+                placeholder={t('basicDetails.fields.emailPlaceholder')}
                 placeholderTextColor={Colors.mute2}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -168,13 +170,15 @@ const BasicDetailsScreen = () => {
           </View>
 
           <View style={styles.fieldBlock}>
-            <Text style={styles.fieldLabel}>Referral code (optional)</Text>
+            <Text style={styles.fieldLabel}>
+              {t('basicDetails.fields.referral')}
+            </Text>
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.input}
                 value={referredBy}
                 onChangeText={setReferredBy}
-                placeholder="Partner ID who referred you"
+                placeholder={t('basicDetails.fields.referralPlaceholder')}
                 placeholderTextColor={Colors.mute2}
                 autoCapitalize="characters"
                 autoCorrect={false}
@@ -187,7 +191,9 @@ const BasicDetailsScreen = () => {
 
         <View style={styles.footer}>
           <PrimaryButton
-            label={loading ? 'Saving…' : 'Continue'}
+            label={
+              loading ? t('basicDetails.saving') : t('basicDetails.continue')
+            }
             onPress={handleContinue}
             icon="arrowRight"
             disabled={loading || !isValid}

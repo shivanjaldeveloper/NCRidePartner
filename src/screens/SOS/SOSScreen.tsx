@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -29,6 +30,7 @@ const HOLD_DURATION_MS = 3000;
 
 const SOSScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const [holding, setHolding] = useState(false);
   const [alerted, setAlerted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,7 +54,10 @@ const SOSScreen = () => {
 
   return (
     <View style={styles.container}>
-      <HeaderBack title="Emergency & SOS" onBack={() => navigation.goBack()} />
+      <HeaderBack
+        title={t('sos.headerTitle')}
+        onBack={() => navigation.goBack()}
+      />
 
       <ScrollView
         style={styles.flex}
@@ -79,15 +84,13 @@ const SOSScreen = () => {
             style={[styles.holdButton, holding && styles.holdButtonActive]}
           >
             <Text style={styles.holdButtonLabel}>
-              {alerted
-                ? 'ALERT SENT · HELP IS ON THE WAY'
-                : 'HOLD 3 SECONDS TO ALERT'}
+              {alerted ? t('sos.alertSent') : t('sos.holdToAlert')}
             </Text>
           </TouchableOpacity>
         </Card>
 
         <Card style={styles.groupCard} pad={4}>
-          <Text style={styles.sectionLabel}>Emergency contacts</Text>
+          <Text style={styles.sectionLabel}>{t('sos.emergencyContacts')}</Text>
           {PARTNER_EMERGENCY_CONTACTS.map((c, i) => (
             <Row
               key={c.title}
@@ -102,30 +105,30 @@ const SOSScreen = () => {
           ))}
           <TouchableOpacity style={styles.addContactButton} onPress={noop}>
             <PlusIcon size={15} color={Colors.ink} strokeWidth={2} />
-            <Text style={styles.addContactLabel}>Add contact</Text>
+            <Text style={styles.addContactLabel}>{t('sos.addContact')}</Text>
           </TouchableOpacity>
         </Card>
 
         <Card style={styles.groupCard} pad={4}>
-          <Text style={styles.sectionLabel}>Partner safety</Text>
+          <Text style={styles.sectionLabel}>{t('sos.partnerSafety')}</Text>
           <Row
             icon={<ShieldIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Report unsafe passenger"
-            sub="Behaviour concern"
+            title={t('sos.reportUnsafe.title')}
+            sub={t('sos.reportUnsafe.sub')}
             onPress={noop}
             showDivider
           />
           <Row
             icon={<CarIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Accident support"
-            sub="Road accident, vehicle damage"
+            title={t('sos.accidentSupport.title')}
+            sub={t('sos.accidentSupport.sub')}
             onPress={noop}
             showDivider
           />
           <Row
             icon={<PhoneIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Call partner support"
-            sub="1800 200 ALO-P · 24×7"
+            title={t('sos.callSupport.title')}
+            sub={t('sos.callSupport.sub')}
             onPress={noop}
           />
         </Card>

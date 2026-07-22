@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -26,6 +27,7 @@ type NavProp = NativeStackNavigationProp<
 
 const ApplicationProcessingScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const [checking, setChecking] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
@@ -54,18 +56,20 @@ const ApplicationProcessingScreen = () => {
         await clearCookie();
         setNote(
           res.Remark
-            ? `Application rejected: ${res.Remark}`
-            : 'Your application was not approved. Contact support for details.',
+            ? t('applicationProcessing.notes.rejected', { remark: res.Remark })
+            : t('applicationProcessing.notes.notApproved'),
         );
       } else {
         setNote(
           res.Remark
-            ? `Still under review — ${res.Remark}`
-            : 'Still under review — check back soon.',
+            ? t('applicationProcessing.notes.underReview', {
+                remark: res.Remark,
+              })
+            : t('applicationProcessing.notes.underReviewDefault'),
         );
       }
     } catch {
-      setNote('Could not check status. Please try again.');
+      setNote(t('applicationProcessing.notes.checkFailed'));
     } finally {
       setChecking(false);
     }
@@ -79,7 +83,9 @@ const ApplicationProcessingScreen = () => {
           onPress={() => navigation.navigate('Logout')}
         >
           <LogoutIcon size={15} color={Colors.red} strokeWidth={1.8} />
-          <Text style={styles.logoutText}>Log out</Text>
+          <Text style={styles.logoutText}>
+            {t('applicationProcessing.logout')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -88,19 +94,19 @@ const ApplicationProcessingScreen = () => {
           <ClockIcon size={30} color={Colors.ink} strokeWidth={1.8} />
         </View>
 
-        <Text style={styles.title}>Application processing</Text>
-        <Text style={styles.message}>
-          Your documents have been submitted successfully and are under
-          verification.{'\n\n'}
-          We will notify you once your account has been approved.
-        </Text>
+        <Text style={styles.title}>{t('applicationProcessing.title')}</Text>
+        <Text style={styles.message}>{t('applicationProcessing.message')}</Text>
 
         {note && <Text style={styles.note}>{note}</Text>}
       </View>
 
       <View style={styles.footer}>
         <PrimaryButton
-          label={checking ? 'Checking…' : 'Check status'}
+          label={
+            checking
+              ? t('applicationProcessing.checking')
+              : t('applicationProcessing.checkStatus')
+          }
           onPress={handleCheckStatus}
           icon="none"
           disabled={checking}

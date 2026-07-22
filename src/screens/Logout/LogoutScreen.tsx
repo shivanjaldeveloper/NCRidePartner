@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableWithoutFeedback, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -14,6 +15,7 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 const LogoutScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
 
   const dismiss = () => navigation.goBack();
 
@@ -35,23 +37,20 @@ const LogoutScreen = () => {
           <View style={styles.iconCircle}>
             <LogoutIcon size={32} color={Colors.red} strokeWidth={1.8} />
           </View>
-          <Text style={styles.title}>Log out of Alo Alo Partner?</Text>
-          <Text style={styles.subtitle}>
-            You can sign back in anytime. Your earnings, documents and vehicle
-            info stay safe.
-          </Text>
+          <Text style={styles.title}>{t('logout.confirmTitle')}</Text>
+          <Text style={styles.subtitle}>{t('logout.confirmSubtitle')}</Text>
         </View>
 
         <View style={styles.actionsRow}>
           <PrimaryButton
-            label="Stay logged in"
+            label={t('logout.stayLoggedIn')}
             onPress={dismiss}
             icon="none"
             variant="ghost"
             style={styles.actionButton}
           />
           <PrimaryButton
-            label="Log out"
+            label={t('logout.logOut')}
             onPress={handleLogout}
             icon="none"
             variant="danger"

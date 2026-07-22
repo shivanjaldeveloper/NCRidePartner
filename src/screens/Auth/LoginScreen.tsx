@@ -13,9 +13,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
-import { hscale, vscale, fscale } from '../../theme/scale';
+import { hscale, vscale, fscale, safeLineHeight } from '../../theme/scale';
 import TopSafeStrap from '../../components/layout/TopSafeStrap';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import ShieldIcon from '../../assets/icons/ShieldIcon';
@@ -37,6 +38,7 @@ const RESEND_SECONDS = 38;
 
 const LoginScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
 
   const [stage, setStage] = useState<Stage>('phone');
   const [phone, setPhone] = useState('');
@@ -82,7 +84,7 @@ const LoginScreen = () => {
         // Covers banned/blocked numbers too — the API returns a
         // non-Success Result with a Message explaining why, at this
         // very first step, rather than a separate status field.
-        throw new Error(res.Message || 'Could not send OTP. Please try again.');
+        throw new Error(res.Message || t('auth.errors.sendOtpFailed'));
       }
       setOtpTransaction(res.OtpTransaction);
       setOtp(Array(OTP_LENGTH).fill(''));
@@ -90,9 +92,7 @@ const LoginScreen = () => {
       setStage('otp');
       setTimeout(() => otpRefs.current[0]?.focus(), 250);
     } catch (err: any) {
-      setErrorMessage(
-        err?.message || 'Something went wrong. Please try again.',
-      );
+      setErrorMessage(err?.message || t('auth.errors.genericRetry'));
     } finally {
       setLoading(false);
     }
@@ -110,18 +110,14 @@ const LoginScreen = () => {
     try {
       const res = await resendOtp(otpTransaction);
       if (res.Result !== 'Success') {
-        throw new Error(
-          res.Message || 'Could not resend OTP. Please try again.',
-        );
+        throw new Error(res.Message || t('auth.errors.resendFailed'));
       }
       if (res.OtpTransaction) setOtpTransaction(res.OtpTransaction);
       setOtp(Array(OTP_LENGTH).fill(''));
       setResendIn(RESEND_SECONDS);
       otpRefs.current[0]?.focus();
     } catch (err: any) {
-      setErrorMessage(
-        err?.message || 'Could not resend OTP. Please try again.',
-      );
+      setErrorMessage(err?.message || t('auth.errors.resendFailed'));
     } finally {
       setLoading(false);
     }
@@ -158,17 +154,14 @@ const LoginScreen = () => {
         // can immediately retype instead of editing stale digits.
         setOtp(Array(OTP_LENGTH).fill(''));
         setTimeout(() => otpRefs.current[0]?.focus(), 50);
-        throw new Error(res.Message || 'Invalid OTP. Please try again.');
+        throw new Error(res.Message || t('auth.errors.invalidOtp'));
       }
 
       const initialResolved = resolveProcessingStatus(res.ProcessingStatus);
 
       if (initialResolved === 'Blocked') {
         // Don't persist the cookie for a banned/rejected account.
-        setErrorMessage(
-          res.Message ||
-            'Your account is not eligible to continue. Please contact support.',
-        );
+        setErrorMessage(res.Message || t('auth.errors.notEligible'));
         return;
       }
 
@@ -186,7 +179,7 @@ const LoginScreen = () => {
         navigation.navigate('BasicDetails');
       }
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Invalid OTP. Please try again.');
+      setErrorMessage(err?.message || t('auth.errors.invalidOtp'));
     } finally {
       setLoading(false);
     }
@@ -207,18 +200,16 @@ const LoginScreen = () => {
             <View>
               <View style={styles.appBadge}>
                 <View style={styles.appBadgeDot} />
-                <Text style={styles.appBadgeText}>Alo Alo Partner App</Text>
+                <Text style={styles.appBadgeText}>{t('auth.appBadge')}</Text>
               </View>
 
-              <Text style={styles.title}>
-                Welcome, partner.{'\n'}Sign in to start driving.
-              </Text>
-              <Text style={styles.subtitle}>
-                We'll send a 4-digit OTP to verify your number.
-              </Text>
+              <Text style={styles.title}>{t('auth.phone.title')}</Text>
+              <Text style={styles.subtitle}>{t('auth.phone.subtitle')}</Text>
 
               <View style={styles.fieldBlock}>
-                <Text style={styles.fieldLabel}>Mobile number</Text>
+                <Text style={styles.fieldLabel}>
+                  {t('auth.phone.fieldLabel')}
+                </Text>
                 <View style={styles.phoneInputBox}>
                   <View style={styles.ccGroup}>
                     <Text style={styles.flag}>🇮🇳</Text>
@@ -228,11 +219,11 @@ const LoginScreen = () => {
                   <TextInput
                     style={styles.phoneInput}
                     value={phone}
-                    onChangeText={t => {
+                    onChangeText={val => {
                       if (errorMessage) setErrorMessage(null);
-                      setPhone(t.replace(/[^0-9]/g, '').slice(0, 10));
+                      setPhone(val.replace(/[^0-9]/g, '').slice(0, 10));
                     }}
-                    placeholder="0000000000"
+                    placeholder={t('auth.phone.placeholder')}
                     placeholderTextColor={Colors.mute2}
                     keyboardType="number-pad"
                     maxLength={10}
@@ -248,7 +239,7 @@ const LoginScreen = () => {
               <View style={styles.trustBanner}>
                 <ShieldIcon size={17} color={Colors.green} strokeWidth={1.8} />
                 <Text style={styles.trustText}>
-                  Your number is used only for partner verification.
+                  {t('auth.phone.trustText')}
                 </Text>
               </View>
 
@@ -268,19 +259,19 @@ const LoginScreen = () => {
                   )}
                 </View>
                 <Text style={styles.termsText}>
-                  I agree to the{' '}
+                  {t('auth.phone.termsPrefix')}{' '}
                   <Text
                     style={styles.termsLink}
                     onPress={() => Linking.openURL(TERMS_URL)}
                   >
-                    Partner Terms
+                    {t('auth.phone.termsLink')}
                   </Text>{' '}
-                  &{' '}
+                  {t('auth.phone.and')}{' '}
                   <Text
                     style={styles.termsLink}
                     onPress={() => Linking.openURL(PRIVACY_URL)}
                   >
-                    Privacy Policy
+                    {t('auth.phone.privacyLink')}
                   </Text>
                 </Text>
               </TouchableOpacity>
@@ -289,14 +280,18 @@ const LoginScreen = () => {
             <View>
               <View style={styles.otpBadge}>
                 <View style={styles.otpBadgeDot} />
-                <Text style={styles.otpBadgeText}>OTP sent to +91 {phone}</Text>
+                <Text style={styles.otpBadgeText}>
+                  {t('auth.otp.sentTo', { phone })}
+                </Text>
               </View>
 
-              <Text style={styles.title}>Enter the code</Text>
+              <Text style={styles.title}>{t('auth.otp.title')}</Text>
               <View style={styles.otpSubRow}>
-                <Text style={styles.subtitle}>4-digit OTP · </Text>
+                <Text style={styles.subtitle}>{t('auth.otp.subtitle')}</Text>
                 <TouchableOpacity onPress={handleChangeNumber}>
-                  <Text style={styles.changeNumberText}>Change number</Text>
+                  <Text style={styles.changeNumberText}>
+                    {t('auth.otp.changeNumber')}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
@@ -307,7 +302,7 @@ const LoginScreen = () => {
                     ref={ref => (otpRefs.current[i] = ref)}
                     style={styles.otpBox}
                     value={digit}
-                    onChangeText={t => handleOtpChange(t, i)}
+                    onChangeText={val => handleOtpChange(val, i)}
                     onKeyPress={e => handleOtpKeyPress(e, i)}
                     keyboardType="number-pad"
                     maxLength={1}
@@ -325,13 +320,15 @@ const LoginScreen = () => {
               <View style={styles.resendRow}>
                 {resendIn > 0 ? (
                   <Text style={styles.resendText}>
-                    Resend in{' '}
+                    {t('auth.otp.resendIn')}
                     <Text style={styles.resendTime}>{timerLabel}</Text>
                   </Text>
                 ) : (
                   <TouchableOpacity onPress={handleResend} disabled={loading}>
                     <Text style={styles.resendActiveText}>
-                      {loading ? 'Resending…' : 'Resend OTP'}
+                      {loading
+                        ? t('auth.otp.resending')
+                        : t('auth.otp.resendOtp')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -345,11 +342,11 @@ const LoginScreen = () => {
             label={
               stage === 'phone'
                 ? loading
-                  ? 'Sending…'
-                  : 'Send OTP'
+                  ? t('auth.buttons.sending')
+                  : t('auth.buttons.sendOtp')
                 : loading
-                ? 'Verifying…'
-                : 'Verify & continue'
+                ? t('auth.buttons.verifying')
+                : t('auth.buttons.verify')
             }
             onPress={stage === 'phone' ? handleSendOtp : handleVerify}
             icon="arrowRight"
@@ -362,21 +359,21 @@ const LoginScreen = () => {
             style={styles.fullButton}
           />
           <Text style={styles.legalText}>
-            By continuing you agree to our{' '}
+            {t('auth.legal.prefix')}{' '}
             <Text
               style={styles.legalStrong}
               onPress={() => Linking.openURL(TERMS_URL)}
             >
-              Partner Terms
+              {t('auth.legal.termsLink')}
             </Text>{' '}
-            &{' '}
+            {t('auth.legal.and')}{' '}
             <Text
               style={styles.legalStrong}
               onPress={() => Linking.openURL(PRIVACY_URL)}
             >
-              Privacy Policy
+              {t('auth.legal.privacyLink')}
             </Text>
-            .
+            {t('auth.legal.suffix')}
           </Text>
         </View>
       </View>
@@ -440,7 +437,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -1,
     color: Colors.ink,
-    lineHeight: fscale(33),
+    lineHeight: safeLineHeight(fscale(30)),
   },
   subtitle: {
     marginTop: vscale(10),
@@ -516,7 +513,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fscale(12.5),
     color: Colors.ink2,
-    lineHeight: fscale(17),
+    lineHeight: safeLineHeight(fscale(12.5)),
   },
   termsRow: {
     marginTop: vscale(16),
@@ -543,7 +540,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fscale(12.5),
     color: Colors.ink2,
-    lineHeight: fscale(18),
+    lineHeight: safeLineHeight(fscale(12.5)),
   },
   termsLink: {
     color: Colors.blue,
@@ -626,7 +623,7 @@ const styles = StyleSheet.create({
     fontSize: fscale(11.5),
     color: Colors.mute2,
     textAlign: 'center',
-    lineHeight: fscale(17),
+    lineHeight: safeLineHeight(fscale(11.5)),
   },
   legalStrong: {
     color: Colors.ink,

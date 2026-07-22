@@ -12,13 +12,14 @@ import {
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import Card from '../../components/common/Card';
 import SegmentedTabs from '../../components/common/SegmentedTabs';
 import TaxiIcon from '../../assets/icons/TaxiIcon';
-import { PARTNER_TRIPS } from '../Home/mockHomeData';
+import { PARTNER_TRIPS, tripStatusKey } from '../Home/mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
 
@@ -29,15 +30,16 @@ type NavProp = CompositeNavigationProp<
 
 type TripFilter = 'all' | 'completed' | 'cancelled';
 
-const TAB_OPTIONS = [
-  { id: 'all', label: 'All' },
-  { id: 'completed', label: 'Completed' },
-  { id: 'cancelled', label: 'Cancelled' },
-];
-
 const TripHistoryScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<TripFilter>('all');
+
+  const TAB_OPTIONS = [
+    { id: 'all', label: t('trips.status.all') },
+    { id: 'completed', label: t('trips.status.completed') },
+    { id: 'cancelled', label: t('trips.status.cancelled') },
+  ];
 
   const filtered =
     tab === 'all'
@@ -123,7 +125,7 @@ const TripHistoryScreen = () => {
                         },
                       ]}
                     >
-                      {trip.status}
+                      {t(tripStatusKey(trip.status))}
                     </Text>
                   </View>
                 </View>
@@ -132,7 +134,9 @@ const TripHistoryScreen = () => {
           ))}
 
           {filtered.length === 0 && (
-            <Text style={styles.emptyText}>No {tab} trips yet.</Text>
+            <Text style={styles.emptyText}>
+              {t('trips.emptyFor', { filter: t(`trips.status.${tab}`) })}
+            </Text>
           )}
         </View>
       </ScrollView>

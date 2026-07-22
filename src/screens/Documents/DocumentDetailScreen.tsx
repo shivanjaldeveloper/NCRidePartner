@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -14,7 +15,11 @@ import ShieldIcon from '../../assets/icons/ShieldIcon';
 import InvoiceIcon from '../../assets/icons/InvoiceIcon';
 import EditIcon from '../../assets/icons/EditIcon';
 import { PARTNER_PROFILE } from '../Home/mockHomeData';
-import { PARTNER_DOCUMENTS, PartnerDocument } from './mockDocumentsData';
+import {
+  PARTNER_DOCUMENTS,
+  PartnerDocument,
+  docStatusKey,
+} from './mockDocumentsData';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'DocumentDetail'>;
@@ -32,11 +37,14 @@ const DOC_ICONS: Record<
 
 const DocumentDetailScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const { docId } = useRoute<RouteProps>().params;
 
   const doc =
     PARTNER_DOCUMENTS.find(d => d.id === docId) || PARTNER_DOCUMENTS[0];
   const IconComponent = DOC_ICONS[doc.icon];
+  const docTitle = t(doc.titleKey);
+  const docStatus = t(docStatusKey(doc.status));
 
   // TODO: real re-upload / edit flow (picking a new file and resubmitting
   // for verification) isn't wired yet — this just logs for now. When ready,
@@ -45,17 +53,20 @@ const DocumentDetailScreen = () => {
     console.log('TODO: launch document re-upload flow', doc.id);
 
   const details: [string, string][] = [
-    ['Status', doc.status],
-    ['Document no.', doc.sub],
-    ['Verified on', doc.verifiedOn],
-    ['Valid till', doc.validTill],
-    ['Linked to', `${PARTNER_PROFILE.name} · ${PARTNER_PROFILE.phone}`],
+    [t('documents.detail.status'), docStatus],
+    [t('documents.detail.docNumber'), doc.sub],
+    [t('documents.detail.verifiedOn'), doc.verifiedOn],
+    [t('documents.detail.validTill'), doc.validTill],
+    [
+      t('documents.detail.linkedTo'),
+      `${PARTNER_PROFILE.name} · ${PARTNER_PROFILE.phone}`,
+    ],
   ];
 
   return (
     <View style={styles.container}>
       <HeaderBack
-        title={doc.title}
+        title={docTitle}
         sub={doc.sub}
         onBack={() => navigation.goBack()}
       />
@@ -71,7 +82,7 @@ const DocumentDetailScreen = () => {
               <IconComponent size={28} color={Colors.green} strokeWidth={1.8} />
             </View>
             <View style={styles.headerTextWrap}>
-              <Text style={styles.docTitle}>{doc.title}</Text>
+              <Text style={styles.docTitle}>{docTitle}</Text>
               <Text style={styles.docSub}>{doc.sub}</Text>
             </View>
             <View
@@ -94,19 +105,19 @@ const DocumentDetailScreen = () => {
                   },
                 ]}
               >
-                {doc.status}
+                {docStatus}
               </Text>
             </View>
           </View>
 
           <View style={styles.previewBox}>
             <IconComponent size={36} color={Colors.mute2} strokeWidth={1.6} />
-            <Text style={styles.previewLabel}>Document preview</Text>
+            <Text style={styles.previewLabel}>{t('documents.preview')}</Text>
           </View>
         </Card>
 
         <Card style={styles.detailsCard} pad={0}>
-          <Text style={styles.detailsLabel}>Details</Text>
+          <Text style={styles.detailsLabel}>{t('documents.detailsLabel')}</Text>
           {details.map(([k, v], i) => (
             <View
               key={k}
@@ -121,7 +132,7 @@ const DocumentDetailScreen = () => {
         </Card>
 
         <PrimaryButton
-          label="Update document"
+          label={t('documents.updateDocument')}
           onPress={handleUpdateDocument}
           icon="edit"
           variant="ghost"

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -19,7 +20,11 @@ import UserIcon from '../../assets/icons/UserIcon';
 import ShieldIcon from '../../assets/icons/ShieldIcon';
 import InvoiceIcon from '../../assets/icons/InvoiceIcon';
 import ChevronRightIcon from '../../assets/icons/ChevronRightIcon';
-import { PARTNER_DOCUMENTS, PartnerDocument } from './mockDocumentsData';
+import {
+  PARTNER_DOCUMENTS,
+  PartnerDocument,
+  docStatusKey,
+} from './mockDocumentsData';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -36,6 +41,7 @@ const DOC_ICONS: Record<
 
 const DocumentsScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const allVerified = PARTNER_DOCUMENTS.every(d => d.status === 'Verified');
 
   return (
@@ -58,11 +64,11 @@ const DocumentsScreen = () => {
           <View style={styles.statusTextWrap}>
             <Text style={styles.statusTitle}>
               {allVerified
-                ? 'All documents verified'
-                : 'Some documents pending'}
+                ? t('documents.allVerified')
+                : t('documents.somePending')}
             </Text>
             <Text style={styles.statusSub}>
-              You are eligible to drive across NCR
+              {t('documents.eligibleToDrive')}
             </Text>
           </View>
         </View>
@@ -90,7 +96,7 @@ const DocumentsScreen = () => {
                   />
                 </View>
                 <View style={styles.docTextWrap}>
-                  <Text style={styles.docTitle}>{doc.title}</Text>
+                  <Text style={styles.docTitle}>{t(doc.titleKey)}</Text>
                   <Text style={styles.docSub}>{doc.sub}</Text>
                 </View>
                 <View style={styles.docRight}>
@@ -132,10 +138,7 @@ const DocumentsScreen = () => {
 
         <View style={styles.privacyNote}>
           <ShieldIcon size={16} color={Colors.blue} strokeWidth={1.8} />
-          <Text style={styles.privacyText}>
-            Documents are encrypted and stored securely. Alo Alo Partner is DPDP
-            Act compliant.
-          </Text>
+          <Text style={styles.privacyText}>{t('documents.privacyNote')}</Text>
         </View>
       </ScrollView>
     </View>

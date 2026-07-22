@@ -1,11 +1,11 @@
-import { fscale } from '../theme/scale';
+import { fscale, safeLineHeight } from '../theme/scale';
 
 export const Typography = {
   onboardingTitle: {
     fontSize: fscale(30),
     fontWeight: '700' as const,
     letterSpacing: -1,
-    lineHeight: fscale(33),
+    lineHeight: safeLineHeight(fscale(30)),
   },
   onboardingSub: {
     fontSize: fscale(15),

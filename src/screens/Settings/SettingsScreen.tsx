@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -9,6 +10,7 @@ import Card from '../../components/common/Card';
 import Row from '../../components/common/Row';
 import HeaderBack from '../../components/common/HeaderBack';
 import ToggleSwitch from '../../components/common/ToggleSwitch';
+import LanguageSheet from '../../components/settings/LanguageSheet';
 import UserIcon from '../../assets/icons/UserIcon';
 import PhoneIcon from '../../assets/icons/PhoneIcon';
 import ShieldIcon from '../../assets/icons/ShieldIcon';
@@ -20,21 +22,44 @@ import InvoiceIcon from '../../assets/icons/InvoiceIcon';
 import TrashIcon from '../../assets/icons/TrashIcon';
 import { PARTNER_PROFILE } from '../Home/mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
+import { getLanguageOption } from '../../i18n/languages';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
+// labelKey points at settings.preferences.<key> in the locale files.
 const DEFAULT_PREFERENCES = [
-  { key: 'push', label: 'Push notifications', value: true },
-  { key: 'rideRequests', label: 'New ride requests', value: true },
-  { key: 'payoutAlerts', label: 'Earnings & payout alerts', value: true },
-  { key: 'bgLocation', label: 'Background location', value: true },
-  { key: 'sound', label: 'Sound for ride requests', value: true },
-  { key: 'showEarnings', label: 'Show earnings on home', value: false },
+  { key: 'push', labelKey: 'settings.preferences.push', value: true },
+  {
+    key: 'rideRequests',
+    labelKey: 'settings.preferences.rideRequests',
+    value: true,
+  },
+  {
+    key: 'payoutAlerts',
+    labelKey: 'settings.preferences.payoutAlerts',
+    value: true,
+  },
+  {
+    key: 'bgLocation',
+    labelKey: 'settings.preferences.bgLocation',
+    value: true,
+  },
+  { key: 'sound', labelKey: 'settings.preferences.sound', value: true },
+  {
+    key: 'showEarnings',
+    labelKey: 'settings.preferences.showEarnings',
+    value: false,
+  },
 ];
+
+const APP_VERSION = '1.0.0';
+const APP_BUILD = '1001';
 
 const SettingsScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t, i18n } = useTranslation();
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
+  const [languageSheetVisible, setLanguageSheetVisible] = useState(false);
 
   const togglePreference = (key: string) => {
     setPreferences(prev =>
@@ -45,44 +70,55 @@ const SettingsScreen = () => {
   // TODO: policy/legal links and delete-account confirmation aren't wired yet.
   const noop = () => console.log('TODO: wire this up');
 
+  const activeLanguage = getLanguageOption(i18n.language);
+
   return (
     <View style={styles.container}>
-      <HeaderBack title="Settings" onBack={() => navigation.goBack()} />
+      <HeaderBack
+        title={t('settings.title')}
+        onBack={() => navigation.goBack()}
+      />
 
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionLabel}>Partner profile</Text>
+        <Text style={styles.sectionLabel}>
+          {t('settings.sections.profile')}
+        </Text>
         <Card pad={4}>
           <Row
             icon={<UserIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Personal info"
-            sub="Name, photo, address"
+            title={t('settings.rows.personalInfo.title')}
+            sub={t('settings.rows.personalInfo.sub')}
             showDivider
           />
           <Row
             icon={<PhoneIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Mobile"
-            sub={`${PARTNER_PROFILE.phone} · Verified`}
+            title={t('settings.rows.mobile.title')}
+            sub={t('settings.rows.mobile.sub', {
+              phone: PARTNER_PROFILE.phone,
+            })}
             showDivider
           />
           <Row
             icon={<ShieldIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="KYC verification"
-            sub="Aadhaar · PAN · DL verified"
+            title={t('settings.rows.kyc.title')}
+            sub={t('settings.rows.kyc.sub')}
           />
         </Card>
 
-        <Text style={styles.sectionLabel}>Preferences</Text>
+        <Text style={styles.sectionLabel}>
+          {t('settings.sections.preferences')}
+        </Text>
         <Card pad={4}>
           {preferences.map((pref, i) => (
             <View
               key={pref.key}
               style={[styles.prefRow, i > 0 && styles.prefRowBorder]}
             >
-              <Text style={styles.prefLabel}>{pref.label}</Text>
+              <Text style={styles.prefLabel}>{t(pref.labelKey)}</Text>
               <ToggleSwitch
                 value={pref.value}
                 onChange={() => togglePreference(pref.key)}
@@ -91,42 +127,45 @@ const SettingsScreen = () => {
           ))}
         </Card>
 
-        <Text style={styles.sectionLabel}>Service preferences</Text>
+        <Text style={styles.sectionLabel}>
+          {t('settings.sections.service')}
+        </Text>
         <Card pad={4}>
           <Row
             icon={<CarIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Vehicle type"
-            sub="Sedan · Car service"
+            title={t('settings.rows.vehicleType.title')}
+            sub={t('settings.rows.vehicleType.sub')}
             showDivider
           />
           <Row
             icon={
               <IntercityIcon size={18} color={Colors.ink} strokeWidth={1.8} />
             }
-            title="Intercity trips"
-            sub="Enabled · NCR outstation"
+            title={t('settings.rows.intercity.title')}
+            sub={t('settings.rows.intercity.sub')}
             showDivider
           />
           <Row
             icon={<LocateIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Service area"
-            sub="Noida · Delhi · Gurugram"
+            title={t('settings.rows.serviceArea.title')}
+            sub={t('settings.rows.serviceArea.sub')}
             showDivider
           />
           <Row
             icon={
               <SettingsIcon size={18} color={Colors.ink} strokeWidth={1.8} />
             }
-            title="Language"
-            sub="Hindi / English"
+            title={t('settings.rows.language.title')}
+            sub={activeLanguage.nativeLabel}
+            onPress={() => setLanguageSheetVisible(true)}
           />
         </Card>
 
-        <Text style={styles.sectionLabel}>Privacy & legal</Text>
+        <Text style={styles.sectionLabel}>{t('settings.sections.legal')}</Text>
         <Card pad={4}>
           <Row
             icon={<ShieldIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Privacy policy"
+            title={t('settings.rows.privacyPolicy.title')}
             onPress={noop}
             showDivider
           />
@@ -134,22 +173,27 @@ const SettingsScreen = () => {
             icon={
               <InvoiceIcon size={18} color={Colors.ink} strokeWidth={1.8} />
             }
-            title="Partner agreement"
+            title={t('settings.rows.partnerAgreement.title')}
             onPress={noop}
             showDivider
           />
           <Row
             icon={<TrashIcon size={18} color={Colors.red} strokeWidth={1.8} />}
-            title="Delete account"
+            title={t('settings.rows.deleteAccount.title')}
             danger
             onPress={noop}
           />
         </Card>
 
         <Text style={styles.footerText}>
-          Alo Alo Partner · v 1.0.0 (build 1001) · Marathwada, India
+          {t('settings.footer', { version: APP_VERSION, build: APP_BUILD })}
         </Text>
       </ScrollView>
+
+      <LanguageSheet
+        visible={languageSheetVisible}
+        onClose={() => setLanguageSheetVisible(false)}
+      />
     </View>
   );
 };
