@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -22,6 +23,7 @@ const MAP_HEIGHT_RATIO = 0.6;
 
 const PickupNavScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
 
   return (
@@ -32,7 +34,7 @@ const PickupNavScreen = () => {
 
       <TouchableOpacity style={styles.sosButton}>
         <SosIcon size={14} color="#FFFFFF" strokeWidth={2} />
-        <Text style={styles.sosLabel}>SOS</Text>
+        <Text style={styles.sosLabel}>{t('common.sos')}</Text>
       </TouchableOpacity>
 
       <View style={styles.sheetAnchor}>
@@ -42,10 +44,14 @@ const PickupNavScreen = () => {
               <Spinner size={22} />
             </View>
             <View style={styles.etaTextWrap}>
-              <Text style={styles.etaEyebrow}>Heading to pickup</Text>
-              <Text style={styles.etaValue}>ETA · 4 min</Text>
+              <Text style={styles.etaEyebrow}>
+                {t('pickupNav.headingToPickup')}
+              </Text>
+              <Text style={styles.etaValue}>{t('pickupNav.etaValue')}</Text>
             </View>
-            <Text style={styles.etaDist}>{req.pickupDist} away</Text>
+            <Text style={styles.etaDist}>
+              {t('pickupNav.away', { dist: req.pickupDist })}
+            </Text>
           </View>
 
           <View style={styles.passengerRow}>
@@ -63,7 +69,7 @@ const PickupNavScreen = () => {
               <View style={styles.passengerMetaRow}>
                 <RatingStars value={req.passengerRating} />
                 <Text style={styles.passengerMetaText}>
-                  · {req.passengerTrips} trips
+                  {t('pickupNav.tripsSuffix', { count: req.passengerTrips })}
                 </Text>
               </View>
             </View>
@@ -80,13 +86,15 @@ const PickupNavScreen = () => {
           <View style={styles.pickupBox}>
             <View style={styles.pickupDot} />
             <View>
-              <Text style={styles.pickupEyebrow}>Pickup</Text>
+              <Text style={styles.pickupEyebrow}>
+                {t('pickupNav.pickupLabel')}
+              </Text>
               <Text style={styles.pickupValue}>{req.pickup}</Text>
             </View>
           </View>
 
           <PrimaryButton
-            label="I've Arrived at Pickup"
+            label={t('pickupNav.arrivedButton')}
             onPress={() => navigation.navigate('Arrived')}
             icon="none"
             style={styles.fullButton}

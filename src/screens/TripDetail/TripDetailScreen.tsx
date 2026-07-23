@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -21,7 +22,7 @@ import ClockIcon from '../../assets/icons/ClockIcon';
 import CarIcon from '../../assets/icons/CarIcon';
 import UserIcon from '../../assets/icons/UserIcon';
 import ChatIcon from '../../assets/icons/ChatIcon';
-import { PARTNER_TRIPS } from '../Home/mockHomeData';
+import { PARTNER_TRIPS, tripStatusKey } from '../Home/mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'TripDetail'>;
@@ -29,6 +30,7 @@ type RouteProps = RouteProp<RootStackParamList, 'TripDetail'>;
 
 const TripDetailScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const { tripId } = useRoute<RouteProps>().params;
 
   const trip = PARTNER_TRIPS.find(t => t.id === tripId) || PARTNER_TRIPS[0];
@@ -40,7 +42,7 @@ const TripDetailScreen = () => {
   return (
     <View style={styles.container}>
       <HeaderBack
-        title="Trip details"
+        title={t('tripDetail.headerTitle')}
         sub={trip.id}
         onBack={() => navigation.goBack()}
         right={
@@ -62,7 +64,7 @@ const TripDetailScreen = () => {
         <Card style={styles.earningCard} pad={16}>
           <View style={styles.earningRow}>
             <View>
-              <Text style={styles.sectionLabel}>Earning</Text>
+              <Text style={styles.sectionLabel}>{t('tripDetail.earning')}</Text>
               <Text style={styles.earningAmount}>₹{trip.earning}</Text>
             </View>
             <View style={styles.earningRight}>
@@ -82,7 +84,7 @@ const TripDetailScreen = () => {
                     { color: isCompleted ? Colors.green : Colors.red },
                   ]}
                 >
-                  {trip.status}
+                  {t(tripStatusKey(trip.status))}
                 </Text>
               </View>
               <Text style={styles.earningDist}>{trip.dist}</Text>
@@ -91,43 +93,45 @@ const TripDetailScreen = () => {
         </Card>
 
         <Card style={styles.infoCard} pad={4}>
-          <Text style={styles.groupLabel}>Trip info</Text>
+          <Text style={styles.groupLabel}>{t('tripDetail.tripInfo')}</Text>
           <Row
             icon={<RouteIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Route"
+            title={t('tripDetail.fields.route')}
             sub={`${trip.from} → ${trip.to}`}
             showChevron={false}
             showDivider
           />
           <Row
             icon={<ClockIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Date & time"
+            title={t('tripDetail.fields.dateTime')}
             sub={trip.date}
             showChevron={false}
             showDivider
           />
           <Row
             icon={<CarIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Vehicle"
-            sub="UP16 AB 4821 · Maruti Swift Dzire"
+            title={t('tripDetail.fields.vehicle')}
+            sub={t('tripDetail.vehicleSub')}
             showChevron={false}
             showDivider
           />
           <Row
             icon={<UserIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Passenger rating"
-            sub="4.8 ★ · Priya S."
+            title={t('tripDetail.fields.passengerRating')}
+            sub={t('tripDetail.passengerRatingSub')}
             showChevron={false}
           />
         </Card>
 
         {isCompleted && (
           <Card style={styles.breakdownCard} pad={16}>
-            <Text style={styles.groupLabel}>Earnings detail</Text>
+            <Text style={styles.groupLabel}>
+              {t('tripDetail.earningsDetail')}
+            </Text>
             {[
-              ['Gross earning', `₹${gross}`],
-              ['Platform fee (8%)', `−₹${platformFee}`],
-              ['TDS (1%)', `−₹${tds}`],
+              [t('tripDetail.grossEarning'), `₹${gross}`],
+              [t('tripDetail.platformFee'), `−₹${platformFee}`],
+              [t('tripDetail.tds'), `−₹${tds}`],
             ].map(([k, v]) => (
               <View key={k} style={styles.breakdownRow}>
                 <Text style={styles.breakdownKey}>{k}</Text>
@@ -135,7 +139,9 @@ const TripDetailScreen = () => {
               </View>
             ))}
             <View style={styles.breakdownTotal}>
-              <Text style={styles.breakdownTotalLabel}>Net earning</Text>
+              <Text style={styles.breakdownTotalLabel}>
+                {t('tripDetail.netEarning')}
+              </Text>
               <Text style={styles.breakdownTotalValue}>₹{trip.earning}</Text>
             </View>
           </Card>
@@ -144,8 +150,8 @@ const TripDetailScreen = () => {
         <Card style={styles.reportCard} pad={4}>
           <Row
             icon={<ChatIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Report an issue"
-            sub="Fare dispute, passenger complaint"
+            title={t('tripDetail.reportIssue')}
+            sub={t('tripDetail.reportIssueSub')}
             onPress={() => console.log('TODO: navigate to Support')}
           />
         </Card>

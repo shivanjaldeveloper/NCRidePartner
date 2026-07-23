@@ -6,6 +6,7 @@ import {
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -37,6 +38,7 @@ type NavProp = CompositeNavigationProp<
 
 const ProfileScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const p = PARTNER_PROFILE;
   const s = PARTNER_STATS;
   const vehicle = PARTNER_VEHICLES[0];
@@ -50,7 +52,7 @@ const ProfileScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Account</Text>
+          <Text style={styles.title}>{t('profile.title')}</Text>
         </View>
 
         <View style={styles.body}>
@@ -64,23 +66,33 @@ const ProfileScreen = () => {
                 <Text style={styles.profilePhone}>{p.phone}</Text>
                 <View style={styles.goldBadge}>
                   <RewardIcon size={12} color={Colors.lime} strokeWidth={1.8} />
-                  <Text style={styles.goldBadgeText}>GOLD PARTNER</Text>
+                  <Text style={styles.goldBadgeText}>
+                    {t('profile.goldPartner')}
+                  </Text>
                 </View>
               </View>
             </View>
 
             <View style={styles.statsRow}>
               {[
-                { v: s.rating, l: 'Rating' },
-                { v: s.totalTrips.toLocaleString('en-IN'), l: 'Trips' },
-                { v: `${s.acceptanceRate}%`, l: 'Acceptance' },
+                { v: s.rating, l: 'rating', labelKey: 'profile.stats.rating' },
+                {
+                  v: s.totalTrips.toLocaleString('en-IN'),
+                  l: 'trips',
+                  labelKey: 'profile.stats.trips',
+                },
+                {
+                  v: `${s.acceptanceRate}%`,
+                  l: 'acceptance',
+                  labelKey: 'profile.stats.acceptance',
+                },
               ].map((item, i) => (
                 <View
                   key={item.l}
                   style={[styles.statItem, i > 0 && styles.statItemBorder]}
                 >
                   <Text style={styles.statValue}>{item.v}</Text>
-                  <Text style={styles.statLabel}>{item.l}</Text>
+                  <Text style={styles.statLabel}>{t(item.labelKey)}</Text>
                 </View>
               ))}
             </View>
@@ -89,22 +101,22 @@ const ProfileScreen = () => {
           <Card pad={4} style={styles.groupCard}>
             <Row
               icon={<CarIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-              title="Vehicle details"
+              title={t('profile.rows.vehicleDetails')}
               sub={`${vehicle.number} · ${vehicle.type}`}
               onPress={() => navigation.navigate('Vehicle')}
               showDivider
             />
             <Row
               icon={<UserIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-              title="Documents"
-              sub="All 7 verified"
+              title={t('profile.rows.documents')}
+              sub={t('profile.allVerified')}
               onPress={() => navigation.navigate('Documents')}
               showDivider
             />
             <Row
               icon={<CashIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-              title="Earnings"
-              sub="₹72,800 this month"
+              title={t('profile.rows.earnings')}
+              sub={t('profile.earningsSub', { amount: '₹72,800' })}
               onPress={() => navigation.navigate('EarningsTab')}
               showDivider
             />
@@ -112,10 +124,11 @@ const ProfileScreen = () => {
               icon={
                 <WalletIcon size={18} color={Colors.ink} strokeWidth={1.8} />
               }
-              title="Payouts"
-              sub={`₹${payout.amount.toLocaleString('en-IN')} due ${
-                payout.date
-              }`}
+              title={t('profile.rows.payouts')}
+              sub={t('profile.payoutDue', {
+                amount: payout.amount.toLocaleString('en-IN'),
+                date: payout.date,
+              })}
               onPress={() => navigation.navigate('Payouts')}
             />
           </Card>
@@ -123,8 +136,8 @@ const ProfileScreen = () => {
           <Card pad={4} style={styles.groupCard}>
             <Row
               icon={<BellIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-              title="Notifications"
-              sub="Ride requests, alerts"
+              title={t('profile.rows.notifications')}
+              sub={t('profile.notificationsSub')}
               onPress={() => navigation.navigate('Settings')}
               showDivider
             />
@@ -132,21 +145,21 @@ const ProfileScreen = () => {
               icon={
                 <SettingsIcon size={18} color={Colors.ink} strokeWidth={1.8} />
               }
-              title="App settings"
-              sub="Language, preferences"
+              title={t('profile.rows.appSettings')}
+              sub={t('profile.appSettingsSub')}
               onPress={() => navigation.navigate('Settings')}
               showDivider
             />
             <Row
               icon={<ChatIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-              title="Help & support"
+              title={t('profile.rows.helpSupport')}
               onPress={() => navigation.navigate('SupportTab')}
               showDivider
             />
             <Row
               icon={<SosIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-              title="Emergency SOS"
-              sub="Quick access contacts"
+              title={t('profile.rows.emergencySos')}
+              sub={t('profile.emergencySosSub')}
               onPress={() => navigation.navigate('SOS')}
               showDivider
             />
@@ -154,15 +167,13 @@ const ProfileScreen = () => {
               icon={
                 <LogoutIcon size={18} color={Colors.red} strokeWidth={1.8} />
               }
-              title="Log out"
+              title={t('profile.rows.logOut')}
               danger
               onPress={() => navigation.navigate('Logout')}
             />
           </Card>
 
-          <Text style={styles.footerText}>
-            Alo Alo Partner · v 1.0.0 · Marathwada, India
-          </Text>
+          <Text style={styles.footerText}>{t('profile.footer')}</Text>
         </View>
       </ScrollView>
     </View>

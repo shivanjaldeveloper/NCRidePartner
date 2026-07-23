@@ -9,6 +9,7 @@ import {
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -26,20 +27,24 @@ import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
-const SERVICE_AREAS = [
-  'Noida · All sectors',
-  'Delhi NCR',
-  'Gurugram (selected routes)',
-  'Greater Noida',
+const SERVICE_AREA_KEYS = [
+  'vehicle.serviceAreas.noida',
+  'vehicle.serviceAreas.delhiNcr',
+  'vehicle.serviceAreas.gurugram',
+  'vehicle.serviceAreas.greaterNoida',
 ];
 
 const VehicleScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const v = PARTNER_VEHICLES[0];
 
   return (
     <View style={styles.container}>
-      <HeaderBack title="Vehicle details" onBack={() => navigation.goBack()} />
+      <HeaderBack
+        title={t('vehicle.headerTitle')}
+        onBack={() => navigation.goBack()}
+      />
 
       <ScrollView
         style={styles.flex}
@@ -49,7 +54,7 @@ const VehicleScreen = () => {
         <Card pad={0} style={styles.vehicleCard}>
           <View style={styles.vehicleCardGlow} />
           <View style={styles.vehicleCardInner}>
-            <Text style={styles.eyebrow}>Active vehicle</Text>
+            <Text style={styles.eyebrow}>{t('vehicle.activeVehicle')}</Text>
             <Text style={styles.plateNumber}>{v.number}</Text>
             <Text style={styles.vehicleMeta}>
               {v.model} · {v.color} · {v.year}
@@ -91,24 +96,24 @@ const VehicleScreen = () => {
         </Card>
 
         <Card style={styles.infoCard} pad={4}>
-          <Text style={styles.sectionLabel}>Vehicle info</Text>
+          <Text style={styles.sectionLabel}>{t('vehicle.vehicleInfo')}</Text>
           <Row
             icon={<CarIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Type"
+            title={t('vehicle.fields.type')}
             sub={v.type}
             showChevron={false}
             showDivider
           />
           <Row
             icon={<TaxiIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="Service category"
+            title={t('vehicle.fields.serviceCategory')}
             sub={v.service}
             showChevron={false}
             showDivider
           />
           <Row
             icon={<ShieldIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="RC status"
+            title={t('vehicle.fields.rcStatus')}
             sub={v.status}
             showChevron={false}
             showDivider
@@ -117,35 +122,39 @@ const VehicleScreen = () => {
             icon={
               <InvoiceIcon size={18} color={Colors.ink} strokeWidth={1.8} />
             }
-            title="Insurance"
-            sub="Valid till 18 Mar 2027"
+            title={t('vehicle.fields.insurance')}
+            sub={t('vehicle.validTillMar2027')}
             showChevron={false}
             showDivider
           />
           <Row
             icon={<CheckIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-            title="PUC"
-            sub="Valid till 18 Sep 2026"
+            title={t('vehicle.fields.puc')}
+            sub={t('vehicle.validTillSep2026')}
             showChevron={false}
           />
         </Card>
 
         <Card style={styles.areasCard} pad={14}>
-          <Text style={styles.sectionLabel}>Service areas</Text>
-          {SERVICE_AREAS.map((area, i) => (
+          <Text style={styles.sectionLabel}>
+            {t('vehicle.serviceAreasLabel')}
+          </Text>
+          {SERVICE_AREA_KEYS.map((areaKey, i) => (
             <View
-              key={area}
+              key={areaKey}
               style={[styles.areaRow, i > 0 && styles.areaRowBorder]}
             >
               <View style={styles.areaDot} />
-              <Text style={styles.areaText}>{area}</Text>
+              <Text style={styles.areaText}>{t(areaKey)}</Text>
             </View>
           ))}
         </Card>
 
         <TouchableOpacity style={styles.updateButton} activeOpacity={0.8}>
           <EditIcon size={17} color={Colors.ink} strokeWidth={1.8} />
-          <Text style={styles.updateButtonLabel}>Update vehicle details</Text>
+          <Text style={styles.updateButtonLabel}>
+            {t('vehicle.updateVehicleDetails')}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

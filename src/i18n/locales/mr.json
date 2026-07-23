@@ -2,7 +2,8 @@
   "common": {
     "skip": "वगळा",
     "next": "पुढे",
-    "getStarted": "सुरुवात करा"
+    "getStarted": "सुरुवात करा",
+    "sos": "SOS"
   },
   "onboarding": {
     "screen1": {
@@ -320,9 +321,15 @@
   },
   "payouts": {
     "status": {
-      "paid": "पेड",
-      "upcoming": "आगामी"
-    }
+      "verified": "पडताळले",
+      "unverified": "अपडताळित"
+    },
+    "headerTitle": "पेआउट",
+    "headerSub": "साप्ताहिक बँक ट्रान्सफर",
+    "nextPayout": "पुढील पेआउट",
+    "payoutHistory": "पेआउट इतिहास",
+    "primaryBankAccount": "प्राथमिक बँक खाते",
+    "change": "बदला"
   },
   "partnerDocuments": {
     "stepBadge": "पायरी 2 / 2 · ऑनबोर्डिंग",
@@ -412,6 +419,131 @@
         "title": "वाहन फ्रंट फोटो",
         "sub": "पूर्ण समोरचा दृश्य"
       }
+    }
+  },
+  "pickupNav": {
+    "headingToPickup": "पिकअपकडे जात आहे",
+    "etaValue": "ETA · 4 मिनिटे",
+    "away": "{{dist}} दूर",
+    "tripsSuffix": "· {{count}} ट्रिप्स",
+    "pickupLabel": "पिकअप",
+    "arrivedButton": "पिकअपला पोहोचलो"
+  },
+  "vehicle": {
+    "headerTitle": "वाहन तपशील",
+    "activeVehicle": "सक्रिय वाहन",
+    "vehicleInfo": "वाहन माहिती",
+    "fields": {
+      "type": "प्रकार",
+      "serviceCategory": "सेवा श्रेणी",
+      "rcStatus": "RC स्थिती",
+      "insurance": "विमा",
+      "puc": "PUC"
+    },
+    "validTillMar2027": "18 मार्च 2027 पर्यंत वैध",
+    "validTillSep2026": "18 सप्टेंबर 2026 पर्यंत वैध",
+    "serviceAreasLabel": "सेवा क्षेत्रे",
+    "serviceAreas": {
+      "noida": "नोएडा · सर्व सेक्टर",
+      "delhiNcr": "दिल्ली NCR",
+      "gurugram": "गुरुग्राम (निवडक मार्ग)",
+      "greaterNoida": "ग्रेटर नोएडा"
+    },
+    "updateVehicleDetails": "वाहन तपशील अद्ययावत करा"
+  },
+  "tripDetail": {
+    "headerTitle": "ट्रिप तपशील",
+    "earning": "कमाई",
+    "tripInfo": "ट्रिप माहिती",
+    "fields": {
+      "route": "मार्ग",
+      "dateTime": "तारीख आणि वेळ",
+      "vehicle": "वाहन",
+      "passengerRating": "प्रवासी रेटिंग"
+    },
+    "vehicleSub": "UP16 AB 4821 · मारुती स्विफ्ट डिझायर",
+    "passengerRatingSub": "4.8 ★ · प्रिया एस.",
+    "earningsDetail": "कमाईचा तपशील",
+    "grossEarning": "एकूण कमाई",
+    "platformFee": "प्लॅटफॉर्म शुल्क (8%)",
+    "tds": "TDS (1%)",
+    "netEarning": "निव्वळ कमाई",
+    "reportIssue": "समस्येची तक्रार करा",
+    "reportIssueSub": "भाडे वाद, प्रवासी तक्रार"
+  },
+  "profile": {
+    "title": "खाते",
+    "goldPartner": "गोल्ड पार्टनर",
+    "stats": {
+      "rating": "रेटिंग",
+      "trips": "ट्रिप्स",
+      "acceptance": "स्वीकृती"
+    },
+    "rows": {
+      "vehicleDetails": "वाहन तपशील",
+      "documents": "कागदपत्रे",
+      "earnings": "कमाई",
+      "payouts": "पेआउट",
+      "notifications": "नोटिफिकेशन्स",
+      "appSettings": "अ‍ॅप सेटिंग्ज",
+      "helpSupport": "मदत आणि सहाय्य",
+      "emergencySos": "आणीबाणी SOS",
+      "logOut": "लॉग आउट"
+    },
+    "allVerified": "सर्व 7 पडताळले",
+    "earningsSub": "या महिन्यात {{amount}}",
+    "payoutDue": "₹{{amount}} {{date}} रोजी देय",
+    "notificationsSub": "राईड रिक्वेस्ट, अलर्ट",
+    "appSettingsSub": "भाषा, प्राधान्ये",
+    "emergencySosSub": "त्वरित संपर्क",
+    "footer": "Alo Alo Partner · v 1.0.0 · मराठवाडा, भारत"
+  },
+  "support": {
+    "title": "सहाय्य",
+    "emergencySos": "आणीबाणी SOS",
+    "emergencySosSub": "तात्काळ मदत आणि आणीबाणी संपर्कांसाठी टॅप करा",
+    "open": "उघडा",
+    "chatWithSupport": "पार्टनर सपोर्टशी चॅट करा",
+    "chatSub": "सरासरी उत्तर 28 सेकंद · 24×7 पार्टनर मदत",
+    "reportIssue": "समस्येची तक्रार करा",
+    "helpline": "पार्टनर हेल्पलाइन (24×7)",
+    "issues": {
+      "tripFare": {
+        "title": "ट्रिप किंवा भाडे समस्या",
+        "sub": "चुकीचे भाडे, मार्ग किंवा ट्रिप समस्या"
+      },
+      "payment": {
+        "title": "पेमेंट किंवा पेआउट समस्या",
+        "sub": "गहाळ पेआउट किंवा पेमेंट जुळत नाही"
+      },
+      "passengerBehavior": {
+        "title": "प्रवासी वर्तन",
+        "sub": "प्रवाशासंबंधी समस्येची तक्रार करा"
+      },
+      "appTechnical": {
+        "title": "अ‍ॅप किंवा तांत्रिक समस्या",
+        "sub": "बग्स, क्रॅश किंवा अ‍ॅप समस्या"
+      }
+    }
+  },
+  "arrived": {
+    "arrivedAtPickup": "पिकअप पॉइंटवर पोहोचलो",
+    "destination": "गंतव्यस्थान",
+    "destinationMeta": "अंदाजे {{duration}} · {{dist}} · कमाई ₹{{earning}}",
+    "askForOtp": "प्रवाशाकडून OTP मागा",
+    "verifyNote": "ट्रिप सुरू करण्यापूर्वी OTP पडताळा.",
+    "startTrip": "ट्रिप सुरू करा"
+  },
+  "liveTrip": {
+    "eta": "ETA {{duration}}",
+    "estEarning": "अंदाजे कमाई",
+    "passenger": "प्रवासी",
+    "completeTrip": "ट्रिप पूर्ण करा",
+    "steps": {
+      "pickedUp": "पिक अप केले",
+      "onTrip": "ट्रिपवर",
+      "arriving": "पोहोचत आहे",
+      "complete": "पूर्ण"
     }
   }
 }

@@ -1,28 +1,34 @@
 export interface SupportItem {
   icon: 'car' | 'cash' | 'user' | 'settings';
-  title: string;
-  sub: string;
+  id: string;
+  // Point at support.issues.<id>.title/.sub in the locale files.
+  titleKey: string;
+  subKey: string;
 }
 
 export const PARTNER_SUPPORT_ITEMS: SupportItem[] = [
   {
     icon: 'car',
-    title: 'Trip or fare issue',
-    sub: 'Wrong fare, route, or trip problem',
+    id: 'tripFare',
+    titleKey: 'support.issues.tripFare.title',
+    subKey: 'support.issues.tripFare.sub',
   },
   {
     icon: 'cash',
-    title: 'Payment or payout issue',
-    sub: 'Missing payout or payment mismatch',
+    id: 'payment',
+    titleKey: 'support.issues.payment.title',
+    subKey: 'support.issues.payment.sub',
   },
   {
     icon: 'user',
-    title: 'Passenger behavior',
-    sub: 'Report an issue with a passenger',
+    id: 'passengerBehavior',
+    titleKey: 'support.issues.passengerBehavior.title',
+    subKey: 'support.issues.passengerBehavior.sub',
   },
   {
     icon: 'settings',
-    title: 'App or technical issue',
-    sub: 'Bugs, crashes, or app problems',
+    id: 'appTechnical',
+    titleKey: 'support.issues.appTechnical.title',
+    subKey: 'support.issues.appTechnical.sub',
   },
 ];

@@ -2,7 +2,8 @@
   "common": {
     "skip": "Skip",
     "next": "Next",
-    "getStarted": "Get started"
+    "getStarted": "Get started",
+    "sos": "SOS"
   },
   "onboarding": {
     "screen1": {
@@ -320,9 +321,15 @@
   },
   "payouts": {
     "status": {
-      "paid": "Paid",
-      "upcoming": "Upcoming"
-    }
+      "verified": "Verified",
+      "unverified": "Unverified"
+    },
+    "headerTitle": "Payouts",
+    "headerSub": "Weekly bank transfer",
+    "nextPayout": "Next payout",
+    "payoutHistory": "Payout history",
+    "primaryBankAccount": "Primary bank account",
+    "change": "Change"
   },
   "partnerDocuments": {
     "stepBadge": "Step 2 of 2 · Onboarding",
@@ -412,6 +419,131 @@
         "title": "Vehicle Front Photo",
         "sub": "Full front view"
       }
+    }
+  },
+  "pickupNav": {
+    "headingToPickup": "Heading to pickup",
+    "etaValue": "ETA · 4 min",
+    "away": "{{dist}} away",
+    "tripsSuffix": "· {{count}} trips",
+    "pickupLabel": "Pickup",
+    "arrivedButton": "I've Arrived at Pickup"
+  },
+  "vehicle": {
+    "headerTitle": "Vehicle details",
+    "activeVehicle": "Active vehicle",
+    "vehicleInfo": "Vehicle info",
+    "fields": {
+      "type": "Type",
+      "serviceCategory": "Service category",
+      "rcStatus": "RC status",
+      "insurance": "Insurance",
+      "puc": "PUC"
+    },
+    "validTillMar2027": "Valid till 18 Mar 2027",
+    "validTillSep2026": "Valid till 18 Sep 2026",
+    "serviceAreasLabel": "Service areas",
+    "serviceAreas": {
+      "noida": "Noida · All sectors",
+      "delhiNcr": "Delhi NCR",
+      "gurugram": "Gurugram (selected routes)",
+      "greaterNoida": "Greater Noida"
+    },
+    "updateVehicleDetails": "Update vehicle details"
+  },
+  "tripDetail": {
+    "headerTitle": "Trip details",
+    "earning": "Earning",
+    "tripInfo": "Trip info",
+    "fields": {
+      "route": "Route",
+      "dateTime": "Date & time",
+      "vehicle": "Vehicle",
+      "passengerRating": "Passenger rating"
+    },
+    "vehicleSub": "UP16 AB 4821 · Maruti Swift Dzire",
+    "passengerRatingSub": "4.8 ★ · Priya S.",
+    "earningsDetail": "Earnings detail",
+    "grossEarning": "Gross earning",
+    "platformFee": "Platform fee (8%)",
+    "tds": "TDS (1%)",
+    "netEarning": "Net earning",
+    "reportIssue": "Report an issue",
+    "reportIssueSub": "Fare dispute, passenger complaint"
+  },
+  "profile": {
+    "title": "Account",
+    "goldPartner": "GOLD PARTNER",
+    "stats": {
+      "rating": "Rating",
+      "trips": "Trips",
+      "acceptance": "Acceptance"
+    },
+    "rows": {
+      "vehicleDetails": "Vehicle details",
+      "documents": "Documents",
+      "earnings": "Earnings",
+      "payouts": "Payouts",
+      "notifications": "Notifications",
+      "appSettings": "App settings",
+      "helpSupport": "Help & support",
+      "emergencySos": "Emergency SOS",
+      "logOut": "Log out"
+    },
+    "allVerified": "All 7 verified",
+    "earningsSub": "{{amount}} this month",
+    "payoutDue": "₹{{amount}} due {{date}}",
+    "notificationsSub": "Ride requests, alerts",
+    "appSettingsSub": "Language, preferences",
+    "emergencySosSub": "Quick access contacts",
+    "footer": "Alo Alo Partner · v 1.0.0 · Marathwada, India"
+  },
+  "support": {
+    "title": "Support",
+    "emergencySos": "Emergency SOS",
+    "emergencySosSub": "Tap for immediate help & emergency contacts",
+    "open": "Open",
+    "chatWithSupport": "Chat with Partner Support",
+    "chatSub": "Avg reply 28 sec · 24×7 partner help",
+    "reportIssue": "Report an issue",
+    "helpline": "Partner helpline (24×7)",
+    "issues": {
+      "tripFare": {
+        "title": "Trip or fare issue",
+        "sub": "Wrong fare, route, or trip problem"
+      },
+      "payment": {
+        "title": "Payment or payout issue",
+        "sub": "Missing payout or payment mismatch"
+      },
+      "passengerBehavior": {
+        "title": "Passenger behavior",
+        "sub": "Report an issue with a passenger"
+      },
+      "appTechnical": {
+        "title": "App or technical issue",
+        "sub": "Bugs, crashes, or app problems"
+      }
+    }
+  },
+  "arrived": {
+    "arrivedAtPickup": "Arrived at pickup point",
+    "destination": "Destination",
+    "destinationMeta": "Est. {{duration}} · {{dist}} · Earning ₹{{earning}}",
+    "askForOtp": "Ask passenger for OTP",
+    "verifyNote": "Verify OTP before starting the trip.",
+    "startTrip": "Start Trip"
+  },
+  "liveTrip": {
+    "eta": "ETA {{duration}}",
+    "estEarning": "Est. earning",
+    "passenger": "Passenger",
+    "completeTrip": "Complete Trip",
+    "steps": {
+      "pickedUp": "Picked up",
+      "onTrip": "On trip",
+      "arriving": "Arriving",
+      "complete": "Complete"
     }
   }
 }

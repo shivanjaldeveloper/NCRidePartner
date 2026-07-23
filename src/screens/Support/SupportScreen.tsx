@@ -12,6 +12,7 @@ import {
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -44,6 +45,7 @@ const ISSUE_ICONS: Record<
 
 const SupportScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const openSos = () => navigation.navigate('SOS');
   const openChat = () => console.log('TODO: open live chat');
 
@@ -55,7 +57,7 @@ const SupportScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Support</Text>
+          <Text style={styles.title}>{t('support.title')}</Text>
         </View>
 
         <View style={styles.body}>
@@ -65,13 +67,13 @@ const SupportScreen = () => {
                 <SosIcon size={24} color="#FFFFFF" strokeWidth={2.2} />
               </View>
               <View style={styles.sosTextWrap}>
-                <Text style={styles.sosTitle}>Emergency SOS</Text>
+                <Text style={styles.sosTitle}>{t('support.emergencySos')}</Text>
                 <Text style={styles.sosSub}>
-                  Tap for immediate help & emergency contacts
+                  {t('support.emergencySosSub')}
                 </Text>
               </View>
               <TouchableOpacity style={styles.sosButton} onPress={openSos}>
-                <Text style={styles.sosButtonLabel}>Open</Text>
+                <Text style={styles.sosButtonLabel}>{t('support.open')}</Text>
               </TouchableOpacity>
             </View>
           </Card>
@@ -84,11 +86,9 @@ const SupportScreen = () => {
                 </View>
                 <View style={styles.chatTextWrap}>
                   <Text style={styles.chatTitle}>
-                    Chat with Partner Support
+                    {t('support.chatWithSupport')}
                   </Text>
-                  <Text style={styles.chatSub}>
-                    Avg reply 28 sec · 24×7 partner help
-                  </Text>
+                  <Text style={styles.chatSub}>{t('support.chatSub')}</Text>
                 </View>
                 <ChevronRightIcon
                   size={18}
@@ -99,13 +99,13 @@ const SupportScreen = () => {
             </Card>
           </TouchableOpacity>
 
-          <Text style={styles.sectionLabel}>Report an issue</Text>
+          <Text style={styles.sectionLabel}>{t('support.reportIssue')}</Text>
           <Card pad={4}>
             {PARTNER_SUPPORT_ITEMS.map((item, i) => {
               const IconComponent = ISSUE_ICONS[item.icon];
               return (
                 <TouchableOpacity
-                  key={item.title}
+                  key={item.id}
                   activeOpacity={0.7}
                   style={[
                     styles.issueRow,
@@ -121,8 +121,8 @@ const SupportScreen = () => {
                     />
                   </View>
                   <View style={styles.issueTextWrap}>
-                    <Text style={styles.issueTitle}>{item.title}</Text>
-                    <Text style={styles.issueSub}>{item.sub}</Text>
+                    <Text style={styles.issueTitle}>{t(item.titleKey)}</Text>
+                    <Text style={styles.issueSub}>{t(item.subKey)}</Text>
                   </View>
                   <ChevronRightIcon
                     size={16}
@@ -135,7 +135,7 @@ const SupportScreen = () => {
           </Card>
 
           <View style={styles.helplineBox}>
-            <Text style={styles.helplineLabel}>Partner helpline (24×7)</Text>
+            <Text style={styles.helplineLabel}>{t('support.helpline')}</Text>
             <Text style={styles.helplineNumber}>1800 200 ALO-P</Text>
           </View>
         </View>

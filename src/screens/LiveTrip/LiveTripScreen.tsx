@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -19,17 +20,25 @@ import { RootStackParamList } from '../../navigation/types';
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'LiveTrip'>;
 
 const MAP_HEIGHT_RATIO = 0.6;
-const STEPS = ['Picked up', 'On trip', 'Arriving', 'Complete'];
+// id is the stable identity for the key prop; labelKey resolves through the
+// active language at render time.
+const STEPS = [
+  { id: 'pickedUp', labelKey: 'liveTrip.steps.pickedUp' },
+  { id: 'onTrip', labelKey: 'liveTrip.steps.onTrip' },
+  { id: 'arriving', labelKey: 'liveTrip.steps.arriving' },
+  { id: 'complete', labelKey: 'liveTrip.steps.complete' },
+];
 const ACTIVE_STEP_INDEX = 1; // trip is in progress — "On trip" is current
 
 const LiveTripScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setElapsed(v => v + 1), 1000);
-    return () => clearInterval(t);
+    const interval = setInterval(() => setElapsed(v => v + 1), 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const minutes = Math.floor(elapsed / 60);
@@ -43,7 +52,7 @@ const LiveTripScreen = () => {
 
       <TouchableOpacity style={styles.sosButton}>
         <SosIcon size={14} color="#FFFFFF" strokeWidth={2} />
-        <Text style={styles.sosLabel}>SOS</Text>
+        <Text style={styles.sosLabel}>{t('common.sos')}</Text>
       </TouchableOpacity>
 
       <View style={styles.timerBadge}>
@@ -58,18 +67,22 @@ const LiveTripScreen = () => {
           <View style={styles.destinationStrip}>
             <View style={styles.destinationDot} />
             <View style={styles.destinationTextWrap}>
-              <Text style={styles.destinationEyebrow}>Destination</Text>
+              <Text style={styles.destinationEyebrow}>
+                {t('arrived.destination')}
+              </Text>
               <Text style={styles.destinationValue}>{req.drop}</Text>
             </View>
             <View style={styles.destinationEtaWrap}>
-              <Text style={styles.destinationEta}>ETA {req.duration}</Text>
+              <Text style={styles.destinationEta}>
+                {t('liveTrip.eta', { duration: req.duration })}
+              </Text>
               <Text style={styles.destinationDist}>{req.tripDist}</Text>
             </View>
           </View>
 
           <View style={styles.progressRow}>
             {STEPS.map((step, i) => (
-              <React.Fragment key={step}>
+              <React.Fragment key={step.id}>
                 <View style={styles.progressStep}>
                   <View
                     style={[
@@ -99,7 +112,7 @@ const LiveTripScreen = () => {
                       },
                     ]}
                   >
-                    {step}
+                    {t(step.labelKey)}
                   </Text>
                 </View>
                 {i < STEPS.length - 1 && (
@@ -124,20 +137,24 @@ const LiveTripScreen = () => {
               <CashIcon size={16} color={Colors.ink} strokeWidth={1.8} />
               <View>
                 <Text style={styles.earningsValue}>₹{req.earning}</Text>
-                <Text style={styles.earningsLabel}>Est. earning</Text>
+                <Text style={styles.earningsLabel}>
+                  {t('liveTrip.estEarning')}
+                </Text>
               </View>
             </View>
             <View style={styles.earningsBox}>
               <StarFillIcon size={16} color={Colors.amber} />
               <View>
                 <Text style={styles.earningsValue}>{req.passengerRating}</Text>
-                <Text style={styles.earningsLabel}>Passenger</Text>
+                <Text style={styles.earningsLabel}>
+                  {t('liveTrip.passenger')}
+                </Text>
               </View>
             </View>
           </View>
 
           <PrimaryButton
-            label="Complete Trip"
+            label={t('liveTrip.completeTrip')}
             onPress={() => navigation.navigate('TripEarnings')}
             icon="check"
             style={styles.fullButton}

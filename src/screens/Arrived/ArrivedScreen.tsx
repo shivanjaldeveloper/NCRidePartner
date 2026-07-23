@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -30,6 +31,7 @@ const MAP_HEIGHT = 180;
 
 const ArrivedScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const otpRefs = useRef<Array<TextInput | null>>([]);
@@ -61,7 +63,7 @@ const ArrivedScreen = () => {
         <RouteMapIllustration />
         <View style={styles.arrivedBadge}>
           <View style={styles.arrivedDot} />
-          <Text style={styles.arrivedText}>Arrived at pickup point</Text>
+          <Text style={styles.arrivedText}>{t('arrived.arrivedAtPickup')}</Text>
         </View>
       </View>
 
@@ -86,7 +88,7 @@ const ArrivedScreen = () => {
               <View style={styles.passengerMetaRow}>
                 <RatingStars value={req.passengerRating} />
                 <Text style={styles.passengerMetaText}>
-                  · {req.passengerTrips} trips
+                  {t('pickupNav.tripsSuffix', { count: req.passengerTrips })}
                 </Text>
               </View>
             </View>
@@ -96,16 +98,22 @@ const ArrivedScreen = () => {
           </View>
 
           <View style={styles.destinationBox}>
-            <Text style={styles.destinationEyebrow}>Destination</Text>
+            <Text style={styles.destinationEyebrow}>
+              {t('arrived.destination')}
+            </Text>
             <Text style={styles.destinationValue}>{req.drop}</Text>
             <Text style={styles.destinationMeta}>
-              Est. {req.duration} · {req.tripDist} · Earning ₹{req.earning}
+              {t('arrived.destinationMeta', {
+                duration: req.duration,
+                dist: req.tripDist,
+                earning: req.earning,
+              })}
             </Text>
           </View>
         </Card>
 
         <View style={styles.otpSection}>
-          <Text style={styles.otpLabel}>Ask passenger for OTP</Text>
+          <Text style={styles.otpLabel}>{t('arrived.askForOtp')}</Text>
           <View style={styles.otpRow}>
             {otp.map((digit, i) => (
               <TextInput
@@ -113,7 +121,7 @@ const ArrivedScreen = () => {
                 ref={ref => (otpRefs.current[i] = ref)}
                 style={styles.otpBox}
                 value={digit}
-                onChangeText={t => handleOtpChange(t, i)}
+                onChangeText={val => handleOtpChange(val, i)}
                 onKeyPress={e => handleKeyPress(e, i)}
                 keyboardType="number-pad"
                 maxLength={1}
@@ -123,16 +131,14 @@ const ArrivedScreen = () => {
           </View>
           <View style={styles.verifyNote}>
             <ShieldIcon size={15} color={Colors.blue} strokeWidth={1.8} />
-            <Text style={styles.verifyNoteText}>
-              Verify OTP before starting the trip.
-            </Text>
+            <Text style={styles.verifyNoteText}>{t('arrived.verifyNote')}</Text>
           </View>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
         <PrimaryButton
-          label="Start Trip"
+          label={t('arrived.startTrip')}
           onPress={() => navigation.navigate('LiveTrip')}
           icon="arrowRight"
           disabled={!isOtpComplete}

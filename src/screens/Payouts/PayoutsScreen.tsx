@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -16,13 +17,18 @@ import HeaderBack from '../../components/common/HeaderBack';
 import ClockIcon from '../../assets/icons/ClockIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import CashIcon from '../../assets/icons/CashIcon';
-import { PARTNER_PAYOUTS, PARTNER_BANK_ACCOUNT } from '../Home/mockHomeData';
+import {
+  PARTNER_PAYOUTS,
+  PARTNER_BANK_ACCOUNT,
+  payoutStatusKey,
+} from '../Home/mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 const PayoutsScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const payouts = PARTNER_PAYOUTS;
   const next = payouts[0];
   const bank = PARTNER_BANK_ACCOUNT;
@@ -30,8 +36,8 @@ const PayoutsScreen = () => {
   return (
     <View style={styles.container}>
       <HeaderBack
-        title="Payouts"
-        sub="Weekly bank transfer"
+        title={t('payouts.headerTitle')}
+        sub={t('payouts.headerSub')}
         onBack={() => navigation.goBack()}
       />
 
@@ -43,7 +49,7 @@ const PayoutsScreen = () => {
         <Card pad={0} style={styles.nextCard}>
           <View style={styles.nextCardGlow} />
           <View style={styles.nextCardInner}>
-            <Text style={styles.eyebrow}>Next payout</Text>
+            <Text style={styles.eyebrow}>{t('payouts.nextPayout')}</Text>
             <Text style={styles.nextAmount}>
               ₹{next.amount.toLocaleString('en-IN')}
             </Text>
@@ -59,7 +65,7 @@ const PayoutsScreen = () => {
           </View>
         </Card>
 
-        <Text style={styles.sectionLabel}>Payout history</Text>
+        <Text style={styles.sectionLabel}>{t('payouts.payoutHistory')}</Text>
         <View style={styles.historyList}>
           {payouts.map(p => (
             <Card key={p.id} pad={14}>
@@ -114,7 +120,7 @@ const PayoutsScreen = () => {
                       },
                     ]}
                   >
-                    {p.status}
+                    {t(payoutStatusKey(p.status))}
                   </Text>
                 </View>
               </View>
@@ -130,12 +136,16 @@ const PayoutsScreen = () => {
                 {bank.bankName} {bank.maskedNumber}
               </Text>
               <Text style={styles.bankSub}>
-                Primary bank account ·{' '}
-                {bank.verified ? 'Verified' : 'Unverified'}
+                {t('payouts.primaryBankAccount')} ·{' '}
+                {bank.verified
+                  ? t('payouts.status.verified')
+                  : t('payouts.status.unverified')}
               </Text>
             </View>
             <TouchableOpacity style={styles.changeButton}>
-              <Text style={styles.changeButtonLabel}>Change</Text>
+              <Text style={styles.changeButtonLabel}>
+                {t('payouts.change')}
+              </Text>
             </TouchableOpacity>
           </View>
         </Card>

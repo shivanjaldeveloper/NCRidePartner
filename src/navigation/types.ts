@@ -18,6 +18,12 @@ export type RootStackParamList = {
   Login: undefined;
   TermsUpdate: undefined;
   BuyCredit: undefined;
+  Payment: {
+    planId: string;
+    planName: string;
+    planTime: number;
+    planRate: string;
+  };
   BasicDetails: undefined;
   PartnerDocuments: undefined;
   ApplicationProcessing: undefined;

@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -20,7 +20,6 @@ import CheckIcon from '../../assets/icons/CheckIcon';
 import { RootStackParamList } from '../../navigation/types';
 import { getCookie } from '../../utils/session';
 import {
-  activateCreditDemo,
   getActiveCredit,
   formatTimeLeft,
   ActiveCredit,
@@ -45,7 +44,6 @@ const BuyCreditScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [buyingId, setBuyingId] = useState<string | null>(null);
   const [justActivated, setJustActivated] = useState<PartnerPlan | null>(null);
 
   const loadPlans = useCallback(async (isRefresh = false) => {
@@ -74,9 +72,20 @@ const BuyCreditScreen = () => {
   }, []);
 
   useEffect(() => {
-    getActiveCredit().then(setActive);
     loadPlans();
   }, [loadPlans]);
+
+  useFocusEffect(
+    useCallback(() => {
+      getActiveCredit().then(result => {
+        setActive(result);
+        if (result) {
+          const matched = plans.find(p => p.PlanTransaction === result.planId);
+          if (matched) setJustActivated(matched);
+        }
+      });
+    }, [plans]),
+  );
 
   const bestValueId = useMemo(() => {
     if (!plans.length) return null;
@@ -85,24 +94,13 @@ const BuyCreditScreen = () => {
     ).PlanTransaction;
   }, [plans]);
 
-  const handleBuy = async (plan: PartnerPlan) => {
-    if (buyingId) return;
-    setBuyingId(plan.PlanTransaction);
-    try {
-      // DEMO: PartnerPlanList only lists plans — there's no confirmed
-      // purchase/payment endpoint yet, so this just activates the window
-      // locally, same as before. Swap this for a real "buy" API call once
-      // one exists; the plan's PlanTransaction id is already threaded
-      // through and ready to send.
-      const result = await activateCreditDemo(
-        plan.PlanTransaction,
-        Number(plan.PlanTime),
-      );
-      setActive(result);
-      setJustActivated(plan);
-    } finally {
-      setBuyingId(null);
-    }
+  const handleBuy = (plan: PartnerPlan) => {
+    navigation.navigate('Payment', {
+      planId: plan.PlanTransaction,
+      planName: plan.PlanName,
+      planTime: Number(plan.PlanTime),
+      planRate: plan.PlanRate,
+    });
   };
 
   return (
@@ -178,7 +176,6 @@ const BuyCreditScreen = () => {
           !error &&
           plans.map(plan => {
             const isActivePlan = active?.planId === plan.PlanTransaction;
-            const isBuying = buyingId === plan.PlanTransaction;
             const isBestValue = plan.PlanTransaction === bestValueId;
             const rate = ratePerHour(plan);
 
@@ -227,18 +224,11 @@ const BuyCreditScreen = () => {
                 <View style={styles.planPriceRow}>
                   <Text style={styles.planPrice}>₹{plan.PlanRate}</Text>
                   <TouchableOpacity
-                    style={[
-                      styles.buyButton,
-                      (isBuying || (buyingId && !isBuying)) &&
-                        styles.buyButtonDisabled,
-                    ]}
+                    style={styles.buyButton}
                     activeOpacity={0.85}
-                    disabled={!!buyingId}
                     onPress={() => handleBuy(plan)}
                   >
-                    <Text style={styles.buyButtonText}>
-                      {isBuying ? 'Activating…' : 'Buy Now'}
-                    </Text>
+                    <Text style={styles.buyButtonText}>Buy Now</Text>
                   </TouchableOpacity>
                 </View>
               </Card>
@@ -248,7 +238,8 @@ const BuyCreditScreen = () => {
         {!loading && !error && plans.length > 0 && (
           <Text style={styles.footNote}>
             Prices and hours shown are live from your region's active plans.
-            Payment on tap is a demo activation until the billing API is ready.
+            Checkout opens in test mode until the billing API is ready — no real
+            money moves.
           </Text>
         )}
       </ScrollView>

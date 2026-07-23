@@ -20,6 +20,7 @@ import VerificationScreen from '../screens/Verification/VerificationScreen';
 import TabNavigator from './TabNavigator';
 import VehicleScreen from '../screens/Vehicle/VehicleScreen';
 import BuyCreditScreen from '../screens/Credit/BuyCreditScreen';
+import PaymentScreen from '../screens/payment/PaymentScreen';
 import PayoutsScreen from '../screens/Payouts/PayoutsScreen';
 import WalletScreen from '../screens/Wallet/WalletScreen';
 import TripDetailScreen from '../screens/TripDetail/TripDetailScreen';
@@ -69,6 +70,11 @@ const RootNavigator = () => {
         <Stack.Screen
           name="BuyCredit"
           component={BuyCreditScreen}
+          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="Payment"
+          component={PaymentScreen}
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />
         <Stack.Screen name="Payouts" component={PayoutsScreen} />
