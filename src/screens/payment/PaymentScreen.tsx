@@ -1,25 +1,26 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
-  TextInput,
   Animated,
   Easing,
-  Platform,
-  KeyboardAvoidingView,
   StatusBar,
+  Modal,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import RazorpayCheckout from 'react-native-razorpay';
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale, safeLineHeight } from '../../theme/scale';
 import { RootStackParamList } from '../../navigation/types';
 import { activateCreditDemo } from '../../utils/credit';
-import SegmentedTabs from '../../components/common/SegmentedTabs';
-import ToggleSwitch from '../../components/common/ToggleSwitch';
+import { RAZORPAY_KEY_ID } from '../../constants/razorpay';
+import { createRazorpayOrder_DEV_ONLY } from '../../services/api/razorpayOrderService';
+import { getCookie } from '../../utils/session';
+import { getProfile } from '../../services/api/authService';
+import Card from '../../components/common/Card';
 import Spinner from '../../components/common/Spinner';
 import WheelLogoIcon from '../../assets/icons/WheelLogoIcon';
 import CloseIcon from '../../assets/icons/CloseIcon';
@@ -29,61 +30,20 @@ import UpiIcon from '../../assets/icons/UpiIcon';
 import CardIcon from '../../assets/icons/CardIcon';
 import BankIcon from '../../assets/icons/BankIcon';
 import WalletIcon from '../../assets/icons/WalletIcon';
-import ChevronRightIcon from '../../assets/icons/ChevronRightIcon';
+import ClockIcon from '../../assets/icons/ClockIcon';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Payment'>;
 type Route = RouteProp<RootStackParamList, 'Payment'>;
 
-type Method = 'upi' | 'card' | 'netbanking' | 'wallet';
 type Stage = 'form' | 'processing' | 'success';
-
-const UPI_APPS = [
-  { id: 'gpay', label: 'Google Pay', tint: '#EAF2FF', fg: Colors.blue },
-  { id: 'phonepe', label: 'PhonePe', tint: '#F1E9FF', fg: '#5F259F' },
-  { id: 'paytm', label: 'Paytm', tint: '#E7F1FF', fg: '#00253C' },
-];
-
-const BANKS = ['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank'];
-
-const WALLETS = [
-  { id: 'paytm', label: 'Paytm Wallet' },
-  { id: 'amazonpay', label: 'Amazon Pay' },
-  { id: 'mobikwik', label: 'MobiKwik' },
-];
-
-// Groups digits as "1234 5678 9012 3456" as the user types.
-const formatCardNumber = (v: string) =>
-  v
-    .replace(/[^0-9]/g, '')
-    .slice(0, 16)
-    .replace(/(.{4})/g, '$1 ')
-    .trim();
-
-const formatExpiry = (v: string) => {
-  const digits = v.replace(/[^0-9]/g, '').slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-};
 
 const PaymentScreen = () => {
   const navigation = useNavigation<NavProp>();
   const { params } = useRoute<Route>();
   const { planId, planName, planTime, planRate } = params;
 
-  const [method, setMethod] = useState<Method>('upi');
   const [stage, setStage] = useState<Stage>('form');
-
-  const [selectedUpiApp, setSelectedUpiApp] = useState<string | null>(null);
-  const [upiId, setUpiId] = useState('');
-
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [saveCard, setSaveCard] = useState(true);
-
-  const [selectedBank, setSelectedBank] = useState<string | null>(null);
-  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
 
   const successScale = useRef(new Animated.Value(0)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -95,60 +55,143 @@ const PaymentScreen = () => {
         duration: 220,
         useNativeDriver: true,
       }).start();
+    } else {
+      overlayOpacity.setValue(0);
     }
   }, [stage, overlayOpacity]);
 
   useEffect(() => {
     if (stage !== 'success') return;
-    Animated.sequence([
-      Animated.timing(successScale, {
-        toValue: 1,
-        duration: 380,
-        easing: Easing.out(Easing.back(1.6)),
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(successScale, {
+      toValue: 1,
+      duration: 380,
+      easing: Easing.out(Easing.back(1.6)),
+      useNativeDriver: true,
+    }).start();
 
     const timer = setTimeout(() => {
-      navigation.goBack();
+      navigation.navigate('MainTabs');
     }, 1300);
     return () => clearTimeout(timer);
   }, [stage, successScale, navigation]);
 
-  const isValid = useMemo(() => {
-    if (method === 'upi') {
-      return !!selectedUpiApp || upiId.includes('@');
-    }
-    if (method === 'card') {
-      return (
-        cardNumber.replace(/\s/g, '').length >= 12 &&
-        cardExpiry.length === 5 &&
-        cardCvv.length >= 3
+  const handlePay = async () => {
+    if (stage !== 'form') return;
+    setPayError(null);
+    setStage('processing');
+
+    try {
+      // Best-effort partner details for the order notes — falls back
+      // quietly if the profile call fails or fields are missing, since a
+      // failed profile lookup shouldn't block a test payment.
+      let partnerName = 'Partner';
+      let partnerMobile = 'NA';
+      try {
+        const cookie = await getCookie();
+        if (cookie) {
+          const profile = await getProfile(cookie);
+          partnerName = profile?.Name || profile?.Username || partnerName;
+          partnerMobile = profile?.Mobile || profile?.Username || partnerMobile;
+        }
+      } catch {
+        // ignore — order still goes through with the fallback values above
+      }
+
+      // Step 1: create the order. DEV-ONLY — see razorpayOrderService.ts
+      // banner. Swap createRazorpayOrder_DEV_ONLY for your backend's real
+      // "create order" endpoint once it exists; nothing below this line
+      // needs to change.
+      let order;
+      try {
+        order = await createRazorpayOrder_DEV_ONLY({
+          amountRupees: planRate,
+          // Razorpay caps `receipt` at 40 chars — planId can be long
+          // (GUID-style), so keep only its last 8 chars plus a base36
+          // timestamp instead of concatenating everything raw.
+          receipt: `P${Date.now().toString(36)}${planId.slice(-8)}`,
+          notes: {
+            'Partner Mobile Number': partnerMobile,
+            'Partner Name': partnerName,
+            // TODO: swap for the real partner reference field once
+            // confirmed with the backend team — Username is a placeholder.
+            'Partner Tran': partnerName,
+            'Plan Name': planName,
+          },
+        });
+      } catch (e: any) {
+        throw new Error(`[create-order] ${e?.message || e}`);
+      }
+
+      // Step 2: real Razorpay Checkout, pinned to that order — this is
+      // what stops a client from paying a different amount than the
+      // server actually requested.
+      let result;
+      try {
+        result = await RazorpayCheckout.open({
+          key: RAZORPAY_KEY_ID,
+          order_id: order.id,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'NCRide Partner',
+          description: `${planName} · ${planTime} hr credit`,
+          theme: { color: Colors.ink },
+          prefill: {
+            name: partnerName,
+            contact: partnerMobile !== 'NA' ? partnerMobile : undefined,
+          },
+        });
+      } catch (e: any) {
+        throw new Error(
+          `[checkout] ${e?.description || e?.message || 'cancelled'}`,
+        );
+      }
+
+      // Step 3: verify. DEV-ONLY stub — this just trusts Checkout's
+      // result for now. Real verification means recomputing
+      // HMAC-SHA256 of `${razorpay_order_id}|${razorpay_payment_id}`
+      // using the key SECRET and comparing it to razorpay_signature,
+      // which can only be done safely on a server (it needs the
+      // secret). Once the backend exposes a verify endpoint, replace
+      // the line below with a call to it, e.g.:
+      //   const res = await postAuthForm('VerifyRazorpayPayment', {
+      //     cookie,
+      //     razorpay_order_id: result.razorpay_order_id,
+      //     razorpay_payment_id: result.razorpay_payment_id,
+      //     razorpay_signature: result.razorpay_signature,
+      //     planTransaction: planId,
+      //   }, API_PLANS_BASE_URL);
+      //   const verified = res.Result === 'Success';
+      try {
+        const verified = !!result?.razorpay_payment_id;
+        if (!verified) throw new Error('no payment id returned');
+      } catch (e: any) {
+        throw new Error(`[verify] ${e?.message || e}`);
+      }
+
+      // DEMO: activates the credit window locally, same as before — swap
+      // for whatever your backend does once payment is verified there.
+      try {
+        await activateCreditDemo(planId, planTime);
+      } catch (e: any) {
+        throw new Error(`[activate] ${e?.message || e}`);
+      }
+
+      setStage('success');
+    } catch (err: any) {
+      setStage('form');
+      // Log the raw error so it shows up in Metro/logcat/Xcode console —
+      // the message shown to the user is intentionally generic, but this
+      // is what actually tells us why it failed.
+      console.warn('[Razorpay] payment flow failed:', err?.message, err?.stack);
+      const code = err?.code;
+      const description =
+        err?.description || err?.error?.description || err?.message;
+      setPayError(
+        description
+          ? `${description}${code ? ` (code ${code})` : ''}`
+          : 'Payment was cancelled or could not be completed.',
       );
     }
-    if (method === 'netbanking') return !!selectedBank;
-    return !!selectedWallet;
-  }, [
-    method,
-    selectedUpiApp,
-    upiId,
-    cardNumber,
-    cardExpiry,
-    cardCvv,
-    selectedBank,
-    selectedWallet,
-  ]);
-
-  const handlePay = async () => {
-    if (!isValid || stage !== 'form') return;
-    setStage('processing');
-    // TEST MODE — simulates the Razorpay test-card/UPI success flow. Swap
-    // this timeout + activateCreditDemo() for a real order-create + verify
-    // call once a payment/billing API exists; the plan id and hours are
-    // already threaded through and ready to send.
-    await new Promise(resolve => setTimeout(resolve, 1600));
-    await activateCreditDemo(planId, planTime);
-    setStage('success');
   };
 
   const handleClose = () => {
@@ -170,7 +213,7 @@ const PaymentScreen = () => {
               <Text style={styles.merchantName}>NCRide Partner</Text>
               <View style={styles.trustedRow}>
                 <ShieldIcon size={11} color={Colors.lime} strokeWidth={2} />
-                <Text style={styles.trustedText}>Trusted Business</Text>
+                <Text style={styles.trustedText}>Secured by Razorpay</Text>
               </View>
             </View>
           </View>
@@ -193,268 +236,93 @@ const PaymentScreen = () => {
 
         <Text style={styles.amountLabel}>Amount payable</Text>
         <Text style={styles.amountValue}>₹{planRate}</Text>
-        <Text style={styles.planSub}>
-          {planName} · {planTime} hr{planTime === 1 ? '' : 's'} credit
-        </Text>
       </View>
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={vscale(20)}
-      >
-        <View style={styles.sheet}>
-          <View style={styles.tabsWrap}>
-            <SegmentedTabs
-              options={[
-                { id: 'upi', label: 'UPI' },
-                { id: 'card', label: 'Cards' },
-                { id: 'netbanking', label: 'Netbanking' },
-                { id: 'wallet', label: 'Wallet' },
-              ]}
-              value={method}
-              onChange={id => setMethod(id as Method)}
-            />
-          </View>
-
-          <ScrollView
-            style={styles.flex}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {method === 'upi' && (
-              <View>
-                <Text style={styles.groupLabel}>Pay via UPI app</Text>
-                {UPI_APPS.map(app => {
-                  const active = selectedUpiApp === app.id;
-                  return (
-                    <TouchableOpacity
-                      key={app.id}
-                      activeOpacity={0.75}
-                      style={[
-                        styles.optionRow,
-                        active && styles.optionRowActive,
-                      ]}
-                      onPress={() => {
-                        setSelectedUpiApp(app.id);
-                        setUpiId('');
-                      }}
-                    >
-                      <View
-                        style={[
-                          styles.optionIconWrap,
-                          { backgroundColor: app.tint },
-                        ]}
-                      >
-                        <UpiIcon size={16} color={app.fg} strokeWidth={2} />
-                      </View>
-                      <Text style={styles.optionLabel}>{app.label}</Text>
-                      <View
-                        style={[
-                          styles.radioOuter,
-                          active && styles.radioOuterActive,
-                        ]}
-                      >
-                        {active && <View style={styles.radioInner} />}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-
-                <Text style={[styles.groupLabel, styles.groupLabelSpaced]}>
-                  Or enter UPI ID
-                </Text>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="yourname@upi"
-                    placeholderTextColor={Colors.mute2}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    value={upiId}
-                    onChangeText={v => {
-                      setUpiId(v);
-                      setSelectedUpiApp(null);
-                    }}
-                  />
-                </View>
-                <Text style={styles.hintText}>
-                  Test mode: any value with "@" works, e.g. success@upi
-                </Text>
-              </View>
-            )}
-
-            {method === 'card' && (
-              <View>
-                <Text style={styles.groupLabel}>Card details</Text>
-                <View style={styles.inputRow}>
-                  <CardIcon size={16} color={Colors.mute} strokeWidth={1.8} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Card number"
-                    placeholderTextColor={Colors.mute2}
-                    keyboardType="number-pad"
-                    value={cardNumber}
-                    onChangeText={v => setCardNumber(formatCardNumber(v))}
-                    maxLength={19}
-                  />
-                </View>
-                <View style={styles.rowGap}>
-                  <View style={[styles.inputRow, styles.inputHalf]}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="MM/YY"
-                      placeholderTextColor={Colors.mute2}
-                      keyboardType="number-pad"
-                      value={cardExpiry}
-                      onChangeText={v => setCardExpiry(formatExpiry(v))}
-                      maxLength={5}
-                    />
-                  </View>
-                  <View style={[styles.inputRow, styles.inputHalf]}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="CVV"
-                      placeholderTextColor={Colors.mute2}
-                      keyboardType="number-pad"
-                      secureTextEntry
-                      value={cardCvv}
-                      onChangeText={v =>
-                        setCardCvv(v.replace(/[^0-9]/g, '').slice(0, 3))
-                      }
-                      maxLength={3}
-                    />
-                  </View>
-                </View>
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Name on card"
-                    placeholderTextColor={Colors.mute2}
-                    value={cardName}
-                    onChangeText={setCardName}
-                  />
-                </View>
-
-                <View style={styles.saveCardRow}>
-                  <Text style={styles.saveCardText}>Save card for later</Text>
-                  <ToggleSwitch value={saveCard} onChange={setSaveCard} />
-                </View>
-                <Text style={styles.hintText}>
-                  Test mode: any 12+ digit number, future expiry &amp; any CVV
-                  works
-                </Text>
-              </View>
-            )}
-
-            {method === 'netbanking' && (
-              <View>
-                <Text style={styles.groupLabel}>Select your bank</Text>
-                {BANKS.map(bank => {
-                  const active = selectedBank === bank;
-                  return (
-                    <TouchableOpacity
-                      key={bank}
-                      activeOpacity={0.75}
-                      style={[
-                        styles.optionRow,
-                        active && styles.optionRowActive,
-                      ]}
-                      onPress={() => setSelectedBank(bank)}
-                    >
-                      <View style={styles.optionIconWrap}>
-                        <BankIcon
-                          size={16}
-                          color={Colors.ink}
-                          strokeWidth={1.8}
-                        />
-                      </View>
-                      <Text style={styles.optionLabel}>{bank}</Text>
-                      <View
-                        style={[
-                          styles.radioOuter,
-                          active && styles.radioOuterActive,
-                        ]}
-                      >
-                        {active && <View style={styles.radioInner} />}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
-
-            {method === 'wallet' && (
-              <View>
-                <Text style={styles.groupLabel}>Pay via wallet</Text>
-                {WALLETS.map(w => {
-                  const active = selectedWallet === w.id;
-                  return (
-                    <TouchableOpacity
-                      key={w.id}
-                      activeOpacity={0.75}
-                      style={[
-                        styles.optionRow,
-                        active && styles.optionRowActive,
-                      ]}
-                      onPress={() => setSelectedWallet(w.id)}
-                    >
-                      <View style={styles.optionIconWrap}>
-                        <WalletIcon
-                          size={16}
-                          color={Colors.ink}
-                          strokeWidth={1.8}
-                        />
-                      </View>
-                      <Text style={styles.optionLabel}>{w.label}</Text>
-                      <View
-                        style={[
-                          styles.radioOuter,
-                          active && styles.radioOuterActive,
-                        ]}
-                      >
-                        {active && <View style={styles.radioInner} />}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
-          </ScrollView>
-
-          <View style={styles.footer}>
-            <View style={styles.secureRow}>
-              <ShieldIcon size={12} color={Colors.mute2} strokeWidth={2} />
-              <Text style={styles.secureText}>
-                100% secure payments · test checkout
+      <View style={styles.sheet}>
+        <Card pad={16} style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryIconWrap}>
+              <ClockIcon size={16} color={Colors.ink} strokeWidth={1.8} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.summaryTitle}>{planName}</Text>
+              <Text style={styles.summarySub}>
+                {planTime} hr{planTime === 1 ? '' : 's'} of ride credit
               </Text>
             </View>
-            <TouchableOpacity
-              style={[styles.payButton, !isValid && styles.payButtonDisabled]}
-              activeOpacity={0.88}
-              disabled={!isValid}
-              onPress={handlePay}
-            >
-              <Text style={styles.payButtonText}>Pay ₹{planRate}</Text>
-              <ChevronRightIcon size={16} color="#FFFFFF" strokeWidth={2.4} />
-            </TouchableOpacity>
+            <Text style={styles.summaryAmount}>₹{planRate}</Text>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </Card>
 
-      {stage !== 'form' && (
-        <Animated.View
-          style={[styles.overlay, { opacity: overlayOpacity }]}
-          pointerEvents="auto"
-        >
-          <View style={styles.overlayCard}>
+        <Text style={styles.methodsLabel}>
+          All major payment methods supported
+        </Text>
+        <View style={styles.methodsRow}>
+          <View style={styles.methodIconWrap}>
+            <UpiIcon size={16} color={Colors.ink} strokeWidth={1.8} />
+          </View>
+          <View style={styles.methodIconWrap}>
+            <CardIcon size={16} color={Colors.ink} strokeWidth={1.8} />
+          </View>
+          <View style={styles.methodIconWrap}>
+            <BankIcon size={16} color={Colors.ink} strokeWidth={1.8} />
+          </View>
+          <View style={styles.methodIconWrap}>
+            <WalletIcon size={16} color={Colors.ink} strokeWidth={1.8} />
+          </View>
+          <Text style={styles.methodsCaption}>
+            UPI · Cards · Netbanking · Wallets
+          </Text>
+        </View>
+
+        <View style={styles.secureNote}>
+          <ShieldIcon size={14} color={Colors.mute} strokeWidth={1.8} />
+          <Text style={styles.secureNoteText}>
+            You'll complete this payment on Razorpay's secure checkout using the
+            account's Test Mode keys — safe to try any test card or UPI ID.
+          </Text>
+        </View>
+
+        {!!payError && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorBannerText}>{payError}</Text>
+          </View>
+        )}
+
+        <View style={styles.spacer} />
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[
+              styles.payButton,
+              stage === 'processing' && styles.payButtonDisabled,
+            ]}
+            activeOpacity={0.88}
+            disabled={stage === 'processing'}
+            onPress={handlePay}
+          >
+            <Text style={styles.payButtonText}>Pay ₹{planRate} securely</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Modal
+        visible={stage === 'processing' || stage === 'success'}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {}}
+      >
+        <View style={styles.overlay}>
+          <Animated.View
+            style={[styles.overlayCard, { opacity: overlayOpacity }]}
+          >
             {stage === 'processing' ? (
               <>
-                <Spinner size={30} color={Colors.lime} />
+                <Spinner size={30} color={Colors.ink} />
                 <Text style={styles.overlayTitle}>Processing payment</Text>
                 <Text style={styles.overlaySub}>
-                  Confirming with your bank — don't close this screen
+                  Confirming with Razorpay — don't close this screen
                 </Text>
               </>
             ) : (
@@ -473,9 +341,9 @@ const PaymentScreen = () => {
                 </Text>
               </>
             )}
-          </View>
-        </Animated.View>
-      )}
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -494,7 +362,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.ink,
     paddingTop: vscale(52),
     paddingHorizontal: hscale(20),
-    paddingBottom: vscale(22),
+    paddingBottom: vscale(26),
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -575,29 +443,47 @@ const styles = StyleSheet.create({
     letterSpacing: -0.8,
     marginTop: vscale(2),
   },
-  planSub: {
-    fontSize: fscale(12.5),
-    color: 'rgba(255,255,255,0.55)',
-    marginTop: vscale(4),
-  },
   sheet: {
     flex: 1,
     backgroundColor: Colors.surface,
     borderTopLeftRadius: hscale(26),
     borderTopRightRadius: hscale(26),
-    overflow: 'hidden',
-  },
-  tabsWrap: {
     paddingHorizontal: hscale(18),
-    paddingTop: vscale(18),
-    paddingBottom: vscale(6),
+    paddingTop: vscale(20),
   },
-  scrollContent: {
-    paddingHorizontal: hscale(18),
-    paddingTop: vscale(14),
-    paddingBottom: vscale(24),
+  summaryCard: {
+    marginBottom: vscale(18),
   },
-  groupLabel: {
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(12),
+  },
+  summaryIconWrap: {
+    width: hscale(36),
+    height: hscale(36),
+    borderRadius: hscale(12),
+    backgroundColor: Colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summaryTitle: {
+    fontSize: fscale(14.5),
+    fontWeight: '800',
+    color: Colors.ink,
+    letterSpacing: -0.2,
+  },
+  summarySub: {
+    fontSize: fscale(11.5),
+    color: Colors.mute,
+    marginTop: vscale(2),
+  },
+  summaryAmount: {
+    fontSize: fscale(16),
+    fontWeight: '800',
+    color: Colors.ink,
+  },
+  methodsLabel: {
     fontSize: fscale(11.5),
     fontWeight: '700',
     color: Colors.mute,
@@ -605,25 +491,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     marginBottom: vscale(10),
   },
-  groupLabelSpaced: {
-    marginTop: vscale(18),
-  },
-  optionRow: {
+  methodsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: hscale(12),
-    padding: hscale(12),
-    borderRadius: hscale(14),
-    borderWidth: 1,
-    borderColor: Colors.line,
-    marginBottom: vscale(9),
-    backgroundColor: Colors.surface,
+    gap: hscale(8),
+    marginBottom: vscale(18),
   },
-  optionRowActive: {
-    borderColor: Colors.ink,
-    backgroundColor: Colors.bg,
-  },
-  optionIconWrap: {
+  methodIconWrap: {
     width: hscale(34),
     height: hscale(34),
     borderRadius: hscale(11),
@@ -631,95 +505,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionLabel: {
+  methodsCaption: {
+    marginLeft: hscale(4),
     flex: 1,
-    fontSize: fscale(13.5),
-    fontWeight: '600',
-    color: Colors.ink,
-  },
-  radioOuter: {
-    width: hscale(20),
-    height: hscale(20),
-    borderRadius: hscale(10),
-    borderWidth: 1.6,
-    borderColor: Colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioOuterActive: {
-    borderColor: Colors.ink,
-  },
-  radioInner: {
-    width: hscale(10),
-    height: hscale(10),
-    borderRadius: hscale(5),
-    backgroundColor: Colors.ink,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: hscale(10),
-    borderWidth: 1,
-    borderColor: Colors.line,
-    borderRadius: hscale(14),
-    paddingHorizontal: hscale(14),
-    height: vscale(50),
-    marginBottom: vscale(10),
-    backgroundColor: Colors.surface,
-  },
-  inputHalf: {
-    flex: 1,
-  },
-  rowGap: {
-    flexDirection: 'row',
-    gap: hscale(10),
-  },
-  input: {
-    flex: 1,
-    fontSize: fscale(13.5),
-    fontWeight: '600',
-    color: Colors.ink,
-    padding: 0,
-  },
-  hintText: {
     fontSize: fscale(11),
     color: Colors.mute2,
-    lineHeight: safeLineHeight(fscale(11)),
-  },
-  saveCardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: vscale(6),
-    marginBottom: vscale(8),
-  },
-  saveCardText: {
-    fontSize: fscale(13),
     fontWeight: '600',
-    color: Colors.ink,
+  },
+  secureNote: {
+    flexDirection: 'row',
+    gap: hscale(10),
+    padding: hscale(14),
+    borderRadius: hscale(14),
+    backgroundColor: Colors.bg,
+  },
+  secureNoteText: {
+    flex: 1,
+    fontSize: fscale(11.5),
+    color: Colors.mute,
+    lineHeight: safeLineHeight(fscale(11.5)),
+  },
+  errorBanner: {
+    marginTop: vscale(14),
+    padding: hscale(12),
+    borderRadius: hscale(12),
+    backgroundColor: 'rgba(224,82,78,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(224,82,78,0.25)',
+  },
+  errorBannerText: {
+    fontSize: fscale(12),
+    color: Colors.red,
+    fontWeight: '600',
+    lineHeight: safeLineHeight(fscale(12)),
+  },
+  spacer: {
+    flex: 1,
   },
   footer: {
-    paddingHorizontal: hscale(18),
-    paddingTop: vscale(10),
     paddingBottom: vscale(44),
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.line2,
-  },
-  secureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: hscale(6),
-    marginBottom: vscale(10),
-  },
-  secureText: {
-    fontSize: fscale(10.5),
-    color: Colors.mute2,
-    fontWeight: '600',
+    paddingTop: vscale(14),
   },
   payButton: {
-    height: vscale(54),
-    borderRadius: hscale(16),
+    height: vscale(56),
+    borderRadius: hscale(18),
     backgroundColor: Colors.ink,
     flexDirection: 'row',
     alignItems: 'center',
@@ -732,7 +561,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   payButtonDisabled: {
-    opacity: 0.4,
+    opacity: 0.7,
   },
   payButtonText: {
     fontSize: fscale(15.5),
@@ -741,7 +570,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: 'rgba(15,17,21,0.6)',
     alignItems: 'center',
     justifyContent: 'center',

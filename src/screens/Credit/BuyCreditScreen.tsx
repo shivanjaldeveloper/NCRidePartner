@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: hscale(24),
-    paddingBottom: vscale(28),
+    paddingBottom: vscale(44),
     paddingTop: vscale(10),
   },
   fullButton: {
