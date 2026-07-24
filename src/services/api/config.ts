@@ -11,4 +11,10 @@ export const API_BASE_URL =
 export const API_PLANS_BASE_URL =
   'https://aloapp.shop/apiv1/partner/partnerplans.asmx';
 
+// Live location tracking (update / history / ride-history) — same host and
+// token, separate .asmx service. Confirmed via the PartnerLocationUpdate /
+// PartnerLocationHistory / PartnerRideLocationHistory curl samples.
+export const API_LIVE_UPDATE_BASE_URL =
+  'https://aloapp.shop/apiv1/partner/partnerliveupdate.asmx';
+
 export const API_BEARER_TOKEN = 'LrhTJugsRqEnefmaykA4wKNY';

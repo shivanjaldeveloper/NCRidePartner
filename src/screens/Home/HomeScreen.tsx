@@ -47,6 +47,13 @@ import {
   formatTimeLeft,
   ActiveCredit,
 } from '../../utils/credit';
+import {
+  useLiveLocationTracker,
+  checkLocationReady,
+  openLocationSettings,
+  LocationUnreadyReason,
+} from '../../utils/locationTracker';
+import LocationStatusModal from '../../components/common/LocationStatusModal';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'HomeTab'>,
@@ -62,6 +69,46 @@ const HomeScreen = () => {
   const rideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const creditTickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [locationPrompt, setLocationPrompt] = useState<{
+    title: string;
+    message: string;
+    reason?: LocationUnreadyReason;
+  } | null>(null);
+
+  // Shared by every path that takes the partner offline — manual toggle,
+  // credit running out (refreshCredit below), or location becoming
+  // unavailable (useLiveLocationTracker below) — so none of them leave a
+  // stale ride-request timer/popup behind. Doesn't touch creditInfo: the
+  // credit window itself is unaffected by online/offline, only the ride
+  // pipeline and location tracker are.
+  const goOffline = useCallback(() => {
+    setOnline(false);
+    if (rideTimerRef.current) {
+      clearTimeout(rideTimerRef.current);
+      rideTimerRef.current = null;
+    }
+    setShowRidePopup(false);
+  }, []);
+
+  // Sends a PartnerLocationUpdate ping every ~20s for as long as `online`
+  // is true, and stops automatically the moment it flips back to false
+  // (going offline, or credit running out — see refreshCredit below).
+  // If Location gets switched off (or permission revoked) while online,
+  // onLocationUnavailable forces the partner back offline and tells them
+  // why — the app can't stop the OS toggle from being flipped, only react.
+  useLiveLocationTracker(online, {
+    onLocationUnavailable: result => {
+      goOffline();
+      setLocationPrompt({
+        title: 'You\u2019ve been set offline',
+        message:
+          result.message ||
+          'Location is unavailable. Please turn on Location and go online again.',
+        reason: result.reason,
+      });
+    },
+  });
+
   const vehicle = PARTNER_VEHICLES[0];
   const payout = PARTNER_PAYOUTS[0];
   const incentive = PARTNER_INCENTIVES[0];
@@ -70,7 +117,17 @@ const HomeScreen = () => {
     const active = await getActiveCredit();
     setCreditInfo(active);
     // Credit window ran out — can't stay online without active credit.
-    setOnline(prevOnline => (prevOnline && !active ? false : prevOnline));
+    setOnline(prevOnline => {
+      if (prevOnline && !active) {
+        if (rideTimerRef.current) {
+          clearTimeout(rideTimerRef.current);
+          rideTimerRef.current = null;
+        }
+        setShowRidePopup(false);
+        return false;
+      }
+      return prevOnline;
+    });
   }, []);
 
   // Re-check whenever Home regains focus (e.g. coming back from BuyCredit).
@@ -94,8 +151,26 @@ const HomeScreen = () => {
     };
   }, []);
 
-  const handleGoOnline = async () => {
-    if (online) return; // once online, stays online — matches source behavior
+  const handleToggleOnline = async () => {
+    if (online) {
+      // Manual "go offline" — credit itself is untouched, it's a
+      // purchased wall-clock window (see utils/credit.ts) and keeps
+      // counting down whether the partner is online or offline, same as
+      // a prepaid rental. Only the ride pipeline/location tracker stop.
+      goOffline();
+      return;
+    }
+
+    const locationStatus = await checkLocationReady();
+    if (!locationStatus.ready) {
+      setLocationPrompt({
+        title: 'Turn on Location',
+        message:
+          locationStatus.message || 'Please enable Location to go online.',
+        reason: locationStatus.reason,
+      });
+      return;
+    }
 
     const active = await getActiveCredit();
     setCreditInfo(active);
@@ -173,7 +248,7 @@ const HomeScreen = () => {
         {/* Online toggle */}
         <View style={styles.section}>
           <TouchableOpacity
-            onPress={handleGoOnline}
+            onPress={handleToggleOnline}
             activeOpacity={0.9}
             style={[
               styles.onlineToggle,
@@ -454,6 +529,19 @@ const HomeScreen = () => {
         request={PARTNER_RIDE_REQUEST}
         onClose={() => setShowRidePopup(false)}
         onAccept={handleAcceptRide}
+      />
+
+      <LocationStatusModal
+        visible={!!locationPrompt}
+        title={locationPrompt?.title || ''}
+        message={locationPrompt?.message || ''}
+        primaryLabel="Open Settings"
+        onPrimaryPress={() => {
+          openLocationSettings(locationPrompt?.reason);
+          setLocationPrompt(null);
+        }}
+        secondaryLabel="Not now"
+        onSecondaryPress={() => setLocationPrompt(null)}
       />
     </View>
   );
