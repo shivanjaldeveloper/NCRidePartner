@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import HeaderBack from '../../components/common/HeaderBack';
@@ -38,6 +39,7 @@ const ratePerHour = (plan: PartnerPlan) => {
 
 const BuyCreditScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
 
   const [active, setActive] = useState<ActiveCredit | null>(null);
   const [plans, setPlans] = useState<PartnerPlan[]>([]);
@@ -52,12 +54,12 @@ const BuyCreditScreen = () => {
     try {
       const cookie = await getCookie();
       if (!cookie) {
-        setError('Session not found. Please log in again.');
+        setError(t('buyCredit.errors.sessionNotFound'));
         return;
       }
       const res = await getPartnerPlanList(cookie);
       if (res.Result !== 'Success' || !res.Plans) {
-        setError(res.Message || 'Could not load plans right now.');
+        setError(res.Message || t('buyCredit.errors.loadPlansFailed'));
         return;
       }
       const sorted = [...res.Plans].sort(
@@ -65,7 +67,7 @@ const BuyCreditScreen = () => {
       );
       setPlans(sorted);
     } catch (err: any) {
-      setError(err?.message || 'Could not load plans right now.');
+      setError(err?.message || t('buyCredit.errors.loadPlansFailed'));
     } finally {
       isRefresh ? setRefreshing(false) : setLoading(false);
     }
@@ -106,8 +108,8 @@ const BuyCreditScreen = () => {
   return (
     <View style={styles.container}>
       <HeaderBack
-        title="Buy Credit"
-        sub="Choose a plan to go online"
+        title={t('buyCredit.headerTitle')}
+        sub={t('buyCredit.headerSub')}
         onBack={() => navigation.goBack()}
       />
 
@@ -131,11 +133,15 @@ const BuyCreditScreen = () => {
             <View style={styles.flex}>
               <Text style={styles.activeTitle}>
                 {justActivated
-                  ? `${justActivated.PlanName} credit activated`
-                  : 'Credit active'}
+                  ? t('buyCredit.creditActivated', {
+                      plan: justActivated.PlanName,
+                    })
+                  : t('buyCredit.creditActive')}
               </Text>
               <Text style={styles.activeSub}>
-                {formatTimeLeft(active.msLeft)} · you can go online now
+                {t('buyCredit.timeLeftSuffix', {
+                  timeLeft: formatTimeLeft(active.msLeft),
+                })}
               </Text>
             </View>
           </Card>
@@ -143,11 +149,13 @@ const BuyCreditScreen = () => {
 
         <View style={styles.sectionHeadRow}>
           <Text style={styles.sectionLabel}>
-            {plans.length ? `Plans in ${plans[0].Region}` : 'Available plans'}
+            {plans.length
+              ? t('buyCredit.plansInRegion', { region: plans[0].Region })
+              : t('buyCredit.availablePlans')}
           </Text>
           {plans.length > 0 && (
             <Text style={styles.sectionCount}>
-              {plans.length} option{plans.length === 1 ? '' : 's'}
+              {t('buyCredit.optionsCount', { count: plans.length })}
             </Text>
           )}
         </View>
@@ -155,7 +163,7 @@ const BuyCreditScreen = () => {
         {loading && (
           <View style={styles.stateBox}>
             <ActivityIndicator color={Colors.ink} size="small" />
-            <Text style={styles.stateText}>Loading plans…</Text>
+            <Text style={styles.stateText}>{t('buyCredit.loadingPlans')}</Text>
           </View>
         )}
 
@@ -167,7 +175,7 @@ const BuyCreditScreen = () => {
               activeOpacity={0.85}
               onPress={() => loadPlans()}
             >
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t('buyCredit.retry')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -199,7 +207,7 @@ const BuyCreditScreen = () => {
                       {isBestValue && !isActivePlan && (
                         <View style={styles.bestValueBadge}>
                           <Text style={styles.bestValueBadgeText}>
-                            Best value
+                            {t('buyCredit.bestValue')}
                           </Text>
                         </View>
                       )}
@@ -210,13 +218,23 @@ const BuyCreditScreen = () => {
                             color={Colors.green}
                             strokeWidth={2.8}
                           />
-                          <Text style={styles.activeBadgeText}>Active</Text>
+                          <Text style={styles.activeBadgeText}>
+                            {t('buyCredit.active')}
+                          </Text>
                         </View>
                       )}
                     </View>
                     <Text style={styles.planMeta}>
-                      {plan.PlanTime} hr{Number(plan.PlanTime) === 1 ? '' : 's'}{' '}
-                      · {plan.PlanRideCount} rides · ₹{rate}/hr
+                      {t('buyCredit.planMeta', {
+                        time: plan.PlanTime,
+                        hrLabel: t(
+                          Number(plan.PlanTime) === 1
+                            ? 'buyCredit.hr'
+                            : 'buyCredit.hrs',
+                        ),
+                        rides: plan.PlanRideCount,
+                        rate,
+                      })}
                     </Text>
                   </View>
                 </View>
@@ -228,7 +246,9 @@ const BuyCreditScreen = () => {
                     activeOpacity={0.85}
                     onPress={() => handleBuy(plan)}
                   >
-                    <Text style={styles.buyButtonText}>Buy Now</Text>
+                    <Text style={styles.buyButtonText}>
+                      {t('buyCredit.buyNow')}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </Card>
@@ -236,18 +256,14 @@ const BuyCreditScreen = () => {
           })}
 
         {!loading && !error && plans.length > 0 && (
-          <Text style={styles.footNote}>
-            Prices and hours shown are live from your region's active plans.
-            Checkout opens in test mode until the billing API is ready — no real
-            money moves.
-          </Text>
+          <Text style={styles.footNote}>{t('buyCredit.footNote')}</Text>
         )}
       </ScrollView>
 
       {active && (
         <View style={styles.footer}>
           <PrimaryButton
-            label="Done, back to Home"
+            label={t('buyCredit.doneBackToHome')}
             onPress={() => navigation.goBack()}
             icon="arrowRight"
             style={styles.fullButton}

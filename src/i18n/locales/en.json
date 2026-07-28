@@ -545,5 +545,74 @@
       "arriving": "Arriving",
       "complete": "Complete"
     }
+  },
+  "tripEarnings": {
+    "tripComplete": "Trip complete!",
+    "yourNetEarning": "Your net earning",
+    "fareBreakdown": "Fare breakdown",
+    "baseFare": "Base fare",
+    "distanceFare": "Distance fare",
+    "timeFare": "Time fare",
+    "surgeBonus": "Surge bonus",
+    "tripLog": "Trip log",
+    "ratePassenger": "Rate Passenger"
+  },
+  "rideRequestSheet": {
+    "newRideRequest": "New ride request",
+    "pickupAway": "Pickup · {{dist}} away",
+    "dropTrip": "Drop · {{dist}} trip",
+    "tripsService": "{{count}} trips · {{service}}",
+    "acceptRide": "Accept Ride",
+    "stats": {
+      "earning": "Earning",
+      "duration": "Duration",
+      "payment": "Payment"
+    }
+  },
+  "rideRequest": {
+    "incomingRequest": "Incoming ride request",
+    "newTripAvailable": "New trip available"
+  },
+  "buyCredit": {
+    "headerTitle": "Buy Credit",
+    "headerSub": "Choose a plan to go online",
+    "errors": {
+      "sessionNotFound": "Session not found. Please log in again.",
+      "loadPlansFailed": "Could not load plans right now."
+    },
+    "creditActivated": "{{plan}} credit activated",
+    "creditActive": "Credit active",
+    "timeLeftSuffix": "{{timeLeft}} · you can go online now",
+    "plansInRegion": "Plans in {{region}}",
+    "availablePlans": "Available plans",
+    "optionsCount": "{{count}} option",
+    "optionsCount_plural": "{{count}} options",
+    "loadingPlans": "Loading plans…",
+    "retry": "Retry",
+    "bestValue": "Best value",
+    "active": "Active",
+    "hr": "hr",
+    "hrs": "hrs",
+    "planMeta": "{{time}} {{hrLabel}} · {{rides}} rides · ₹{{rate}}/hr",
+    "buyNow": "Buy Now",
+    "footNote": "Prices and hours shown are live from your region's active plans. Checkout opens in test mode until the billing API is ready — no real money moves.",
+    "doneBackToHome": "Done, back to Home"
+  },
+  "payment": {
+    "securedByRazorpay": "Secured by Razorpay",
+    "testMode": "TEST MODE — no real money moves",
+    "amountPayable": "Amount payable",
+    "creditDuration": "{{time}} {{hrLabel}} of ride credit",
+    "allMethodsSupported": "All major payment methods supported",
+    "methodsCaption": "UPI · Cards · Netbanking · Wallets",
+    "secureNote": "You'll complete this payment on Razorpay's secure checkout using the account's Test Mode keys — safe to try any test card or UPI ID.",
+    "paySecurely": "Pay ₹{{amount}} securely",
+    "processingPayment": "Processing payment",
+    "confirmingNote": "Confirming with Razorpay — don't close this screen",
+    "paymentSuccessful": "Payment successful",
+    "creditNowActive": "{{plan}} credit is now active",
+    "errors": {
+      "cancelledOrFailed": "Payment was cancelled or could not be completed."
+    }
   }
 }

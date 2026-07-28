@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -24,6 +25,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 const RideRequestScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
   const [timer, setTimer] = useState(TOTAL_SECONDS);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -53,8 +55,8 @@ const RideRequestScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Incoming ride request</Text>
-        <Text style={styles.title}>New trip available</Text>
+        <Text style={styles.eyebrow}>{t('rideRequest.incomingRequest')}</Text>
+        <Text style={styles.title}>{t('rideRequest.newTripAvailable')}</Text>
       </View>
 
       <View style={styles.timerWrap}>
@@ -98,7 +100,7 @@ const RideRequestScreen = () => {
             <View style={styles.pickupDot} />
             <View style={styles.routeTextWrap}>
               <Text style={styles.routeLabel}>
-                Pickup · {req.pickupDist} away
+                {t('rideRequestSheet.pickupAway', { dist: req.pickupDist })}
               </Text>
               <Text style={styles.routeValue}>{req.pickup}</Text>
             </View>
@@ -107,7 +109,9 @@ const RideRequestScreen = () => {
           <View style={styles.routeRow}>
             <View style={styles.dropDot} />
             <View style={styles.routeTextWrap}>
-              <Text style={styles.routeLabel}>Drop · {req.tripDist} trip</Text>
+              <Text style={styles.routeLabel}>
+                {t('rideRequestSheet.dropTrip', { dist: req.tripDist })}
+              </Text>
               <Text style={styles.routeValue}>{req.drop}</Text>
             </View>
           </View>
@@ -118,17 +122,23 @@ const RideRequestScreen = () => {
         <View style={styles.chip}>
           <CashIcon size={16} color={Colors.lime} strokeWidth={1.8} />
           <Text style={styles.chipValue}>₹{req.earning}</Text>
-          <Text style={styles.chipLabel}>Earning</Text>
+          <Text style={styles.chipLabel}>
+            {t('rideRequestSheet.stats.earning')}
+          </Text>
         </View>
         <View style={styles.chip}>
           <ClockIcon size={16} color={Colors.lime} strokeWidth={1.8} />
           <Text style={styles.chipValue}>{req.duration}</Text>
-          <Text style={styles.chipLabel}>Duration</Text>
+          <Text style={styles.chipLabel}>
+            {t('rideRequestSheet.stats.duration')}
+          </Text>
         </View>
         <View style={styles.chip}>
           <UpiIcon size={16} color={Colors.lime} strokeWidth={1.8} />
           <Text style={styles.chipValue}>{req.payment}</Text>
-          <Text style={styles.chipLabel}>Payment</Text>
+          <Text style={styles.chipLabel}>
+            {t('rideRequestSheet.stats.payment')}
+          </Text>
         </View>
       </View>
 
@@ -146,7 +156,10 @@ const RideRequestScreen = () => {
           <View style={styles.passengerTextWrap}>
             <Text style={styles.passengerName}>{req.passengerName}</Text>
             <Text style={styles.passengerMeta}>
-              {req.passengerTrips} trips · {req.service}
+              {t('rideRequestSheet.tripsService', {
+                count: req.passengerTrips,
+                service: req.service,
+              })}
             </Text>
           </View>
           <View style={styles.ratingWrap}>
@@ -168,7 +181,9 @@ const RideRequestScreen = () => {
           activeOpacity={0.9}
         >
           <CheckIcon size={22} color={Colors.ink} strokeWidth={2.4} />
-          <Text style={styles.acceptLabel}>Accept Ride</Text>
+          <Text style={styles.acceptLabel}>
+            {t('rideRequestSheet.acceptRide')}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -11,6 +11,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -27,6 +28,7 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const TripEarningsScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
 
   const earning = req.earning || 186;
@@ -75,7 +77,9 @@ const TripEarningsScreen = () => {
               />
             </Svg>
           </View>
-          <Text style={styles.successTitle}>Trip complete!</Text>
+          <Text style={styles.successTitle}>
+            {t('tripEarnings.tripComplete')}
+          </Text>
           <Text style={styles.successSub}>
             {req.pickup} → {req.drop}
           </Text>
@@ -85,7 +89,9 @@ const TripEarningsScreen = () => {
           <Card style={styles.netCard} pad={20}>
             <View style={styles.netRow}>
               <View>
-                <Text style={styles.netEyebrow}>Your net earning</Text>
+                <Text style={styles.netEyebrow}>
+                  {t('tripEarnings.yourNetEarning')}
+                </Text>
                 <Text style={styles.netValue}>₹{net}</Text>
               </View>
               <View style={styles.netIconWrap}>
@@ -102,12 +108,14 @@ const TripEarningsScreen = () => {
           </Card>
 
           <Card style={styles.breakdownCard} pad={16}>
-            <Text style={styles.breakdownLabel}>Fare breakdown</Text>
+            <Text style={styles.breakdownLabel}>
+              {t('tripEarnings.fareBreakdown')}
+            </Text>
             {[
-              ['Base fare', `₹${base}`, Colors.ink2],
-              ['Distance fare', `₹${dist}`, Colors.ink2],
-              ['Time fare', `₹${time}`, Colors.ink2],
-              ['Surge bonus', '₹0', Colors.ink2],
+              [t('tripEarnings.baseFare'), `₹${base}`, Colors.ink2],
+              [t('tripEarnings.distanceFare'), `₹${dist}`, Colors.ink2],
+              [t('tripEarnings.timeFare'), `₹${time}`, Colors.ink2],
+              [t('tripEarnings.surgeBonus'), '₹0', Colors.ink2],
             ].map(([k, v, c]) => (
               <View key={k} style={styles.breakdownRow}>
                 <Text style={[styles.breakdownKey, { color: c as string }]}>
@@ -120,7 +128,7 @@ const TripEarningsScreen = () => {
             ))}
             <View style={styles.breakdownRow}>
               <Text style={[styles.breakdownKey, { color: Colors.red }]}>
-                Platform fee (8%)
+                {t('tripDetail.platformFee')}
               </Text>
               <Text style={[styles.breakdownValue, { color: Colors.red }]}>
                 −₹{platform}
@@ -128,14 +136,16 @@ const TripEarningsScreen = () => {
             </View>
             <View style={styles.breakdownRow}>
               <Text style={[styles.breakdownKey, { color: Colors.mute }]}>
-                TDS (1%)
+                {t('tripDetail.tds')}
               </Text>
               <Text style={[styles.breakdownValue, { color: Colors.mute }]}>
                 −₹{tds}
               </Text>
             </View>
             <View style={styles.breakdownTotal}>
-              <Text style={styles.breakdownTotalLabel}>Net earning</Text>
+              <Text style={styles.breakdownTotalLabel}>
+                {t('tripDetail.netEarning')}
+              </Text>
               <Text style={styles.breakdownTotalValue}>₹{net}</Text>
             </View>
           </Card>
@@ -145,10 +155,10 @@ const TripEarningsScreen = () => {
       <View style={styles.footer}>
         <TouchableOpacity style={styles.tripLogButton}>
           <ActivityIcon size={18} color={Colors.ink} strokeWidth={1.8} />
-          <Text style={styles.tripLogLabel}>Trip log</Text>
+          <Text style={styles.tripLogLabel}>{t('tripEarnings.tripLog')}</Text>
         </TouchableOpacity>
         <PrimaryButton
-          label="Rate Passenger"
+          label={t('tripEarnings.ratePassenger')}
           onPress={() => navigation.navigate('PassengerRating')}
           icon="none"
           style={styles.rateButton}

@@ -8,6 +8,8 @@ import {
   Dimensions,
 } from 'react-native';
 
+import { useTranslation } from 'react-i18next';
+
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import CloseIcon from '../../assets/icons/CloseIcon';
@@ -30,6 +32,7 @@ const RideRequestSheet: React.FC<Props> = ({
   onClose,
   onAccept,
 }) => {
+  const { t } = useTranslation();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const pulse = useRef(new Animated.Value(0)).current;
 
@@ -73,7 +76,9 @@ const RideRequestSheet: React.FC<Props> = ({
       <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
         <View style={styles.header}>
           <Animated.View style={[styles.pulseDot, { opacity: dotOpacity }]} />
-          <Text style={styles.headerLabel}>New ride request</Text>
+          <Text style={styles.headerLabel}>
+            {t('rideRequestSheet.newRideRequest')}
+          </Text>
         </View>
 
         <View style={styles.routeBlock}>
@@ -81,7 +86,7 @@ const RideRequestSheet: React.FC<Props> = ({
             <View style={styles.pickupDot} />
             <View style={styles.routeTextWrap}>
               <Text style={styles.routeLabel}>
-                Pickup · {request.pickupDist} away
+                {t('rideRequestSheet.pickupAway', { dist: request.pickupDist })}
               </Text>
               <Text style={styles.routeValue}>{request.pickup}</Text>
             </View>
@@ -91,7 +96,7 @@ const RideRequestSheet: React.FC<Props> = ({
             <View style={styles.dropDot} />
             <View style={styles.routeTextWrap}>
               <Text style={styles.routeLabel}>
-                Drop · {request.tripDist} trip
+                {t('rideRequestSheet.dropTrip', { dist: request.tripDist })}
               </Text>
               <Text style={styles.routeValue}>{request.drop}</Text>
             </View>
@@ -100,13 +105,25 @@ const RideRequestSheet: React.FC<Props> = ({
 
         <View style={styles.statsRow}>
           {[
-            { v: `₹${request.earning}`, l: 'Earning' },
-            { v: request.duration, l: 'Duration' },
-            { v: request.payment, l: 'Payment' },
+            {
+              v: `₹${request.earning}`,
+              l: 'earning',
+              labelKey: 'rideRequestSheet.stats.earning',
+            },
+            {
+              v: request.duration,
+              l: 'duration',
+              labelKey: 'rideRequestSheet.stats.duration',
+            },
+            {
+              v: request.payment,
+              l: 'payment',
+              labelKey: 'rideRequestSheet.stats.payment',
+            },
           ].map(item => (
             <View key={item.l} style={styles.statBox}>
               <Text style={styles.statValue}>{item.v}</Text>
-              <Text style={styles.statLabel}>{item.l}</Text>
+              <Text style={styles.statLabel}>{t(item.labelKey)}</Text>
             </View>
           ))}
         </View>
@@ -124,7 +141,10 @@ const RideRequestSheet: React.FC<Props> = ({
           <View style={styles.passengerTextWrap}>
             <Text style={styles.passengerName}>{request.passengerName}</Text>
             <Text style={styles.passengerMeta}>
-              {request.passengerTrips} trips · {request.service}
+              {t('rideRequestSheet.tripsService', {
+                count: request.passengerTrips,
+                service: request.service,
+              })}
             </Text>
           </View>
           <View style={styles.ratingWrap}>
@@ -143,7 +163,9 @@ const RideRequestSheet: React.FC<Props> = ({
             activeOpacity={0.9}
           >
             <CheckIcon size={22} color={Colors.ink} strokeWidth={2.4} />
-            <Text style={styles.acceptLabel}>Accept Ride</Text>
+            <Text style={styles.acceptLabel}>
+              {t('rideRequestSheet.acceptRide')}
+            </Text>
           </TouchableOpacity>
         </View>
       </Animated.View>

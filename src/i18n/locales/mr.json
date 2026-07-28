@@ -545,5 +545,74 @@
       "arriving": "पोहोचत आहे",
       "complete": "पूर्ण"
     }
+  },
+  "tripEarnings": {
+    "tripComplete": "ट्रिप पूर्ण झाली!",
+    "yourNetEarning": "तुमची निव्वळ कमाई",
+    "fareBreakdown": "भाड्याचा तपशील",
+    "baseFare": "बेस भाडे",
+    "distanceFare": "अंतर भाडे",
+    "timeFare": "वेळ भाडे",
+    "surgeBonus": "सर्ज बोनस",
+    "tripLog": "ट्रिप लॉग",
+    "ratePassenger": "प्रवाशाला रेट करा"
+  },
+  "rideRequestSheet": {
+    "newRideRequest": "नवीन राईड रिक्वेस्ट",
+    "pickupAway": "पिकअप · {{dist}} दूर",
+    "dropTrip": "ड्रॉप · {{dist}} ट्रिप",
+    "tripsService": "{{count}} ट्रिप्स · {{service}}",
+    "acceptRide": "राईड स्वीकारा",
+    "stats": {
+      "earning": "कमाई",
+      "duration": "कालावधी",
+      "payment": "पेमेंट"
+    }
+  },
+  "rideRequest": {
+    "incomingRequest": "येणारी राईड रिक्वेस्ट",
+    "newTripAvailable": "नवीन ट्रिप उपलब्ध"
+  },
+  "buyCredit": {
+    "headerTitle": "क्रेडिट खरेदी करा",
+    "headerSub": "ऑनलाइन जाण्यासाठी एक प्लॅन निवडा",
+    "errors": {
+      "sessionNotFound": "सेशन सापडले नाही. कृपया पुन्हा लॉग इन करा.",
+      "loadPlansFailed": "आत्ता प्लॅन लोड करता आले नाहीत."
+    },
+    "creditActivated": "{{plan}} क्रेडिट सक्रिय झाले",
+    "creditActive": "क्रेडिट सक्रिय आहे",
+    "timeLeftSuffix": "{{timeLeft}} · तुम्ही आत्ता ऑनलाइन जाऊ शकता",
+    "plansInRegion": "{{region}} मधील प्लॅन",
+    "availablePlans": "उपलब्ध प्लॅन",
+    "optionsCount": "{{count}} पर्याय",
+    "optionsCount_plural": "{{count}} पर्याय",
+    "loadingPlans": "प्लॅन लोड होत आहेत…",
+    "retry": "पुन्हा प्रयत्न करा",
+    "bestValue": "बेस्ट व्हॅल्यू",
+    "active": "सक्रिय",
+    "hr": "तास",
+    "hrs": "तास",
+    "planMeta": "{{time}} {{hrLabel}} · {{rides}} राईड्स · ₹{{rate}}/तास",
+    "buyNow": "आता खरेदी करा",
+    "footNote": "दाखवलेल्या किमती आणि तास तुमच्या क्षेत्रातील सक्रिय प्लॅनवरून लाइव्ह आहेत. बिलिंग API तयार होईपर्यंत चेकआउट टेस्ट मोडमध्ये उघडते — कोणतेही खरे पैसे कापले जात नाहीत.",
+    "doneBackToHome": "झाले, होमवर परत जा"
+  },
+  "payment": {
+    "securedByRazorpay": "Razorpay द्वारे सुरक्षित",
+    "testMode": "टेस्ट मोड — कोणतेही खरे पैसे कापले जात नाहीत",
+    "amountPayable": "देय रक्कम",
+    "creditDuration": "{{time}} {{hrLabel}} राईड क्रेडिट",
+    "allMethodsSupported": "सर्व प्रमुख पेमेंट पद्धती समर्थित",
+    "methodsCaption": "UPI · कार्ड्स · नेटबँकिंग · वॉलेट्स",
+    "secureNote": "तुम्ही हे पेमेंट Razorpay च्या सुरक्षित चेकआउटवर, खात्याच्या टेस्ट मोड कीज वापरून पूर्ण कराल — कोणतेही टेस्ट कार्ड किंवा UPI ID वापरणे सुरक्षित आहे.",
+    "paySecurely": "₹{{amount}} सुरक्षितपणे भरा",
+    "processingPayment": "पेमेंट प्रक्रिया होत आहे",
+    "confirmingNote": "Razorpay कडून पुष्टी होत आहे — ही स्क्रीन बंद करू नका",
+    "paymentSuccessful": "पेमेंट यशस्वी",
+    "creditNowActive": "{{plan}} क्रेडिट आता सक्रिय आहे",
+    "errors": {
+      "cancelledOrFailed": "पेमेंट रद्द झाले किंवा पूर्ण होऊ शकले नाही."
+    }
   }
 }

@@ -42,6 +42,7 @@ import {
 } from './mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
+import { getCookie } from '../../utils/session';
 import {
   getActiveCredit,
   formatTimeLeft,
@@ -114,6 +115,7 @@ const HomeScreen = () => {
   const incentive = PARTNER_INCENTIVES[0];
 
   const refreshCredit = useCallback(async () => {
+    console.log('[HomeScreen] stored cookie:', await getCookie());
     const active = await getActiveCredit();
     setCreditInfo(active);
     // Credit window ran out — can't stay online without active credit.

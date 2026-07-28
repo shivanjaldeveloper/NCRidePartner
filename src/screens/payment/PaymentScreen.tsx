@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import RazorpayCheckout from 'react-native-razorpay';
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale, safeLineHeight } from '../../theme/scale';
@@ -41,6 +42,7 @@ const PaymentScreen = () => {
   const navigation = useNavigation<NavProp>();
   const { params } = useRoute<Route>();
   const { planId, planName, planTime, planRate } = params;
+  const { t } = useTranslation();
 
   const [stage, setStage] = useState<Stage>('form');
   const [payError, setPayError] = useState<string | null>(null);
@@ -189,7 +191,7 @@ const PaymentScreen = () => {
       setPayError(
         description
           ? `${description}${code ? ` (code ${code})` : ''}`
-          : 'Payment was cancelled or could not be completed.',
+          : t('payment.errors.cancelledOrFailed'),
       );
     }
   };
@@ -213,7 +215,9 @@ const PaymentScreen = () => {
               <Text style={styles.merchantName}>NCRide Partner</Text>
               <View style={styles.trustedRow}>
                 <ShieldIcon size={11} color={Colors.lime} strokeWidth={2} />
-                <Text style={styles.trustedText}>Secured by Razorpay</Text>
+                <Text style={styles.trustedText}>
+                  {t('payment.securedByRazorpay')}
+                </Text>
               </View>
             </View>
           </View>
@@ -229,12 +233,10 @@ const PaymentScreen = () => {
 
         <View style={styles.testModeBadge}>
           <View style={styles.testModeDot} />
-          <Text style={styles.testModeText}>
-            TEST MODE — no real money moves
-          </Text>
+          <Text style={styles.testModeText}>{t('payment.testMode')}</Text>
         </View>
 
-        <Text style={styles.amountLabel}>Amount payable</Text>
+        <Text style={styles.amountLabel}>{t('payment.amountPayable')}</Text>
         <Text style={styles.amountValue}>₹{planRate}</Text>
       </View>
 
@@ -247,7 +249,10 @@ const PaymentScreen = () => {
             <View style={styles.flex}>
               <Text style={styles.summaryTitle}>{planName}</Text>
               <Text style={styles.summarySub}>
-                {planTime} hr{planTime === 1 ? '' : 's'} of ride credit
+                {t('payment.creditDuration', {
+                  time: planTime,
+                  hrLabel: t(planTime === 1 ? 'buyCredit.hr' : 'buyCredit.hrs'),
+                })}
               </Text>
             </View>
             <Text style={styles.summaryAmount}>₹{planRate}</Text>
@@ -255,7 +260,7 @@ const PaymentScreen = () => {
         </Card>
 
         <Text style={styles.methodsLabel}>
-          All major payment methods supported
+          {t('payment.allMethodsSupported')}
         </Text>
         <View style={styles.methodsRow}>
           <View style={styles.methodIconWrap}>
@@ -271,16 +276,13 @@ const PaymentScreen = () => {
             <WalletIcon size={16} color={Colors.ink} strokeWidth={1.8} />
           </View>
           <Text style={styles.methodsCaption}>
-            UPI · Cards · Netbanking · Wallets
+            {t('payment.methodsCaption')}
           </Text>
         </View>
 
         <View style={styles.secureNote}>
           <ShieldIcon size={14} color={Colors.mute} strokeWidth={1.8} />
-          <Text style={styles.secureNoteText}>
-            You'll complete this payment on Razorpay's secure checkout using the
-            account's Test Mode keys — safe to try any test card or UPI ID.
-          </Text>
+          <Text style={styles.secureNoteText}>{t('payment.secureNote')}</Text>
         </View>
 
         {!!payError && (
@@ -301,7 +303,9 @@ const PaymentScreen = () => {
             disabled={stage === 'processing'}
             onPress={handlePay}
           >
-            <Text style={styles.payButtonText}>Pay ₹{planRate} securely</Text>
+            <Text style={styles.payButtonText}>
+              {t('payment.paySecurely', { amount: planRate })}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -320,9 +324,11 @@ const PaymentScreen = () => {
             {stage === 'processing' ? (
               <>
                 <Spinner size={30} color={Colors.ink} />
-                <Text style={styles.overlayTitle}>Processing payment</Text>
+                <Text style={styles.overlayTitle}>
+                  {t('payment.processingPayment')}
+                </Text>
                 <Text style={styles.overlaySub}>
-                  Confirming with Razorpay — don't close this screen
+                  {t('payment.confirmingNote')}
                 </Text>
               </>
             ) : (
@@ -335,9 +341,11 @@ const PaymentScreen = () => {
                 >
                   <CheckIcon size={26} color="#FFFFFF" strokeWidth={3} />
                 </Animated.View>
-                <Text style={styles.overlayTitle}>Payment successful</Text>
+                <Text style={styles.overlayTitle}>
+                  {t('payment.paymentSuccessful')}
+                </Text>
                 <Text style={styles.overlaySub}>
-                  {planName} credit is now active
+                  {t('payment.creditNowActive', { plan: planName })}
                 </Text>
               </>
             )}

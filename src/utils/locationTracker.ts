@@ -17,14 +17,19 @@ import Geolocation from '@react-native-community/geolocation';
 import { getCookie } from './session';
 import { updatePartnerLocation } from '../services/api/locationService';
 
-// "Every 15 or 30 seconds" — 20s sits comfortably in that window, same
-// reasoning as sessionWatcher's interval choice.
-const UPDATE_INTERVAL_MS = 10000;
+// "Every 15 or 30 seconds" — was set to 10000 (10s), which is SHORTER
+// than getCurrentPositionAccurate's own 15s GPS timeout. That meant a new
+// tick could get scheduled before the previous one had even finished
+// timing out, which is exactly what the "skip tick — previous update
+// still in flight" spam in testing was — not a bug in the skip logic
+// itself, just an interval shorter than the worst-case time a single tick
+// can take. 20s sits comfortably above that worst case.
+const UPDATE_INTERVAL_MS = 20000;
 
-// Hardcoded per current backend guidance ("the rideTran will be 1234567890
-// all the time for now"). Swap the default here (or pass a real rideTran
-// into useLiveLocationTracker) once ride-tracking is wired up.
-const DEFAULT_RIDE_TRAN = '1234567890';
+// Empty for now — this is just the partner's general live location, not
+// tied to a ride. Pass a real rideTran into useLiveLocationTracker once
+// there's an active ride to attach these pings to.
+const DEFAULT_RIDE_TRAN = '';
 
 const LOG_PREFIX = '[LocationTracker]';
 
@@ -54,41 +59,72 @@ async function ensureLocationPermission(): Promise<boolean> {
   }
 }
 
-// A raw GPS satellite lock (enableHighAccuracy: true) can take a long time
-// or fail entirely indoors / on an emulator / with a weak signal — even
-// when device Location is genuinely switched ON. Forcing that as the only
-// option is exactly what caused "location + permission are both on, still
-// can't go online": the fix would time out and get misread as "off."
-// Instead: try a fast network/cell/wifi-based fix first (near-instant,
-// works indoors), and only fall back to a slower high-accuracy GPS
-// attempt if that somehow fails.
-function getCurrentPosition(): Promise<any> {
-  const attempt = (options: {
-    enableHighAccuracy: boolean;
-    timeout: number;
-    maximumAge: number;
-  }) =>
-    new Promise<any>((resolve, reject) => {
-      Geolocation.getCurrentPosition(
-        (position: any) => resolve(position),
-        (error: any) => reject(error),
-        options,
-      );
-    });
+// Two different needs, two different strategies:
+//
+// 1. checkLocationReady() (used once, when the partner taps "Go Online")
+//    only needs to confirm location genuinely works — accuracy doesn't
+//    matter. A raw GPS satellite lock can take a long time or fail
+//    entirely indoors / on an emulator / weak signal, even when Location
+//    is genuinely ON — forcing that as the only option is exactly what
+//    caused "location + permission are both on, still can't go online."
+//    So this path tries a fast network/cell/wifi fix first, GPS as backup.
+//
+// 2. The periodic tracking tick (every ~10-20s while online) needs REAL
+//    speed/heading for the ride telemetry sent to the server. Only a GPS
+//    fix actually reports speed/heading — a network/wifi/cell fix reports
+//    neither (they come back null/undefined), which is why speed and
+//    heading were always showing as 0 even on a real bike ride: the old
+//    single getCurrentPosition() tried network first, got a fast success,
+//    and never even attempted the GPS fix that would've had real numbers.
+//    So this path tries GPS first, network only as a last-resort fallback
+//    (better to send a position with speed/heading than skip the tick
+//    entirely, but the fallback case will still read 0 for both).
+function attemptPosition(options: {
+  enableHighAccuracy: boolean;
+  timeout: number;
+  maximumAge: number;
+}): Promise<any> {
+  return new Promise((resolve, reject) => {
+    Geolocation.getCurrentPosition(
+      (position: any) => resolve(position),
+      (error: any) => reject(error),
+      options,
+    );
+  });
+}
 
-  return attempt({
+function getCurrentPositionQuick(): Promise<any> {
+  return attemptPosition({
     enableHighAccuracy: false,
     timeout: 8000,
     maximumAge: 60000,
   }).catch((fastErr: any) => {
     console.warn(
-      `${LOG_PREFIX} fast location fix failed, falling back to GPS:`,
+      `${LOG_PREFIX} quick location fix failed, falling back to GPS:`,
       fastErr?.message || fastErr,
     );
-    return attempt({
+    return attemptPosition({
       enableHighAccuracy: true,
       timeout: 15000,
       maximumAge: 10000,
+    });
+  });
+}
+
+function getCurrentPositionAccurate(): Promise<any> {
+  return attemptPosition({
+    enableHighAccuracy: true,
+    timeout: 15000,
+    maximumAge: 5000,
+  }).catch((gpsErr: any) => {
+    console.warn(
+      `${LOG_PREFIX} GPS fix failed for tracking tick, falling back to network (speed/heading will read 0 this tick):`,
+      gpsErr?.message || gpsErr,
+    );
+    return attemptPosition({
+      enableHighAccuracy: false,
+      timeout: 8000,
+      maximumAge: 15000,
     });
   });
 }
@@ -197,7 +233,7 @@ export async function checkLocationReady(): Promise<LocationReadyResult> {
   }
 
   try {
-    await getCurrentPosition();
+    await getCurrentPositionQuick();
     console.log(`${LOG_PREFIX} readiness check — OK`);
     return { ready: true };
   } catch (err: any) {
@@ -327,7 +363,7 @@ export function useLiveLocationTracker(
 
         let position: any;
         try {
-          position = await getCurrentPosition();
+          position = await getCurrentPositionAccurate();
         } catch (gpsErr: any) {
           const mapped = mapGeoError(gpsErr);
           console.warn(
