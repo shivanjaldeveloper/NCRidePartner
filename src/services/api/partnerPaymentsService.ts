@@ -37,12 +37,24 @@ export interface CreatePartnerPlanOrderResponse {
  * Stop and surface an error if `Result !== 'Success'` — do not open
  * Razorpay Checkout in that case.
  */
-export const createPartnerPlanOrder = (cookie: string, plantran: string) =>
-  postAuthForm<CreatePartnerPlanOrderResponse>(
-    'CreatePartnerPlanOrder',
-    { cookie, plantran },
-    API_PAYMENTS_BASE_URL,
-  );
+export const createPartnerPlanOrder = async (
+  cookie: string,
+  plantran: string,
+) => {
+  console.log('[API → CreatePartnerPlanOrder] request:', { cookie, plantran });
+  try {
+    const res = await postAuthForm<CreatePartnerPlanOrderResponse>(
+      'CreatePartnerPlanOrder',
+      { cookie, plantran },
+      API_PAYMENTS_BASE_URL,
+    );
+    console.log('[API ← CreatePartnerPlanOrder] response:', res);
+    return res;
+  } catch (err) {
+    console.warn('[API ← CreatePartnerPlanOrder] error:', err);
+    throw err;
+  }
+};
 
 export interface VerifyPartnerPlanPaymentResponse {
   Result: 'Success' | string;
@@ -65,14 +77,29 @@ export interface VerifyPartnerPlanPaymentResponse {
  * Only show the success screen / activate credit when this returns
  * `Result === 'Success'`.
  */
-export const verifyPartnerPlanPayment = (
+export const verifyPartnerPlanPayment = async (
   cookie: string,
   razorpayOrderId: string,
   razorpayPaymentId: string,
   razorpaySignature: string,
-) =>
-  postAuthForm<VerifyPartnerPlanPaymentResponse>(
-    'VerifyPartnerPlanPayment',
-    { cookie, razorpayOrderId, razorpayPaymentId, razorpaySignature },
-    API_PAYMENTS_BASE_URL,
-  );
+) => {
+  const params = {
+    cookie,
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature,
+  };
+  console.log('[API → VerifyPartnerPlanPayment] request:', params);
+  try {
+    const res = await postAuthForm<VerifyPartnerPlanPaymentResponse>(
+      'VerifyPartnerPlanPayment',
+      params,
+      API_PAYMENTS_BASE_URL,
+    );
+    console.log('[API ← VerifyPartnerPlanPayment] response:', res);
+    return res;
+  } catch (err) {
+    console.warn('[API ← VerifyPartnerPlanPayment] error:', err);
+    throw err;
+  }
+};

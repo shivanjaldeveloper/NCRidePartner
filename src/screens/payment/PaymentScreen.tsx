@@ -86,6 +86,12 @@ const PaymentScreen = () => {
     setStage('processing');
 
     try {
+      console.log('[PaymentFlow] === starting purchase ===', {
+        planId,
+        planName,
+        planRate,
+        planTime,
+      });
       const cookie = await getCookie();
       if (!cookie) {
         throw new Error(t('payment.errors.sessionNotFound'));
@@ -98,9 +104,14 @@ const PaymentScreen = () => {
       let partnerMobile = 'NA';
       try {
         const profile = await getProfile(cookie);
+        console.log('[PaymentFlow] getProfile response:', profile);
         partnerName = profile?.Name || profile?.Username || partnerName;
         partnerMobile = profile?.Mobile || profile?.Username || partnerMobile;
-      } catch {
+      } catch (e) {
+        console.warn(
+          '[PaymentFlow] getProfile failed, using fallback prefill:',
+          e,
+        );
         // ignore — order still goes through with the fallback values above
       }
 
@@ -116,9 +127,10 @@ const PaymentScreen = () => {
         }
       } catch (e: any) {
         // e?.raw is the raw response body ApiError carries (see
-        // httpClient.ts) — logging it here is the difference between
-        // "failed with HTTP 500" and actually knowing why.
-        console.warn('[create-order] raw response:', e?.raw);
+        // httpClient.ts) — the request/response themselves are already
+        // logged inside createPartnerPlanOrder, this just adds the raw
+        // text for the "HTTP 500 with no useful message" case.
+        if (e?.raw) console.warn('[create-order] raw response:', e.raw);
         throw new Error(`[create-order] ${e?.message || e}`);
       }
 
@@ -126,7 +138,7 @@ const PaymentScreen = () => {
       // server call happens during Checkout itself.
       let result;
       try {
-        result = await RazorpayCheckout.open({
+        const checkoutOptions = {
           key: RAZORPAY_KEY_ID,
           order_id: order.RazorpayOrderId,
           amount: order.AmountPaise,
@@ -139,11 +151,21 @@ const PaymentScreen = () => {
             name: partnerName,
             contact: partnerMobile !== 'NA' ? partnerMobile : undefined,
           },
-        });
+        };
+        console.log(
+          '[PaymentFlow] RazorpayCheckout.open options:',
+          checkoutOptions,
+        );
+        result = await RazorpayCheckout.open(checkoutOptions);
+        console.log('[PaymentFlow] RazorpayCheckout.open result:', result);
       } catch (e: any) {
         // User cancelled or Checkout itself failed. Per the flow spec: no
         // server-side verification call is made here — the CREATED order
         // row from Step 1 is simply left unused.
+        console.warn(
+          '[PaymentFlow] RazorpayCheckout.open cancelled/failed:',
+          e,
+        );
         throw new Error(
           `[checkout] ${e?.description || e?.message || 'cancelled'}`,
         );
@@ -165,7 +187,7 @@ const PaymentScreen = () => {
           throw new Error(verifyRes.Message || 'Payment could not be verified');
         }
       } catch (e: any) {
-        console.warn('[verify] raw response:', e?.raw);
+        if (e?.raw) console.warn('[verify] raw response:', e.raw);
         throw new Error(`[verify] ${e?.message || e}`);
       }
 
@@ -174,18 +196,25 @@ const PaymentScreen = () => {
       // matches exactly what VerifyPartnerPlanPayment confirmed.
       try {
         const verifiedHours = Number(verifyRes.PlanHour ?? planTime);
-        await activateCredit(planId, verifiedHours);
+        console.log('[PaymentFlow] activateCredit:', { planId, verifiedHours });
+        const activated = await activateCredit(planId, verifiedHours);
+        console.log('[PaymentFlow] activateCredit result:', activated);
       } catch (e: any) {
         throw new Error(`[activate] ${e?.message || e}`);
       }
 
+      console.log('[PaymentFlow] === purchase succeeded ===');
       setStage('success');
     } catch (err: any) {
       setStage('form');
       // Log the raw error so it shows up in Metro/logcat/Xcode console —
       // the message shown to the user is intentionally generic, but this
       // is what actually tells us why it failed.
-      console.warn('[Razorpay] payment flow failed:', err?.message, err?.stack);
+      console.warn(
+        '[PaymentFlow] === purchase failed ===',
+        err?.message,
+        err?.stack,
+      );
       const code = err?.code;
       const description =
         err?.description || err?.error?.description || err?.message;
@@ -276,10 +305,8 @@ const PaymentScreen = () => {
           <View style={styles.methodIconWrap}>
             <WalletIcon size={16} color={Colors.ink} strokeWidth={1.8} />
           </View>
-          <Text style={styles.methodsCaption}>
-            {t('payment.methodsCaption')}
-          </Text>
         </View>
+        <Text style={styles.methodsCaption}>{t('payment.methodsCaption')}</Text>
 
         <View style={styles.secureNote}>
           <ShieldIcon size={14} color={Colors.mute} strokeWidth={1.8} />
@@ -504,7 +531,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: hscale(8),
-    marginBottom: vscale(18),
+    marginBottom: vscale(8),
   },
   methodIconWrap: {
     width: hscale(34),
@@ -515,11 +542,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   methodsCaption: {
-    marginLeft: hscale(4),
-    flex: 1,
     fontSize: fscale(11),
     color: Colors.mute2,
     fontWeight: '600',
+    marginBottom: vscale(18),
   },
   secureNote: {
     flexDirection: 'row',

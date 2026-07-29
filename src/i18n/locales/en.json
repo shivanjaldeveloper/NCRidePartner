@@ -496,7 +496,14 @@
     "notificationsSub": "Ride requests, alerts",
     "appSettingsSub": "Language, preferences",
     "emergencySosSub": "Quick access contacts",
-    "footer": "Alo Alo Partner · v 1.0.0 · Marathwada, India"
+    "footer": "Alo Alo Partner · v 1.0.0 · Marathwada, India",
+    "plans": {
+      "title": "Plans & Credit",
+      "activeSub": "Active · {{timeLeft}} left",
+      "lastPurchaseSub": "Last plan: {{plan}} · {{date}}",
+      "noActiveSub": "No active plan — tap to buy credit",
+      "activeBadge": "ACTIVE"
+    }
   },
   "support": {
     "title": "Support",

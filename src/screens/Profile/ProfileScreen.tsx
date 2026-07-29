@@ -1,7 +1,14 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import {
   useNavigation,
+  useFocusEffect,
   CompositeNavigationProp,
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +24,7 @@ import CarIcon from '../../assets/icons/CarIcon';
 import UserIcon from '../../assets/icons/UserIcon';
 import CashIcon from '../../assets/icons/CashIcon';
 import WalletIcon from '../../assets/icons/WalletIcon';
+import ClockIcon from '../../assets/icons/ClockIcon';
 import BellIcon from '../../assets/icons/BellIcon';
 import SettingsIcon from '../../assets/icons/SettingsIcon';
 import ChatIcon from '../../assets/icons/ChatIcon';
@@ -30,6 +38,16 @@ import {
 } from '../Home/mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
+import { getCookie } from '../../utils/session';
+import {
+  refreshActiveCreditFromServer,
+  formatTimeLeft,
+  ActiveCredit,
+} from '../../utils/credit';
+import {
+  getPartnerPlanHistory,
+  PartnerPlanHistoryItem,
+} from '../../services/api/plansService';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'AccountTab'>,
@@ -43,6 +61,49 @@ const ProfileScreen = () => {
   const s = PARTNER_STATS;
   const vehicle = PARTNER_VEHICLES[0];
   const payout = PARTNER_PAYOUTS[0];
+
+  const [activeCredit, setActiveCredit] = useState<ActiveCredit | null>(null);
+  const [lastPurchase, setLastPurchase] =
+    useState<PartnerPlanHistoryItem | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  // On focus (e.g. after buying a plan and coming back here): pull
+  // active-credit status and the most recent purchase off a single
+  // cookie fetch, same pattern as HomeScreen/BuyCreditScreen so all
+  // three screens always agree with each other and with the server.
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const cookie = await getCookie();
+        if (!cookie) return;
+
+        const [active, historyRes] = await Promise.all([
+          refreshActiveCreditFromServer(cookie),
+          getPartnerPlanHistory(cookie).catch(() => null),
+        ]);
+
+        setActiveCredit(active);
+        if (
+          historyRes &&
+          historyRes.Result === 'Success' &&
+          historyRes.History?.length
+        ) {
+          setLastPurchase(historyRes.History[0]);
+        }
+      })();
+    }, []),
+  );
+
+  // Purely local 1s tick so the countdown reads smoothly here too,
+  // instead of only refreshing whenever this screen happens to refocus.
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+
+  const activeMsLeft = activeCredit
+    ? Math.max(0, activeCredit.expiresAt - now)
+    : 0;
 
   return (
     <View style={styles.container}>
@@ -97,6 +158,56 @@ const ProfileScreen = () => {
               ))}
             </View>
           </Card>
+
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('BuyCredit')}
+          >
+            <Card pad={16} style={styles.plansCard}>
+              <View style={styles.plansRow}>
+                <View
+                  style={[
+                    styles.plansIconWrap,
+                    activeCredit && styles.plansIconWrapActive,
+                  ]}
+                >
+                  {activeCredit ? (
+                    <ClockIcon size={18} color="#FFFFFF" strokeWidth={2} />
+                  ) : (
+                    <WalletIcon
+                      size={18}
+                      color={Colors.ink}
+                      strokeWidth={1.8}
+                    />
+                  )}
+                </View>
+                <View style={styles.plansTextWrap}>
+                  <Text style={styles.plansTitle}>
+                    {t('profile.plans.title')}
+                  </Text>
+                  <Text style={styles.plansSub}>
+                    {activeCredit
+                      ? t('profile.plans.activeSub', {
+                          timeLeft: formatTimeLeft(activeMsLeft),
+                        })
+                      : lastPurchase
+                      ? t('profile.plans.lastPurchaseSub', {
+                          plan: lastPurchase.PlanName,
+                          date: lastPurchase.PlanStartDate,
+                        })
+                      : t('profile.plans.noActiveSub')}
+                  </Text>
+                </View>
+                {activeCredit && (
+                  <View style={styles.plansActiveBadge}>
+                    <Text style={styles.plansActiveBadgeText}>
+                      {t('profile.plans.activeBadge')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </Card>
+          </TouchableOpacity>
 
           <Card pad={4} style={styles.groupCard}>
             <Row
@@ -280,6 +391,49 @@ const styles = StyleSheet.create({
     color: Colors.mute,
     fontWeight: '600',
     marginTop: vscale(1),
+  },
+  plansCard: {
+    marginTop: vscale(12),
+  },
+  plansRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(12),
+  },
+  plansIconWrap: {
+    width: hscale(38),
+    height: hscale(38),
+    borderRadius: hscale(13),
+    backgroundColor: Colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plansIconWrapActive: {
+    backgroundColor: Colors.green,
+  },
+  plansTextWrap: {
+    flex: 1,
+  },
+  plansTitle: {
+    fontSize: fscale(14.5),
+    fontWeight: '700',
+    color: Colors.ink,
+  },
+  plansSub: {
+    fontSize: fscale(12),
+    color: Colors.mute,
+    marginTop: vscale(2),
+  },
+  plansActiveBadge: {
+    paddingVertical: vscale(3),
+    paddingHorizontal: hscale(8),
+    borderRadius: hscale(6),
+    backgroundColor: '#E9F8E4',
+  },
+  plansActiveBadgeText: {
+    fontSize: fscale(9.5),
+    fontWeight: '700',
+    color: Colors.green,
   },
   groupCard: {
     marginTop: vscale(12),

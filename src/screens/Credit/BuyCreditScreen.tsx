@@ -44,6 +44,7 @@ const BuyCreditScreen = () => {
   const { t } = useTranslation();
 
   const [active, setActive] = useState<ActiveCredit | null>(null);
+  const [now, setNow] = useState(Date.now());
   const [plans, setPlans] = useState<PartnerPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -80,37 +81,51 @@ const BuyCreditScreen = () => {
     loadPlans();
   }, [loadPlans]);
 
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        try {
-          const cookie = await getCookie();
-          if (!cookie) return;
-          const res = await getPartnerPlanHistory(cookie);
-          if (res.Result === 'Success' && res.History) {
-            setHistory(res.History);
-          }
-        } catch {
-          // Supplementary section — a failed history fetch shouldn't
-          // block or error out the main plan list above.
-        }
-      })();
-    }, []),
-  );
-
+  // On focus (e.g. returning from PaymentScreen after a purchase): pull
+  // active-credit status and recent purchase history together, off a
+  // single cookie fetch instead of two separate ones.
   useFocusEffect(
     useCallback(() => {
       (async () => {
         const cookie = await getCookie();
-        const result = await refreshActiveCreditFromServer(cookie);
-        setActive(result);
-        if (result) {
-          const matched = plans.find(p => p.PlanTransaction === result.planId);
+        if (!cookie) return;
+
+        const [activeResult, historyRes] = await Promise.all([
+          refreshActiveCreditFromServer(cookie),
+          getPartnerPlanHistory(cookie).catch(() => null),
+        ]);
+
+        setActive(activeResult);
+        if (activeResult) {
+          const matched = plans.find(
+            p => p.PlanTransaction === activeResult.planId,
+          );
           if (matched) setJustActivated(matched);
+        }
+
+        // History is supplementary — a failed fetch shouldn't affect the
+        // active-credit banner or the main plan list above.
+        if (
+          historyRes &&
+          historyRes.Result === 'Success' &&
+          historyRes.History
+        ) {
+          setHistory(historyRes.History);
         }
       })();
     }, [plans]),
   );
+
+  // Purely local 1s tick so "time left" counts down smoothly instead of
+  // sitting frozen between focus-triggered server refreshes. No network
+  // call — just forces a re-render so activeMsLeft (derived from
+  // active.expiresAt) stays current.
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+
+  const activeMsLeft = active ? Math.max(0, active.expiresAt - now) : 0;
 
   const bestValueId = useMemo(() => {
     if (!plans.length) return null;
@@ -163,7 +178,7 @@ const BuyCreditScreen = () => {
               </Text>
               <Text style={styles.activeSub}>
                 {t('buyCredit.timeLeftSuffix', {
-                  timeLeft: formatTimeLeft(active.msLeft),
+                  timeLeft: formatTimeLeft(activeMsLeft),
                 })}
               </Text>
             </View>

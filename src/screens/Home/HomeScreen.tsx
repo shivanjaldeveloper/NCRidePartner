@@ -69,6 +69,7 @@ type NavProp = CompositeNavigationProp<
 const HomeScreen = () => {
   const navigation = useNavigation<NavProp>();
 
+  const [now, setNow] = useState(Date.now());
   const [online, setOnline] = useState(false);
   const [onOffBusy, setOnOffBusy] = useState(false);
   const [onOffError, setOnOffError] = useState<string | null>(null);
@@ -181,13 +182,33 @@ const HomeScreen = () => {
     }, [refreshCredit, syncOnOffStatus]),
   );
 
-  // Keep the "time left" readout ticking down while Home is mounted.
+  // Server-truth re-check every 30s while Home is mounted — this is the
+  // "is the plan still actually valid" poll, separate from the display.
   useEffect(() => {
     creditTickRef.current = setInterval(refreshCredit, 30000);
     return () => {
       if (creditTickRef.current) clearInterval(creditTickRef.current);
     };
   }, [refreshCredit]);
+
+  // Purely local 1s tick so the "time left" text counts down smoothly
+  // instead of sitting frozen between the 30s server polls above and
+  // then jumping. No network call — just forces a re-render so
+  // creditMsLeft (derived from creditInfo.expiresAt) stays current.
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+
+  const creditMsLeft = creditInfo ? Math.max(0, creditInfo.expiresAt - now) : 0;
+
+  // If the local countdown hits zero before the next scheduled server
+  // poll, resync right away instead of showing "0s" for up to 30s.
+  useEffect(() => {
+    if (creditInfo && creditMsLeft <= 0) {
+      refreshCredit();
+    }
+  }, [creditMsLeft, creditInfo, refreshCredit]);
 
   useEffect(() => {
     return () => {
@@ -365,7 +386,7 @@ const HomeScreen = () => {
             <View style={styles.creditRow}>
               <ClockIcon size={13} color={Colors.mute} strokeWidth={2} />
               <Text style={styles.creditRowText}>
-                Credit active · {formatTimeLeft(creditInfo.msLeft)}
+                Credit active · {formatTimeLeft(creditMsLeft)}
               </Text>
             </View>
           ) : (

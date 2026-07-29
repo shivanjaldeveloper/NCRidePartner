@@ -496,7 +496,14 @@
     "notificationsSub": "राइड रिक्वेस्ट, अलर्ट",
     "appSettingsSub": "भाषा, प्राथमिकताएं",
     "emergencySosSub": "त्वरित संपर्क",
-    "footer": "Alo Alo Partner · v 1.0.0 · मराठवाड़ा, भारत"
+    "footer": "Alo Alo Partner · v 1.0.0 · मराठवाड़ा, भारत",
+    "plans": {
+      "title": "प्लान और क्रेडिट",
+      "activeSub": "सक्रिय · {{timeLeft}} बचा",
+      "lastPurchaseSub": "आखिरी प्लान: {{plan}} · {{date}}",
+      "noActiveSub": "कोई सक्रिय प्लान नहीं — क्रेडिट खरीदने के लिए टैप करें",
+      "activeBadge": "सक्रिय"
+    }
   },
   "support": {
     "title": "सहायता",

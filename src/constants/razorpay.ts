@@ -18,4 +18,4 @@
 // it here only — PaymentScreen.tsx just imports RAZORPAY_KEY_ID.
 export const RAZORPAY_KEY_ID = 'rzp_test_TGuVycUJXGAtAe';
 
-//export const RAZORPAY_KEY_SECRET = 'pO1jBjg1Am4PTdDgGjG7520h';
+//export const RAZORPAY_KEY_ID = 'pO1jBjg1Am4PTdDgGjG7520h';
