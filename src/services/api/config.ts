@@ -17,4 +17,11 @@ export const API_PLANS_BASE_URL =
 export const API_LIVE_UPDATE_BASE_URL =
   'https://aloapp.shop/apiv1/partner/partnerliveupdate.asmx';
 
+// Razorpay order create/verify — confirmed via the VerifyPartnerPlanPayment
+// curl sample (partnerpayments.asmx). CreatePartnerPlanOrder's exact path
+// isn't confirmed by a real curl yet, but it's assumed to live on the same
+// .asmx service as Verify — see the banner in partnerPaymentsService.ts.
+export const API_PAYMENTS_BASE_URL =
+  'https://aloapp.shop/apiv1/partner/partnerpayments.asmx';
+
 export const API_BEARER_TOKEN = 'LrhTJugsRqEnefmaykA4wKNY';

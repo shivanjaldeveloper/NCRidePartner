@@ -595,24 +595,26 @@
     "hrs": "hrs",
     "planMeta": "{{time}} {{hrLabel}} · {{rides}} rides · ₹{{rate}}/hr",
     "buyNow": "Buy Now",
-    "footNote": "Prices and hours shown are live from your region's active plans. Checkout opens in test mode until the billing API is ready — no real money moves.",
-    "doneBackToHome": "Done, back to Home"
+    "footNote": "Prices and hours shown are live from your region's active plans.",
+    "doneBackToHome": "Done, back to Home",
+    "recentPurchases": "Recent purchases"
   },
   "payment": {
     "securedByRazorpay": "Secured by Razorpay",
-    "testMode": "TEST MODE — no real money moves",
+    "testMode": "Payments are secured by Razorpay",
     "amountPayable": "Amount payable",
     "creditDuration": "{{time}} {{hrLabel}} of ride credit",
     "allMethodsSupported": "All major payment methods supported",
     "methodsCaption": "UPI · Cards · Netbanking · Wallets",
-    "secureNote": "You'll complete this payment on Razorpay's secure checkout using the account's Test Mode keys — safe to try any test card or UPI ID.",
+    "secureNote": "You'll complete this payment on Razorpay's secure checkout. Your card, UPI, or bank details are never seen by this app.",
     "paySecurely": "Pay ₹{{amount}} securely",
     "processingPayment": "Processing payment",
     "confirmingNote": "Confirming with Razorpay — don't close this screen",
     "paymentSuccessful": "Payment successful",
     "creditNowActive": "{{plan}} credit is now active",
     "errors": {
-      "cancelledOrFailed": "Payment was cancelled or could not be completed."
+      "cancelledOrFailed": "Payment was cancelled or could not be completed.",
+      "sessionNotFound": "Session not found. Please log in again."
     }
   }
 }

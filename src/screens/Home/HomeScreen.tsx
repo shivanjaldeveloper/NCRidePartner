@@ -18,6 +18,7 @@ import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import TopSafeStrap from '../../components/layout/TopSafeStrap';
 import Card from '../../components/common/Card';
+import Spinner from '../../components/common/Spinner';
 import LocateIcon from '../../assets/icons/LocateIcon';
 import SosIcon from '../../assets/icons/SosIcon';
 import CashIcon from '../../assets/icons/CashIcon';
@@ -44,10 +45,14 @@ import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
 import { getCookie } from '../../utils/session';
 import {
-  getActiveCredit,
+  refreshActiveCreditFromServer,
   formatTimeLeft,
   ActiveCredit,
 } from '../../utils/credit';
+import {
+  getPartnerOnOffStatus,
+  setPartnerOnOffStatus,
+} from '../../services/api/plansService';
 import {
   useLiveLocationTracker,
   checkLocationReady,
@@ -65,6 +70,8 @@ const HomeScreen = () => {
   const navigation = useNavigation<NavProp>();
 
   const [online, setOnline] = useState(false);
+  const [onOffBusy, setOnOffBusy] = useState(false);
+  const [onOffError, setOnOffError] = useState<string | null>(null);
   const [showRidePopup, setShowRidePopup] = useState(false);
   const [creditInfo, setCreditInfo] = useState<ActiveCredit | null>(null);
   const rideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -89,6 +96,19 @@ const HomeScreen = () => {
       rideTimerRef.current = null;
     }
     setShowRidePopup(false);
+
+    // Best-effort server sync — going offline is a fail-safe local state
+    // (same as the location-unavailable path above), so a network hiccup
+    // here shouldn't stop the UI from showing "Offline" immediately. If
+    // this fails the next PartnerOnOffGet poll/app open will just re-sync.
+    getCookie()
+      .then(cookie => {
+        if (!cookie) return;
+        return setPartnerOnOffStatus(cookie, 'OFF');
+      })
+      .catch(err =>
+        console.warn('[HomeScreen] PartnerOnOffUpdate(OFF) failed:', err),
+      );
   }, []);
 
   // Sends a PartnerLocationUpdate ping every ~20s for as long as `online`
@@ -115,8 +135,11 @@ const HomeScreen = () => {
   const incentive = PARTNER_INCENTIVES[0];
 
   const refreshCredit = useCallback(async () => {
-    console.log('[HomeScreen] stored cookie:', await getCookie());
-    const active = await getActiveCredit();
+    const cookie = await getCookie();
+    // Server-truth check via PartnerActivePlan, falling back to local
+    // storage on any API failure — see refreshActiveCreditFromServer's
+    // doc comment in utils/credit.ts for the field-name caveat.
+    const active = await refreshActiveCreditFromServer(cookie);
     setCreditInfo(active);
     // Credit window ran out — can't stay online without active credit.
     setOnline(prevOnline => {
@@ -132,11 +155,30 @@ const HomeScreen = () => {
     });
   }, []);
 
+  // Pulls the server's current ON/OFF state so the toggle reflects reality
+  // on app open / returning to Home (e.g. partner went online on another
+  // device, or a previous PartnerOnOffUpdate(OFF) that failed silently in
+  // goOffline actually did land server-side). Best-effort — on failure we
+  // just keep whatever the local state already is.
+  const syncOnOffStatus = useCallback(async () => {
+    try {
+      const cookie = await getCookie();
+      if (!cookie) return;
+      const res = await getPartnerOnOffStatus(cookie);
+      if (res.Result === 'Success' && res.OnOff) {
+        setOnline(res.OnOff === 'ON');
+      }
+    } catch (err) {
+      console.warn('[HomeScreen] PartnerOnOffGet failed:', err);
+    }
+  }, []);
+
   // Re-check whenever Home regains focus (e.g. coming back from BuyCredit).
   useFocusEffect(
     useCallback(() => {
       refreshCredit();
-    }, [refreshCredit]),
+      syncOnOffStatus();
+    }, [refreshCredit, syncOnOffStatus]),
   );
 
   // Keep the "time left" readout ticking down while Home is mounted.
@@ -153,7 +195,15 @@ const HomeScreen = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!onOffError) return;
+    const timer = setTimeout(() => setOnOffError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [onOffError]);
+
   const handleToggleOnline = async () => {
+    if (onOffBusy) return;
+
     if (online) {
       // Manual "go offline" — credit itself is untouched, it's a
       // purchased wall-clock window (see utils/credit.ts) and keeps
@@ -174,7 +224,8 @@ const HomeScreen = () => {
       return;
     }
 
-    const active = await getActiveCredit();
+    const cookie = await getCookie();
+    const active = await refreshActiveCreditFromServer(cookie);
     setCreditInfo(active);
     if (!active) {
       // No active credit — send them to buy one before they can go online.
@@ -182,8 +233,21 @@ const HomeScreen = () => {
       return;
     }
 
-    setOnline(true);
-    rideTimerRef.current = setTimeout(() => setShowRidePopup(true), 3000);
+    setOnOffError(null);
+    setOnOffBusy(true);
+    try {
+      if (!cookie) throw new Error('Session not found. Please log in again.');
+      const res = await setPartnerOnOffStatus(cookie, 'ON');
+      if (res.Result !== 'Success') {
+        throw new Error(res.Message || 'Could not go online right now.');
+      }
+      setOnline(true);
+      rideTimerRef.current = setTimeout(() => setShowRidePopup(true), 3000);
+    } catch (err: any) {
+      setOnOffError(err?.message || 'Could not go online right now.');
+    } finally {
+      setOnOffBusy(false);
+    }
   };
 
   const handleAcceptRide = () => {
@@ -252,28 +316,50 @@ const HomeScreen = () => {
           <TouchableOpacity
             onPress={handleToggleOnline}
             activeOpacity={0.9}
+            disabled={onOffBusy}
             style={[
               styles.onlineToggle,
               { backgroundColor: online ? Colors.green : Colors.ink },
+              onOffBusy && styles.onlineToggleBusy,
             ]}
           >
-            <View style={styles.onlineIconWrap}>
-              <LocateIcon
-                size={20}
-                color={online ? '#FFFFFF' : Colors.lime}
-                strokeWidth={2}
-              />
-            </View>
+            {onOffBusy ? (
+              <Spinner size={20} color={online ? '#FFFFFF' : Colors.lime} />
+            ) : (
+              <View style={styles.onlineIconWrap}>
+                <LocateIcon
+                  size={20}
+                  color={online ? '#FFFFFF' : Colors.lime}
+                  strokeWidth={2}
+                />
+              </View>
+            )}
             <Text
               style={[
                 styles.onlineLabel,
                 { color: online ? '#FFFFFF' : Colors.lime },
               ]}
             >
-              {online ? 'You are Online' : 'Go Online'}
+              {onOffBusy
+                ? 'Going Online\u2026'
+                : online
+                ? 'You are Online'
+                : 'Go Online'}
             </Text>
-            {online && <Text style={styles.onlineSub}>Sector 62, Noida</Text>}
+            {online && !onOffBusy && (
+              <Text style={styles.onlineSub}>Sector 62, Noida</Text>
+            )}
           </TouchableOpacity>
+
+          {!!onOffError && (
+            <TouchableOpacity
+              style={styles.onOffErrorRow}
+              activeOpacity={0.7}
+              onPress={() => setOnOffError(null)}
+            >
+              <Text style={styles.onOffErrorText}>{onOffError}</Text>
+            </TouchableOpacity>
+          )}
 
           {creditInfo ? (
             <View style={styles.creditRow}>
@@ -643,6 +729,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 24,
     elevation: 6,
+  },
+  onlineToggleBusy: {
+    opacity: 0.85,
+  },
+  onOffErrorRow: {
+    marginTop: vscale(8),
+    paddingVertical: vscale(8),
+    paddingHorizontal: hscale(12),
+    borderRadius: hscale(12),
+    backgroundColor: 'rgba(224,82,78,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(224,82,78,0.25)',
+  },
+  onOffErrorText: {
+    fontSize: fscale(11.5),
+    fontWeight: '600',
+    color: Colors.red,
+    textAlign: 'center',
   },
   onlineIconWrap: {
     width: hscale(36),

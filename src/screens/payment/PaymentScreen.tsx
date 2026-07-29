@@ -16,9 +16,12 @@ import RazorpayCheckout from 'react-native-razorpay';
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale, safeLineHeight } from '../../theme/scale';
 import { RootStackParamList } from '../../navigation/types';
-import { activateCreditDemo } from '../../utils/credit';
+import { activateCredit } from '../../utils/credit';
 import { RAZORPAY_KEY_ID } from '../../constants/razorpay';
-import { createRazorpayOrder_DEV_ONLY } from '../../services/api/razorpayOrderService';
+import {
+  createPartnerPlanOrder,
+  verifyPartnerPlanPayment,
+} from '../../services/api/partnerPaymentsService';
 import { getCookie } from '../../utils/session';
 import { getProfile } from '../../services/api/authService';
 import Card from '../../components/common/Card';
@@ -83,59 +86,54 @@ const PaymentScreen = () => {
     setStage('processing');
 
     try {
-      // Best-effort partner details for the order notes — falls back
-      // quietly if the profile call fails or fields are missing, since a
-      // failed profile lookup shouldn't block a test payment.
+      const cookie = await getCookie();
+      if (!cookie) {
+        throw new Error(t('payment.errors.sessionNotFound'));
+      }
+
+      // Best-effort partner details for Checkout's prefill only — falls
+      // back quietly if the profile call fails or fields are missing,
+      // since a failed profile lookup shouldn't block the payment.
       let partnerName = 'Partner';
       let partnerMobile = 'NA';
       try {
-        const cookie = await getCookie();
-        if (cookie) {
-          const profile = await getProfile(cookie);
-          partnerName = profile?.Name || profile?.Username || partnerName;
-          partnerMobile = profile?.Mobile || profile?.Username || partnerMobile;
-        }
+        const profile = await getProfile(cookie);
+        partnerName = profile?.Name || profile?.Username || partnerName;
+        partnerMobile = profile?.Mobile || profile?.Username || partnerMobile;
       } catch {
         // ignore — order still goes through with the fallback values above
       }
 
-      // Step 1: create the order. DEV-ONLY — see razorpayOrderService.ts
-      // banner. Swap createRazorpayOrder_DEV_ONLY for your backend's real
-      // "create order" endpoint once it exists; nothing below this line
-      // needs to change.
+      // Step 1: ask the server to create the Razorpay order for this
+      // plan. Stop here (no Checkout, no verify call) unless it says
+      // Success — see partnerPaymentsService.ts for the endpoint-name
+      // caveat on this one call.
       let order;
       try {
-        order = await createRazorpayOrder_DEV_ONLY({
-          amountRupees: planRate,
-          // Razorpay caps `receipt` at 40 chars — planId can be long
-          // (GUID-style), so keep only its last 8 chars plus a base36
-          // timestamp instead of concatenating everything raw.
-          receipt: `P${Date.now().toString(36)}${planId.slice(-8)}`,
-          notes: {
-            'Partner Mobile Number': partnerMobile,
-            'Partner Name': partnerName,
-            // TODO: swap for the real partner reference field once
-            // confirmed with the backend team — Username is a placeholder.
-            'Partner Tran': partnerName,
-            'Plan Name': planName,
-          },
-        });
+        order = await createPartnerPlanOrder(cookie, planId);
+        if (order.Result !== 'Success') {
+          throw new Error(order.Message || 'Could not start payment');
+        }
       } catch (e: any) {
+        // e?.raw is the raw response body ApiError carries (see
+        // httpClient.ts) — logging it here is the difference between
+        // "failed with HTTP 500" and actually knowing why.
+        console.warn('[create-order] raw response:', e?.raw);
         throw new Error(`[create-order] ${e?.message || e}`);
       }
 
-      // Step 2: real Razorpay Checkout, pinned to that order — this is
-      // what stops a client from paying a different amount than the
-      // server actually requested.
+      // Step 2: Razorpay Checkout, using only what Step 1 returned — no
+      // server call happens during Checkout itself.
       let result;
       try {
         result = await RazorpayCheckout.open({
           key: RAZORPAY_KEY_ID,
-          order_id: order.id,
-          amount: order.amount,
-          currency: order.currency,
-          name: 'NCRide Partner',
-          description: `${planName} · ${planTime} hr credit`,
+          order_id: order.RazorpayOrderId,
+          amount: order.AmountPaise,
+          currency: order.Currency,
+          name: 'Alo Alo Partner',
+          description:
+            order.PlanName || `${planName} \u00b7 ${planTime} hr credit`,
           theme: { color: Colors.ink },
           prefill: {
             name: partnerName,
@@ -143,37 +141,40 @@ const PaymentScreen = () => {
           },
         });
       } catch (e: any) {
+        // User cancelled or Checkout itself failed. Per the flow spec: no
+        // server-side verification call is made here — the CREATED order
+        // row from Step 1 is simply left unused.
         throw new Error(
           `[checkout] ${e?.description || e?.message || 'cancelled'}`,
         );
       }
 
-      // Step 3: verify. DEV-ONLY stub — this just trusts Checkout's
-      // result for now. Real verification means recomputing
-      // HMAC-SHA256 of `${razorpay_order_id}|${razorpay_payment_id}`
-      // using the key SECRET and comparing it to razorpay_signature,
-      // which can only be done safely on a server (it needs the
-      // secret). Once the backend exposes a verify endpoint, replace
-      // the line below with a call to it, e.g.:
-      //   const res = await postAuthForm('VerifyRazorpayPayment', {
-      //     cookie,
-      //     razorpay_order_id: result.razorpay_order_id,
-      //     razorpay_payment_id: result.razorpay_payment_id,
-      //     razorpay_signature: result.razorpay_signature,
-      //     planTransaction: planId,
-      //   }, API_PLANS_BASE_URL);
-      //   const verified = res.Result === 'Success';
+      // Step 3: verify server-side. This recomputes the HMAC signature
+      // using the key SECRET, which only the server can safely do. The
+      // success screen/credit activation is gated strictly on
+      // `Result === 'Success'` from THIS call, not on Checkout returning.
+      let verifyRes;
       try {
-        const verified = !!result?.razorpay_payment_id;
-        if (!verified) throw new Error('no payment id returned');
+        verifyRes = await verifyPartnerPlanPayment(
+          cookie,
+          result.razorpay_order_id,
+          result.razorpay_payment_id,
+          result.razorpay_signature,
+        );
+        if (verifyRes.Result !== 'Success') {
+          throw new Error(verifyRes.Message || 'Payment could not be verified');
+        }
       } catch (e: any) {
+        console.warn('[verify] raw response:', e?.raw);
         throw new Error(`[verify] ${e?.message || e}`);
       }
 
-      // DEMO: activates the credit window locally, same as before — swap
-      // for whatever your backend does once payment is verified there.
+      // Activate the local credit window using the server-verified plan
+      // hours — not the planTime the screen was opened with — so it
+      // matches exactly what VerifyPartnerPlanPayment confirmed.
       try {
-        await activateCreditDemo(planId, planTime);
+        const verifiedHours = Number(verifyRes.PlanHour ?? planTime);
+        await activateCredit(planId, verifiedHours);
       } catch (e: any) {
         throw new Error(`[activate] ${e?.message || e}`);
       }
@@ -212,7 +213,7 @@ const PaymentScreen = () => {
               <WheelLogoIcon size={22} color={Colors.lime} />
             </View>
             <View>
-              <Text style={styles.merchantName}>NCRide Partner</Text>
+              <Text style={styles.merchantName}>Alo Alo Partner</Text>
               <View style={styles.trustedRow}>
                 <ShieldIcon size={11} color={Colors.lime} strokeWidth={2} />
                 <Text style={styles.trustedText}>

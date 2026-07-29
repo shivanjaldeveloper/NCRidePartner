@@ -21,13 +21,15 @@ import CheckIcon from '../../assets/icons/CheckIcon';
 import { RootStackParamList } from '../../navigation/types';
 import { getCookie } from '../../utils/session';
 import {
-  getActiveCredit,
+  refreshActiveCreditFromServer,
   formatTimeLeft,
   ActiveCredit,
 } from '../../utils/credit';
 import {
   getPartnerPlanList,
+  getPartnerPlanHistory,
   PartnerPlan,
+  PartnerPlanHistoryItem,
 } from '../../services/api/plansService';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'BuyCredit'>;
@@ -47,6 +49,7 @@ const BuyCreditScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justActivated, setJustActivated] = useState<PartnerPlan | null>(null);
+  const [history, setHistory] = useState<PartnerPlanHistoryItem[]>([]);
 
   const loadPlans = useCallback(async (isRefresh = false) => {
     isRefresh ? setRefreshing(true) : setLoading(true);
@@ -79,13 +82,33 @@ const BuyCreditScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      getActiveCredit().then(result => {
+      (async () => {
+        try {
+          const cookie = await getCookie();
+          if (!cookie) return;
+          const res = await getPartnerPlanHistory(cookie);
+          if (res.Result === 'Success' && res.History) {
+            setHistory(res.History);
+          }
+        } catch {
+          // Supplementary section — a failed history fetch shouldn't
+          // block or error out the main plan list above.
+        }
+      })();
+    }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const cookie = await getCookie();
+        const result = await refreshActiveCreditFromServer(cookie);
         setActive(result);
         if (result) {
           const matched = plans.find(p => p.PlanTransaction === result.planId);
           if (matched) setJustActivated(matched);
         }
-      });
+      })();
     }, [plans]),
   );
 
@@ -257,6 +280,32 @@ const BuyCreditScreen = () => {
 
         {!loading && !error && plans.length > 0 && (
           <Text style={styles.footNote}>{t('buyCredit.footNote')}</Text>
+        )}
+
+        {history.length > 0 && (
+          <View style={styles.historySection}>
+            <Text style={styles.sectionLabel}>
+              {t('buyCredit.recentPurchases')}
+            </Text>
+            {history.slice(0, 5).map((item, i) => (
+              <View
+                key={item.Transaction || `${item.PlanTran}-${i}`}
+                style={[
+                  styles.historyRow,
+                  i < Math.min(history.length, 5) - 1 &&
+                    styles.historyRowDivider,
+                ]}
+              >
+                <View style={styles.flex}>
+                  <Text style={styles.historyPlanName}>{item.PlanName}</Text>
+                  <Text style={styles.historyMeta}>
+                    {item.PlanStartDate} · {item.PlanStartTime}
+                  </Text>
+                </View>
+                <Text style={styles.historyAmount}>₹{item.PlanRate}</Text>
+              </View>
+            ))}
+          </View>
         )}
       </ScrollView>
 
@@ -455,6 +504,34 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
+  historySection: {
+    marginTop: vscale(20),
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: vscale(10),
+  },
+  historyRowDivider: {
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.line2,
+  },
+  historyPlanName: {
+    fontSize: fscale(13),
+    fontWeight: '700',
+    color: Colors.ink,
+  },
+  historyMeta: {
+    fontSize: fscale(11),
+    color: Colors.mute,
+    marginTop: vscale(2),
+  },
+  historyAmount: {
+    fontSize: fscale(13.5),
+    fontWeight: '700',
+    color: Colors.ink,
+  },
   footNote: {
     fontSize: fscale(11.5),
     color: Colors.mute2,
