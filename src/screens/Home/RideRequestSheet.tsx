@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -14,27 +14,46 @@ import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import CloseIcon from '../../assets/icons/CloseIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
-import StarFillIcon from '../../assets/icons/StarFillIcon';
-import { RideRequest } from './mockHomeData';
+import CarIcon from '../../assets/icons/CarIcon';
+import { PendingRide } from '../../services/api/ridesService';
 
 interface Props {
   visible: boolean;
-  request: RideRequest;
+  ride: PendingRide | null;
+  /** Server-reported offer window, in seconds (GetPendingRides.OfferExpirySeconds). */
+  expirySeconds: number;
   onClose: () => void;
-  onAccept: () => void;
+  onAccept: (ride: PendingRide) => void;
 }
 
 const SHEET_HEIGHT = 420;
 
+// "CAR" -> "Car", "CAR_XL" -> "Car Xl" — best-effort label for whatever
+// VehicleType string the server sends, without hardcoding a lookup table
+// that'll drift out of sync with new vehicle types added server-side.
+function formatVehicleType(raw: string): string {
+  if (!raw) return '';
+  return raw
+    .toLowerCase()
+    .split(/[\s_]+/)
+    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(' ');
+}
+
 const RideRequestSheet: React.FC<Props> = ({
   visible,
-  request,
+  ride,
+  expirySeconds,
   onClose,
   onAccept,
 }) => {
   const { t } = useTranslation();
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const pulse = useRef(new Animated.Value(0)).current;
+  const [secondsLeft, setSecondsLeft] = useState(expirySeconds);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     Animated.timing(translateY, {
@@ -64,12 +83,42 @@ const RideRequestSheet: React.FC<Props> = ({
     return () => loop.stop();
   }, [visible, pulse]);
 
-  if (!visible) return null;
+  // Resets and starts a fresh local countdown every time a new ride offer
+  // comes in (keyed off RideTran, not just `visible` — a new offer while
+  // one is already showing should restart the clock, not keep the old
+  // one's remaining time). Auto-dismisses via onClose when it hits 0,
+  // matching the server's own offer expiry so the sheet never sits open
+  // on a dead offer waiting for the next poll tick to notice.
+  useEffect(() => {
+    if (!visible || !ride) {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      return;
+    }
+    setSecondsLeft(expirySeconds);
+    countdownRef.current = setInterval(() => {
+      setSecondsLeft(prev => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          onCloseRef.current();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, ride?.RideTran, expirySeconds]);
+
+  if (!visible || !ride) return null;
 
   const dotOpacity = pulse.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 0.3],
   });
+
+  const urgent = secondsLeft <= 10;
 
   return (
     <View style={styles.overlay}>
@@ -79,6 +128,19 @@ const RideRequestSheet: React.FC<Props> = ({
           <Text style={styles.headerLabel}>
             {t('rideRequestSheet.newRideRequest')}
           </Text>
+          <View style={styles.spacerFlex} />
+          <View
+            style={[styles.countdownPill, urgent && styles.countdownPillUrgent]}
+          >
+            <Text
+              style={[
+                styles.countdownText,
+                urgent && styles.countdownTextUrgent,
+              ]}
+            >
+              {t('rideRequestSheet.expiresIn', { sec: secondsLeft })}
+            </Text>
+          </View>
         </View>
 
         <View style={styles.routeBlock}>
@@ -86,9 +148,13 @@ const RideRequestSheet: React.FC<Props> = ({
             <View style={styles.pickupDot} />
             <View style={styles.routeTextWrap}>
               <Text style={styles.routeLabel}>
-                {t('rideRequestSheet.pickupAway', { dist: request.pickupDist })}
+                {t('rideRequestSheet.pickupAway', {
+                  dist: `${ride.DistanceToPickupKM} km`,
+                })}
               </Text>
-              <Text style={styles.routeValue}>{request.pickup}</Text>
+              <Text style={styles.routeValue} numberOfLines={1}>
+                {ride.Pickup.Address}
+              </Text>
             </View>
           </View>
           <View style={styles.routeConnector} />
@@ -96,9 +162,13 @@ const RideRequestSheet: React.FC<Props> = ({
             <View style={styles.dropDot} />
             <View style={styles.routeTextWrap}>
               <Text style={styles.routeLabel}>
-                {t('rideRequestSheet.dropTrip', { dist: request.tripDist })}
+                {t('rideRequestSheet.dropTrip', {
+                  dist: `${ride.TripDistanceKM} km`,
+                })}
               </Text>
-              <Text style={styles.routeValue}>{request.drop}</Text>
+              <Text style={styles.routeValue} numberOfLines={1}>
+                {ride.Drop.Address}
+              </Text>
             </View>
           </View>
         </View>
@@ -106,50 +176,39 @@ const RideRequestSheet: React.FC<Props> = ({
         <View style={styles.statsRow}>
           {[
             {
-              v: `₹${request.earning}`,
-              l: 'earning',
+              v: ride.EstimatedFareText,
+              key: 'earning',
               labelKey: 'rideRequestSheet.stats.earning',
             },
             {
-              v: request.duration,
-              l: 'duration',
+              v: `${ride.TripDurationMinutes} min`,
+              key: 'duration',
               labelKey: 'rideRequestSheet.stats.duration',
             },
             {
-              v: request.payment,
-              l: 'payment',
-              labelKey: 'rideRequestSheet.stats.payment',
+              v: `${ride.ETAToPickupMinutes} min`,
+              key: 'eta',
+              labelKey: 'rideRequestSheet.stats.eta',
             },
           ].map(item => (
-            <View key={item.l} style={styles.statBox}>
+            <View key={item.key} style={styles.statBox}>
               <Text style={styles.statValue}>{item.v}</Text>
               <Text style={styles.statLabel}>{t(item.labelKey)}</Text>
             </View>
           ))}
         </View>
 
-        <View style={styles.passengerRow}>
-          <View style={styles.passengerAvatar}>
-            <Text style={styles.passengerAvatarText}>
-              {request.passengerName
-                .split(' ')
-                .map(w => w[0])
-                .join('')
-                .slice(0, 2)}
-            </Text>
+        <View style={styles.vehicleRow}>
+          <View style={styles.vehicleIconWrap}>
+            <CarIcon size={18} color={Colors.lime} strokeWidth={1.8} />
           </View>
-          <View style={styles.passengerTextWrap}>
-            <Text style={styles.passengerName}>{request.passengerName}</Text>
-            <Text style={styles.passengerMeta}>
-              {t('rideRequestSheet.tripsService', {
-                count: request.passengerTrips,
-                service: request.service,
-              })}
+          <View style={styles.vehicleTextWrap}>
+            <Text style={styles.vehicleLabel}>
+              {t('rideRequestSheet.vehicle')}
             </Text>
-          </View>
-          <View style={styles.ratingWrap}>
-            <StarFillIcon size={13} color={Colors.amber} />
-            <Text style={styles.ratingText}>{request.passengerRating}</Text>
+            <Text style={styles.vehicleValue}>
+              {formatVehicleType(ride.VehicleType)}
+            </Text>
           </View>
         </View>
 
@@ -158,7 +217,7 @@ const RideRequestSheet: React.FC<Props> = ({
             <CloseIcon size={22} color="#FFFFFF" strokeWidth={2} />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={onAccept}
+            onPress={() => onAccept(ride)}
             style={styles.acceptButton}
             activeOpacity={0.9}
           >
@@ -215,6 +274,26 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.55)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  spacerFlex: {
+    flex: 1,
+  },
+  countdownPill: {
+    paddingVertical: vscale(4),
+    paddingHorizontal: hscale(9),
+    borderRadius: hscale(10),
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  countdownPillUrgent: {
+    backgroundColor: 'rgba(224,82,78,0.18)',
+  },
+  countdownText: {
+    fontSize: fscale(11),
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.7)',
+  },
+  countdownTextUrgent: {
+    color: Colors.red,
   },
   routeBlock: {
     marginBottom: vscale(14),
@@ -288,7 +367,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: vscale(2),
   },
-  passengerRow: {
+  vehicleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: hscale(10),
@@ -300,7 +379,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.08)',
     marginBottom: vscale(16),
   },
-  passengerAvatar: {
+  vehicleIconWrap: {
     width: hscale(36),
     height: hscale(36),
     borderRadius: hscale(18),
@@ -308,33 +387,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  passengerAvatarText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: fscale(13),
-  },
-  passengerTextWrap: {
+  vehicleTextWrap: {
     flex: 1,
   },
-  passengerName: {
+  vehicleLabel: {
+    fontSize: fscale(10),
+    color: 'rgba(255,255,255,0.4)',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  vehicleValue: {
     fontSize: fscale(13.5),
     fontWeight: '700',
     color: '#FFFFFF',
-  },
-  passengerMeta: {
-    fontSize: fscale(11),
-    color: 'rgba(255,255,255,0.5)',
     marginTop: vscale(1),
-  },
-  ratingWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: hscale(4),
-  },
-  ratingText: {
-    fontSize: fscale(13),
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
   actionsRow: {
     flexDirection: 'row',

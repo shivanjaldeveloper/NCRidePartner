@@ -24,4 +24,9 @@ export const API_LIVE_UPDATE_BASE_URL =
 export const API_PAYMENTS_BASE_URL =
   'https://aloapp.shop/apiv1/partner/partnerpayments.asmx';
 
+// Pending ride offers (GetPendingRides) — same host/token, separate .asmx
+// service. Confirmed via the GetPendingRides curl + response samples.
+export const API_RIDE_REQUEST_BASE_URL =
+  'https://aloapp.shop/apiv1/partner/partner-riderequest.asmx';
+
 export const API_BEARER_TOKEN = 'LrhTJugsRqEnefmaykA4wKNY';

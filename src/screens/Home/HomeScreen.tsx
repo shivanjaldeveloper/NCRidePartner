@@ -39,8 +39,9 @@ import {
   PARTNER_VEHICLES,
   PARTNER_PAYOUTS,
   PARTNER_TRIPS,
-  PARTNER_RIDE_REQUEST,
 } from './mockHomeData';
+import { useRidePolling } from '../../utils/ridePolling';
+import { PendingRide } from '../../services/api/ridesService';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
 import { getCookie } from '../../utils/session';
@@ -73,10 +74,15 @@ const HomeScreen = () => {
   const [online, setOnline] = useState(false);
   const [onOffBusy, setOnOffBusy] = useState(false);
   const [onOffError, setOnOffError] = useState<string | null>(null);
-  const [showRidePopup, setShowRidePopup] = useState(false);
   const [creditInfo, setCreditInfo] = useState<ActiveCredit | null>(null);
-  const rideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const creditTickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Polls GetPendingRides every few seconds while online and surfaces the
+  // sheet the instant an offer comes in — see utils/ridePolling.ts. Turns
+  // itself off (and clears any offer on screen) the moment `online` flips
+  // false, so goOffline below doesn't need to touch this directly.
+  const { incomingRide, offerExpirySeconds, dismissIncomingRide } =
+    useRidePolling(online);
 
   const [locationPrompt, setLocationPrompt] = useState<{
     title: string;
@@ -92,11 +98,6 @@ const HomeScreen = () => {
   // pipeline and location tracker are.
   const goOffline = useCallback(() => {
     setOnline(false);
-    if (rideTimerRef.current) {
-      clearTimeout(rideTimerRef.current);
-      rideTimerRef.current = null;
-    }
-    setShowRidePopup(false);
 
     // Best-effort server sync — going offline is a fail-safe local state
     // (same as the location-unavailable path above), so a network hiccup
@@ -145,11 +146,6 @@ const HomeScreen = () => {
     // Credit window ran out — can't stay online without active credit.
     setOnline(prevOnline => {
       if (prevOnline && !active) {
-        if (rideTimerRef.current) {
-          clearTimeout(rideTimerRef.current);
-          rideTimerRef.current = null;
-        }
-        setShowRidePopup(false);
         return false;
       }
       return prevOnline;
@@ -211,12 +207,6 @@ const HomeScreen = () => {
   }, [creditMsLeft, creditInfo, refreshCredit]);
 
   useEffect(() => {
-    return () => {
-      if (rideTimerRef.current) clearTimeout(rideTimerRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
     if (!onOffError) return;
     const timer = setTimeout(() => setOnOffError(null), 5000);
     return () => clearTimeout(timer);
@@ -263,7 +253,6 @@ const HomeScreen = () => {
         throw new Error(res.Message || 'Could not go online right now.');
       }
       setOnline(true);
-      rideTimerRef.current = setTimeout(() => setShowRidePopup(true), 3000);
     } catch (err: any) {
       setOnOffError(err?.message || 'Could not go online right now.');
     } finally {
@@ -271,9 +260,9 @@ const HomeScreen = () => {
     }
   };
 
-  const handleAcceptRide = () => {
-    setShowRidePopup(false);
-    navigation.navigate('RideRequest');
+  const handleAcceptRide = (ride: PendingRide) => {
+    dismissIncomingRide();
+    navigation.navigate('RideRequest', { ride });
   };
 
   return (
@@ -634,9 +623,10 @@ const HomeScreen = () => {
       </ScrollView>
 
       <RideRequestSheet
-        visible={showRidePopup}
-        request={PARTNER_RIDE_REQUEST}
-        onClose={() => setShowRidePopup(false)}
+        visible={!!incomingRide}
+        ride={incomingRide}
+        expirySeconds={offerExpirySeconds}
+        onClose={dismissIncomingRide}
         onAccept={handleAcceptRide}
       />
 

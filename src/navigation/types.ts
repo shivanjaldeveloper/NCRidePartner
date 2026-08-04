@@ -1,3 +1,5 @@
+import { PendingRide } from '../services/api/ridesService';
+
 // The only routes Splash ever hands off to — kept as a narrow union so
 // LanguageSelectScreen's nextRoute param can't drift to a route that
 // needs params of its own (e.g. TripDetail, DocumentDetail).
@@ -39,8 +41,16 @@ export type RootStackParamList = {
   Logout: undefined;
   Documents: undefined;
   DocumentDetail: { docId: string };
-  RideRequest: undefined;
-  PickupNav: undefined;
+  // Optional only so navigation.navigate('RideRequest') without params
+  // doesn't error at the type level — RideRequestScreen itself requires
+  // a real ride and bails straight back to MainTabs if it's missing.
+  // HomeScreen always passes the real offer it just polled.
+  RideRequest: { ride: PendingRide } | undefined;
+  // Carries the AcceptRide response forward so PickupNav can eventually
+  // read pickup coords/polyline for real navigation — PickupNavScreen
+  // itself hasn't been wired to use it yet (still mock), this just avoids
+  // the data getting dropped on the floor between screens.
+  PickupNav: { ride?: PendingRide } | undefined;
   Arrived: undefined;
   LiveTrip: undefined;
   TripEarnings: undefined;

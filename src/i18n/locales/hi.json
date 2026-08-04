@@ -1,120 +1,120 @@
 {
   "common": {
-    "skip": "छोड़ें",
-    "next": "आगे",
-    "getStarted": "शुरू करें",
+    "skip": "वगळा",
+    "next": "पुढे",
+    "getStarted": "सुरुवात करा",
     "sos": "SOS"
   },
   "onboarding": {
     "screen1": {
-      "title": "ड्राइव करें। कमाएं। NCR में आगे बढ़ें।",
-      "sub": "नोएडा, दिल्ली और गुरुग्राम में हज़ारों NCRide पार्टनर्स के साथ जुड़ें। अपने घंटे खुद तय करें और ज़्यादा कमाएं।"
+      "title": "ड्राइव्ह करा. कमवा. NCR मध्ये वाढ करा.",
+      "sub": "नोएडा, दिल्ली आणि गुरुग्राममध्ये हजारो NCRide पार्टनर्ससोबत सामील व्हा. तुमचे तास स्वतः ठरवा आणि जास्त कमवा."
     },
     "screen2": {
-      "title": "सभी वाहन। सभी क्षेत्र।",
-      "sub": "कार, ऑटो, ई-रिक्शा या बाइक टैक्सी चलाएं। नोएडा से गुरुग्राम तक पूरे NCR को कवर करें — अपनी शर्तों पर।"
+      "title": "सर्व वाहने. सर्व झोन.",
+      "sub": "कार, ऑटो, ई-रिक्षा किंवा बाईक टॅक्सी चालवा. नोएडा ते गुरुग्राम संपूर्ण NCR कव्हर करा — तुमच्या अटींवर."
     },
     "screen3": {
-      "title": "समय पर कमाई। हमेशा।",
-      "sub": "रोज़ की कमाई, साप्ताहिक भुगतान और बोनस को रीयल-टाइम में ट्रैक करें। NCRide पार्टनर हर सोमवार भुगतान करता है।"
+      "title": "वेळेवर कमाई. नेहमी.",
+      "sub": "दैनंदिन कमाई, साप्ताहिक पेआउट आणि बोनस रिअल-टाइममध्ये ट्रॅक करा. NCRide पार्टनर दर सोमवारी पेमेंट करते."
     }
   },
   "permissions": {
-    "title": "लोकेशन एक्सेस की अनुमति दें",
-    "subtitle": "NCRide पार्टनर आपकी लोकेशन का उपयोग राइड मैचिंग, नेविगेशन और ट्रिप ट्रैकिंग के लिए करता है। ऑनलाइन जाने के लिए यह ज़रूरी है।",
+    "title": "लोकेशन अ‍ॅक्सेसला परवानगी द्या",
+    "subtitle": "NCRide पार्टनर तुमच्या लोकेशनचा वापर राईड मॅचिंग, नेव्हिगेशन आणि ट्रिप ट्रॅकिंगसाठी करते. ऑनलाइन जाण्यासाठी हे आवश्यक आहे.",
     "items": {
       "location": {
-        "title": "सटीक लोकेशन",
-        "sub": "सही पिकअप और नेविगेशन के लिए"
+        "title": "अचूक लोकेशन",
+        "sub": "अचूक पिकअप आणि नेव्हिगेशनसाठी"
       },
       "notifications": {
-        "title": "नोटिफिकेशन",
-        "sub": "नई राइड रिक्वेस्ट और अलर्ट"
+        "title": "नोटिफिकेशन्स",
+        "sub": "नवीन राईड रिक्वेस्ट आणि अलर्ट"
       },
       "background": {
-        "title": "बैकग्राउंड लोकेशन",
-        "sub": "ऐप मिनिमाइज़ होने पर ज़रूरी"
+        "title": "बॅकग्राउंड लोकेशन",
+        "sub": "अ‍ॅप मिनिमाइझ असताना आवश्यक"
       }
     },
-    "allowAll": "सभी अनुमतियां दें",
-    "notNow": "अभी नहीं"
+    "allowAll": "सर्व परवानग्या द्या",
+    "notNow": "आत्ता नाही"
   },
   "splash": {
     "title": "Alo Alo Partner",
-    "subtitle": "ड्राइव · कमाएं · पूरे भारत में आगे बढ़ें",
+    "subtitle": "ड्राइव्ह · कमवा · संपूर्ण भारतात वाढ करा",
     "footerCaption": "पार्टनर · भारत"
   },
   "auth": {
     "appBadge": "Alo Alo Partner App",
     "phone": {
-      "title": "स्वागत है, पार्टनर।\nड्राइविंग शुरू करने के लिए साइन इन करें।",
-      "subtitle": "हम आपका नंबर वेरिफ़ाई करने के लिए 4 अंकों का OTP भेजेंगे।",
+      "title": "स्वागत आहे, पार्टनर.\nड्रायव्हिंग सुरू करण्यासाठी साइन इन करा.",
+      "subtitle": "तुमचा नंबर पडताळण्यासाठी आम्ही 4 अंकी OTP पाठवू.",
       "fieldLabel": "मोबाइल नंबर",
       "placeholder": "0000000000",
-      "trustText": "आपके नंबर का उपयोग केवल पार्टनर वेरिफिकेशन के लिए किया जाता है।",
-      "termsPrefix": "मैं सहमत हूं",
-      "termsLink": "पार्टनर नियम व शर्तें",
-      "and": "और",
-      "privacyLink": "गोपनीयता नीति"
+      "trustText": "तुमचा नंबर फक्त पार्टनर पडताळणीसाठी वापरला जातो.",
+      "termsPrefix": "मी सहमत आहे",
+      "termsLink": "पार्टनर अटी व शर्ती",
+      "and": "आणि",
+      "privacyLink": "गोपनीयता धोरण"
     },
     "otp": {
-      "sentTo": "OTP भेजा गया +91 {{phone}}",
-      "title": "कोड दर्ज करें",
-      "subtitle": "4 अंकों का OTP · ",
-      "changeNumber": "नंबर बदलें",
-      "resendIn": "फिर से भेजें ",
-      "resendOtp": "OTP फिर से भेजें",
-      "resending": "फिर से भेज रहे हैं…"
+      "sentTo": "OTP पाठवला +91 {{phone}}",
+      "title": "कोड टाका",
+      "subtitle": "4 अंकी OTP · ",
+      "changeNumber": "नंबर बदला",
+      "resendIn": "पुन्हा पाठवा ",
+      "resendOtp": "OTP पुन्हा पाठवा",
+      "resending": "पुन्हा पाठवत आहे…"
     },
     "buttons": {
-      "sendOtp": "OTP भेजें",
-      "sending": "भेज रहे हैं…",
-      "verify": "वेरिफ़ाई करें और जारी रखें",
-      "verifying": "वेरिफ़ाई हो रहा है…"
+      "sendOtp": "OTP पाठवा",
+      "sending": "पाठवत आहे…",
+      "verify": "पडताळा आणि पुढे जा",
+      "verifying": "पडताळत आहे…"
     },
     "legal": {
-      "prefix": "जारी रखकर आप हमारी",
-      "termsLink": "पार्टनर नियम व शर्तें",
-      "and": "और",
-      "privacyLink": "गोपनीयता नीति",
-      "suffix": "से सहमत होते हैं।"
+      "prefix": "पुढे सुरू ठेवून तुम्ही आमच्या",
+      "termsLink": "पार्टनर अटी व शर्ती",
+      "and": "आणि",
+      "privacyLink": "गोपनीयता धोरणा",
+      "suffix": "शी सहमत आहात."
     },
     "errors": {
-      "sendOtpFailed": "OTP भेजा नहीं जा सका। कृपया दोबारा कोशिश करें।",
-      "genericRetry": "कुछ गड़बड़ हो गई। कृपया दोबारा कोशिश करें।",
-      "resendFailed": "OTP दोबारा नहीं भेजा जा सका। कृपया दोबारा कोशिश करें।",
-      "invalidOtp": "गलत OTP। कृपया दोबारा कोशिश करें।",
-      "notEligible": "आपका खाता जारी रखने के लिए पात्र नहीं है। कृपया सहायता से संपर्क करें।"
+      "sendOtpFailed": "OTP पाठवता आला नाही. कृपया पुन्हा प्रयत्न करा.",
+      "genericRetry": "काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा.",
+      "resendFailed": "OTP पुन्हा पाठवता आला नाही. कृपया पुन्हा प्रयत्न करा.",
+      "invalidOtp": "चुकीचा OTP. कृपया पुन्हा प्रयत्न करा.",
+      "notEligible": "तुमचे खाते सुरू ठेवण्यास पात्र नाही. कृपया सपोर्टशी संपर्क साधा."
     }
   },
   "basicDetails": {
-    "stepBadge": "चरण 1 / 2 · ऑनबोर्डिंग",
-    "title": "अपने बारे में बताएं",
-    "subtitle": "इन जानकारियों का उपयोग आपकी पार्टनर प्रोफ़ाइल में किया जाएगा।",
+    "stepBadge": "पायरी 1 / 2 · ऑनबोर्डिंग",
+    "title": "तुमच्याबद्दल सांगा",
+    "subtitle": "ही माहिती तुमच्या पार्टनर प्रोफाइलवर वापरली जाईल.",
     "fields": {
-      "fullName": "पूरा नाम",
-      "fullNamePlaceholder": "आपका पूरा नाम",
-      "email": "ईमेल पता",
+      "fullName": "पूर्ण नाव",
+      "fullNamePlaceholder": "तुमचे पूर्ण नाव",
+      "email": "ईमेल पत्ता",
       "emailPlaceholder": "you@example.com",
-      "referral": "रेफरल कोड (वैकल्पिक)",
-      "referralPlaceholder": "जिस पार्टनर ने आपको रेफर किया हो उसकी ID"
+      "referral": "रेफरल कोड (ऐच्छिक)",
+      "referralPlaceholder": "ज्या पार्टनरने रेफर केले त्याचा ID"
     },
-    "continue": "जारी रखें",
-    "saving": "सहेजा जा रहा है…",
+    "continue": "सुरू ठेवा",
+    "saving": "सेव्ह करत आहे…",
     "errors": {
-      "saveFailed": "आपकी जानकारी सहेजी नहीं जा सकी। कृपया दोबारा कोशिश करें।",
-      "genericRetry": "कुछ गड़बड़ हो गई। कृपया दोबारा कोशिश करें।"
+      "saveFailed": "तुमची माहिती सेव्ह करता आली नाही. कृपया पुन्हा प्रयत्न करा.",
+      "genericRetry": "काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा."
     }
   },
   "verification": {
     "eyebrow": "पार्टनर ऑनबोर्डिंग",
-    "title": "दस्तावेज़ स्थिति",
-    "bannerEyebrow": "वेरिफिकेशन स्थिति",
-    "bannerTitle": "सभी दस्तावेज़ सत्यापित ✓",
-    "bannerSub": "आप अभी ऑनलाइन जाकर कमाई शुरू कर सकते हैं।",
+    "title": "कागदपत्रांची स्थिती",
+    "bannerEyebrow": "पडताळणी स्थिती",
+    "bannerTitle": "सर्व कागदपत्रे पडताळली ✓",
+    "bannerSub": "तुम्ही आत्ताच ऑनलाइन जाऊन कमाई सुरू करू शकता.",
     "documents": {
       "dl": {
-        "title": "ड्राइविंग लाइसेंस",
+        "title": "ड्रायव्हिंग लायसन्स",
         "sub": "DL-0420110012345"
       },
       "rc": {
@@ -123,54 +123,54 @@
       },
       "aadhaar": {
         "title": "आधार कार्ड",
-        "sub": "पहचान प्रमाण"
+        "sub": "ओळख पुरावा"
       },
       "insurance": {
-        "title": "बीमा प्रमाणपत्र",
-        "sub": "मार्च 2027 तक मान्य"
+        "title": "विमा प्रमाणपत्र",
+        "sub": "मार्च 2027 पर्यंत वैध"
       },
       "photo": {
-        "title": "प्रोफ़ाइल फ़ोटो",
-        "sub": "फेस वेरिफिकेशन"
+        "title": "प्रोफाइल फोटो",
+        "sub": "फेस पडताळणी"
       }
     },
-    "statusVerified": "सत्यापित",
-    "startEarning": "कमाई शुरू करें"
+    "statusVerified": "पडताळले",
+    "startEarning": "कमाई सुरू करा"
   },
   "applicationProcessing": {
     "logout": "लॉग आउट",
-    "title": "आवेदन प्रोसेस हो रहा है",
-    "message": "आपके दस्तावेज़ सफलतापूर्वक जमा हो गए हैं और वेरिफिकेशन में हैं।\n\nखाता स्वीकृत होते ही हम आपको सूचित करेंगे।",
-    "checkStatus": "स्थिति जांचें",
-    "checking": "जांच रहे हैं…",
+    "title": "अर्जावर प्रक्रिया सुरू आहे",
+    "message": "तुमची कागदपत्रे यशस्वीरित्या सबमिट झाली असून पडताळणीसाठी आहेत.\n\nखाते मंजूर झाल्यावर आम्ही तुम्हाला कळवू.",
+    "checkStatus": "स्थिती तपासा",
+    "checking": "तपासत आहे…",
     "notes": {
-      "rejected": "आवेदन अस्वीकृत: {{remark}}",
-      "notApproved": "आपका आवेदन स्वीकृत नहीं हुआ। विवरण के लिए सहायता से संपर्क करें।",
-      "underReview": "अभी समीक्षा में है — {{remark}}",
-      "underReviewDefault": "अभी समीक्षा में है — कुछ देर बाद देखें।",
-      "checkFailed": "स्थिति जांची नहीं जा सकी। कृपया दोबारा कोशिश करें।"
+      "rejected": "अर्ज नाकारला: {{remark}}",
+      "notApproved": "तुमचा अर्ज मंजूर झाला नाही. तपशीलांसाठी सपोर्टशी संपर्क साधा.",
+      "underReview": "अजून पुनरावलोकनात आहे — {{remark}}",
+      "underReviewDefault": "अजून पुनरावलोकनात आहे — थोड्या वेळाने पुन्हा तपासा.",
+      "checkFailed": "स्थिती तपासता आली नाही. कृपया पुन्हा प्रयत्न करा."
     }
   },
   "settings": {
-    "title": "सेटिंग्स",
+    "title": "सेटिंग्ज",
     "sections": {
-      "profile": "पार्टनर प्रोफ़ाइल",
-      "preferences": "प्राथमिकताएं",
-      "service": "सेवा प्राथमिकताएं",
-      "legal": "गोपनीयता और कानूनी"
+      "profile": "पार्टनर प्रोफाइल",
+      "preferences": "प्राधान्ये",
+      "service": "सेवा प्राधान्ये",
+      "legal": "गोपनीयता आणि कायदेशीर"
     },
     "rows": {
       "personalInfo": {
-        "title": "व्यक्तिगत जानकारी",
-        "sub": "नाम, फ़ोटो, पता"
+        "title": "वैयक्तिक माहिती",
+        "sub": "नाव, फोटो, पत्ता"
       },
       "mobile": {
         "title": "मोबाइल",
-        "sub": "{{phone}} · सत्यापित"
+        "sub": "{{phone}} · पडताळले"
       },
       "kyc": {
-        "title": "KYC वेरिफिकेशन",
-        "sub": "आधार · पैन · DL सत्यापित"
+        "title": "KYC पडताळणी",
+        "sub": "आधार · पॅन · DL पडताळले"
       },
       "vehicleType": {
         "title": "वाहन प्रकार",
@@ -188,105 +188,105 @@
         "title": "भाषा"
       },
       "privacyPolicy": {
-        "title": "गोपनीयता नीति"
+        "title": "गोपनीयता धोरण"
       },
       "partnerAgreement": {
-        "title": "पार्टनर एग्रीमेंट"
+        "title": "पार्टनर करार"
       },
       "deleteAccount": {
-        "title": "खाता हटाएं"
+        "title": "खाते हटवा"
       }
     },
     "preferences": {
-      "push": "पुश नोटिफिकेशन",
-      "rideRequests": "नई राइड रिक्वेस्ट",
-      "payoutAlerts": "कमाई और भुगतान अलर्ट",
-      "bgLocation": "बैकग्राउंड लोकेशन",
-      "sound": "राइड रिक्वेस्ट के लिए साउंड",
-      "showEarnings": "होम पर कमाई दिखाएं"
+      "push": "पुश नोटिफिकेशन्स",
+      "rideRequests": "नवीन राईड रिक्वेस्ट",
+      "payoutAlerts": "कमाई आणि पेआउट अलर्ट",
+      "bgLocation": "बॅकग्राउंड लोकेशन",
+      "sound": "राईड रिक्वेस्टसाठी आवाज",
+      "showEarnings": "होमवर कमाई दाखवा"
     },
-    "footer": "Alo Alo Partner · v {{version}} (बिल्ड {{build}}) · मराठवाड़ा, भारत",
+    "footer": "Alo Alo Partner · v {{version}} (बिल्ड {{build}}) · मराठवाडा, भारत",
     "languageSheet": {
-      "title": "भाषा चुनें",
-      "subtitle": "ऐप में उपयोग करने के लिए भाषा चुनें।",
-      "done": "हो गया"
+      "title": "भाषा निवडा",
+      "subtitle": "अ‍ॅपमध्ये वापरण्यासाठी भाषा निवडा.",
+      "done": "झाले"
     }
   },
   "logout": {
-    "confirmTitle": "क्या आप Alo Alo Partner से लॉग आउट करना चाहते हैं?",
-    "confirmSubtitle": "आप कभी भी वापस साइन इन कर सकते हैं। आपकी कमाई, दस्तावेज़ और वाहन की जानकारी सुरक्षित रहेगी।",
-    "stayLoggedIn": "लॉग इन रहें",
-    "logOut": "लॉग आउट करें"
+    "confirmTitle": "Alo Alo Partner मधून लॉग आउट करायचे आहे का?",
+    "confirmSubtitle": "तुम्ही कधीही परत साइन इन करू शकता. तुमची कमाई, कागदपत्रे आणि वाहन माहिती सुरक्षित राहील.",
+    "stayLoggedIn": "लॉग इन राहा",
+    "logOut": "लॉग आउट करा"
   },
   "passengerRating": {
-    "rate": "{{name}} को रेट करें",
-    "howWas": "यह पैसेंजर कैसा था?",
-    "submit": "रेटिंग सबमिट करें",
+    "rate": "{{name}} यांना रेट करा",
+    "howWas": "हा प्रवासी कसा होता?",
+    "submit": "रेटिंग सबमिट करा",
     "tags": {
       "polite": "विनम्र",
-      "onTime": "समय पर",
-      "cleanPickupArea": "साफ पिकअप जगह",
-      "safeRide": "सुरक्षित राइड",
-      "easyToFind": "ढूंढने में आसान"
+      "onTime": "वेळेवर",
+      "cleanPickupArea": "स्वच्छ पिकअप जागा",
+      "safeRide": "सुरक्षित राईड",
+      "easyToFind": "शोधण्यास सोपे"
     }
   },
   "termsUpdate": {
-    "title": "हमारे नियम व शर्तें अपडेट हुई हैं",
-    "subtitle": "ऐप का उपयोग जारी रखने के लिए कृपया नवीनतम पार्टनर नियम व शर्तें और गोपनीयता नीति की समीक्षा करें और स्वीकार करें।",
-    "agreePrefix": "मैं अपडेटेड",
-    "termsLink": "पार्टनर नियम व शर्तें",
-    "and": "और",
-    "privacyLink": "गोपनीयता नीति",
-    "saving": "सहेजा जा रहा है…",
-    "acceptContinue": "स्वीकार करें और जारी रखें",
-    "declineLogout": "अभी नहीं, मुझे लॉग आउट करें"
+    "title": "आमच्या अटी व शर्ती अद्ययावत झाल्या आहेत",
+    "subtitle": "अ‍ॅप वापरणे सुरू ठेवण्यासाठी कृपया नवीनतम पार्टनर अटी व शर्ती आणि गोपनीयता धोरण पुनरावलोकन करून स्वीकारा.",
+    "agreePrefix": "मी अद्ययावत",
+    "termsLink": "पार्टनर अटी व शर्ती",
+    "and": "आणि",
+    "privacyLink": "गोपनीयता धोरणा",
+    "saving": "सेव्ह करत आहे…",
+    "acceptContinue": "स्वीकारा आणि सुरू ठेवा",
+    "declineLogout": "आत्ता नाही, मला लॉग आउट करा"
   },
   "sos": {
-    "headerTitle": "आपातकाल और SOS",
-    "tapHoldTitle": "SOS के लिए टैप करके होल्ड करें",
-    "tapHoldSub": "लाइव लोकेशन पुलिस + आपातकालीन संपर्कों को भेजी जाती है",
-    "alertSent": "अलर्ट भेजा गया · मदद रास्ते में है",
-    "holdToAlert": "अलर्ट के लिए 3 सेकंड होल्ड करें",
-    "emergencyContacts": "आपातकालीन संपर्क",
-    "addContact": "संपर्क जोड़ें",
+    "headerTitle": "आणीबाणी आणि SOS",
+    "tapHoldTitle": "SOS साठी टॅप करून होल्ड करा",
+    "tapHoldSub": "लाइव्ह लोकेशन पोलीस + आणीबाणी संपर्कांना पाठवले जाते",
+    "alertSent": "अलर्ट पाठवला · मदत येत आहे",
+    "holdToAlert": "अलर्टसाठी 3 सेकंद होल्ड करा",
+    "emergencyContacts": "आणीबाणी संपर्क",
+    "addContact": "संपर्क जोडा",
     "partnerSafety": "पार्टनर सुरक्षा",
     "reportUnsafe": {
-      "title": "असुरक्षित पैसेंजर की रिपोर्ट करें",
-      "sub": "व्यवहार संबंधी चिंता"
+      "title": "असुरक्षित प्रवाशाची तक्रार करा",
+      "sub": "वर्तनाबद्दल चिंता"
     },
     "accidentSupport": {
-      "title": "दुर्घटना सहायता",
-      "sub": "सड़क दुर्घटना, वाहन क्षति"
+      "title": "अपघात सहाय्य",
+      "sub": "रस्ता अपघात, वाहन नुकसान"
     },
     "callSupport": {
-      "title": "पार्टनर सपोर्ट को कॉल करें",
+      "title": "पार्टनर सपोर्टला कॉल करा",
       "sub": "1800 200 ALO-P · 24×7"
     }
   },
   "documents": {
-    "headerTitle": "दस्तावेज़ केंद्र",
-    "headerSub": "पार्टनर KYC और वाहन दस्तावेज़",
-    "allVerified": "सभी दस्तावेज़ सत्यापित",
-    "somePending": "कुछ दस्तावेज़ लंबित हैं",
-    "eligibleToDrive": "आप पूरे NCR में ड्राइव करने के पात्र हैं",
-    "privacyNote": "दस्तावेज़ एन्क्रिप्टेड और सुरक्षित रूप से संग्रहीत हैं। Alo Alo Partner DPDP एक्ट अनुपालक है।",
-    "preview": "दस्तावेज़ पूर्वावलोकन",
-    "detailsLabel": "विवरण",
-    "updateDocument": "दस्तावेज़ अपडेट करें",
+    "headerTitle": "कागदपत्र केंद्र",
+    "headerSub": "पार्टनर KYC आणि वाहन कागदपत्रे",
+    "allVerified": "सर्व कागदपत्रे पडताळली",
+    "somePending": "काही कागदपत्रे प्रलंबित आहेत",
+    "eligibleToDrive": "तुम्ही संपूर्ण NCR मध्ये ड्राइव्ह करण्यास पात्र आहात",
+    "privacyNote": "कागदपत्रे एन्क्रिप्टेड आणि सुरक्षितपणे साठवली जातात. Alo Alo Partner DPDP कायद्याचे पालन करते.",
+    "preview": "कागदपत्र पूर्वावलोकन",
+    "detailsLabel": "तपशील",
+    "updateDocument": "कागदपत्र अद्ययावत करा",
     "status": {
-      "verified": "सत्यापित",
-      "pending": "लंबित"
+      "verified": "पडताळले",
+      "pending": "प्रलंबित"
     },
     "detail": {
-      "status": "स्थिति",
-      "docNumber": "दस्तावेज़ संख्या",
-      "verifiedOn": "सत्यापित तिथि",
-      "validTill": "मान्य तक",
-      "linkedTo": "इससे लिंक"
+      "status": "स्थिती",
+      "docNumber": "कागदपत्र क्रमांक",
+      "verifiedOn": "पडताळणी तारीख",
+      "validTill": "वैध तारीख",
+      "linkedTo": "याच्याशी लिंक"
     },
     "items": {
       "dl": {
-        "title": "ड्राइविंग लाइसेंस"
+        "title": "ड्रायव्हिंग लायसन्स"
       },
       "rc": {
         "title": "वाहन RC"
@@ -295,109 +295,109 @@
         "title": "आधार कार्ड"
       },
       "insurance": {
-        "title": "बीमा प्रमाणपत्र"
+        "title": "विमा प्रमाणपत्र"
       },
       "permit": {
-        "title": "वाहन परमिट"
+        "title": "वाहन परवाना"
       }
     }
   },
   "trips": {
     "title": "ट्रिप्स",
-    "subtitle": "Alo Alo Partner के रूप में सभी ट्रिप्स",
+    "subtitle": "Alo Alo Partner म्हणून सर्व ट्रिप्स",
     "status": {
-      "all": "सभी",
+      "all": "सर्व",
       "completed": "पूर्ण",
       "cancelled": "रद्द"
     },
-    "emptyFor": "अभी तक कोई {{filter}} ट्रिप नहीं है।"
+    "emptyFor": "अजून {{filter}} ट्रिप नाही."
   },
   "wallet": {
     "headerTitle": "वॉलेट",
-    "headerSub": "पार्टनर कमाई शेष",
-    "balanceLabel": "वॉलेट बैलेंस",
-    "viewPayouts": "भुगतान देखें",
-    "recentTransactions": "हाल के लेनदेन"
+    "headerSub": "पार्टनर कमाई शिल्लक",
+    "balanceLabel": "वॉलेट बॅलन्स",
+    "viewPayouts": "पेआउट पहा",
+    "recentTransactions": "अलीकडील व्यवहार"
   },
   "payouts": {
     "status": {
-      "verified": "सत्यापित",
-      "unverified": "असत्यापित"
+      "verified": "पडताळले",
+      "unverified": "अपडताळित"
     },
-    "headerTitle": "भुगतान",
-    "headerSub": "साप्ताहिक बैंक ट्रांसफर",
-    "nextPayout": "अगला भुगतान",
-    "payoutHistory": "भुगतान इतिहास",
-    "primaryBankAccount": "प्राथमिक बैंक खाता",
-    "change": "बदलें"
+    "headerTitle": "पेआउट",
+    "headerSub": "साप्ताहिक बँक ट्रान्सफर",
+    "nextPayout": "पुढील पेआउट",
+    "payoutHistory": "पेआउट इतिहास",
+    "primaryBankAccount": "प्राथमिक बँक खाते",
+    "change": "बदला"
   },
   "partnerDocuments": {
-    "stepBadge": "चरण 2 / 2 · ऑनबोर्डिंग",
-    "title": "पार्टनर दस्तावेज़",
-    "subtitle": "आपके खाते को सत्यापित करने के लिए ये अपलोड करें।",
-    "personalDocsLabel": "व्यक्तिगत दस्तावेज़",
-    "vehicleDetailsLabel": "वाहन विवरण",
-    "vehicleDocsLabel": "वाहन दस्तावेज़",
+    "stepBadge": "पायरी 2 / 2 · ऑनबोर्डिंग",
+    "title": "पार्टनर कागदपत्रे",
+    "subtitle": "तुमचे खाते पडताळण्यासाठी ही अपलोड करा.",
+    "personalDocsLabel": "वैयक्तिक कागदपत्रे",
+    "vehicleDetailsLabel": "वाहन तपशील",
+    "vehicleDocsLabel": "वाहन कागदपत्रे",
     "fields": {
-      "registrationNumber": "वाहन पंजीकरण संख्या",
+      "registrationNumber": "वाहन नोंदणी क्रमांक",
       "registrationPlaceholder": "UP16 AB 4821",
       "vehicleType": "वाहन प्रकार",
-      "vehicleModel": "वाहन मॉडल",
-      "vehicleModelPlaceholder": "जैसे Hero Splendor"
+      "vehicleModel": "वाहन मॉडेल",
+      "vehicleModelPlaceholder": "उदा. Hero Splendor"
     },
     "vehicleTypes": {
-      "BIKE": "बाइक",
+      "BIKE": "बाईक",
       "AUTO": "ऑटो",
       "CAR": "कार"
     },
-    "saveVehicleDetails": "वाहन विवरण सहेजें",
-    "saving": "सहेजा जा रहा है…",
-    "saved": "सहेजा गया",
-    "submitApplication": "आवेदन सबमिट करें",
-    "submitting": "सबमिट हो रहा है…",
+    "saveVehicleDetails": "वाहन तपशील सेव्ह करा",
+    "saving": "सेव्ह करत आहे…",
+    "saved": "सेव्ह झाले",
+    "submitApplication": "अर्ज सबमिट करा",
+    "submitting": "सबमिट होत आहे…",
     "docStatus": {
-      "uploading": "अपलोड हो रहा है",
-      "added": "जोड़ा गया",
-      "retry": "पुनः प्रयास करें",
-      "upload": "अपलोड करें"
+      "uploading": "अपलोड होत आहे",
+      "added": "जोडले",
+      "retry": "पुन्हा प्रयत्न करा",
+      "upload": "अपलोड करा"
     },
     "docSub": {
-      "uploadFailed": "अपलोड विफल — पुनः प्रयास के लिए टैप करें",
-      "uploaded": "अपलोड हो गया"
+      "uploadFailed": "अपलोड अयशस्वी — पुन्हा प्रयत्नासाठी टॅप करा",
+      "uploaded": "अपलोड झाले"
     },
     "errors": {
-      "uploadFailed": "{{title}} अपलोड नहीं हो सका।",
-      "uploadFailedRetry": "{{title}} अपलोड नहीं हो सका। कृपया दोबारा कोशिश करें।",
-      "pickerFailed": "पिकर नहीं खोला जा सका। कृपया दोबारा कोशिश करें।",
-      "saveVehicleFailed": "वाहन विवरण सहेजा नहीं जा सका।",
-      "saveVehicleFailedRetry": "वाहन विवरण सहेजा नहीं जा सका। कृपया दोबारा कोशिश करें।",
-      "submitFailed": "आपका आवेदन सबमिट नहीं हो सका।",
-      "genericRetry": "कुछ गड़बड़ हो गई। कृपया दोबारा कोशिश करें।"
+      "uploadFailed": "{{title}} अपलोड करता आले नाही.",
+      "uploadFailedRetry": "{{title}} अपलोड करता आले नाही. कृपया पुन्हा प्रयत्न करा.",
+      "pickerFailed": "पिकर उघडता आले नाही. कृपया पुन्हा प्रयत्न करा.",
+      "saveVehicleFailed": "वाहन तपशील सेव्ह करता आला नाही.",
+      "saveVehicleFailedRetry": "वाहन तपशील सेव्ह करता आला नाही. कृपया पुन्हा प्रयत्न करा.",
+      "submitFailed": "तुमचा अर्ज सबमिट करता आला नाही.",
+      "genericRetry": "काहीतरी चुकले. कृपया पुन्हा प्रयत्न करा."
     },
     "docs": {
       "PersonalSelfPhoto": {
-        "title": "व्यक्तिगत सेल्फ फोटो",
-        "sub": "अभी लिया गया स्पष्ट चेहरे का फोटो"
+        "title": "वैयक्तिक सेल्फ फोटो",
+        "sub": "आत्ता काढलेला स्पष्ट चेहऱ्याचा फोटो"
       },
       "PersonalAadhaarCard": {
-        "title": "व्यक्तिगत आधार कार्ड",
-        "sub": "पहचान प्रमाण"
+        "title": "वैयक्तिक आधार कार्ड",
+        "sub": "ओळख पुरावा"
       },
       "PersonalPANCard": {
-        "title": "व्यक्तिगत पैन कार्ड",
-        "sub": "पहचान प्रमाण"
+        "title": "वैयक्तिक पॅन कार्ड",
+        "sub": "ओळख पुरावा"
       },
       "PersonalDrivingLicence": {
-        "title": "व्यक्तिगत ड्राइविंग लाइसेंस",
-        "sub": "आगे और पीछे, स्पष्ट रूप से दिखाई दे"
+        "title": "वैयक्तिक ड्रायव्हिंग लायसन्स",
+        "sub": "पुढील आणि मागील बाजू, स्पष्ट दिसणारी"
       },
       "VehicleRC": {
         "title": "वाहन RC",
-        "sub": "पंजीकरण प्रमाणपत्र"
+        "sub": "नोंदणी प्रमाणपत्र"
       },
       "VehicleInsurance": {
-        "title": "वाहन बीमा",
-        "sub": "मान्य बीमा प्रति"
+        "title": "वाहन विमा",
+        "sub": "वैध विमा प्रत"
       },
       "VehiclePUC": {
         "title": "वाहन PUC",
@@ -408,220 +408,223 @@
         "sub": "फिटनेस प्रमाणपत्र"
       },
       "VehiclePermit": {
-        "title": "वाहन परमिट",
-        "sub": "व्यावसायिक परमिट"
+        "title": "वाहन परवाना",
+        "sub": "व्यावसायिक परवाना"
       },
       "VehicleNumberPlatePhoto": {
         "title": "वाहन नंबर प्लेट फोटो",
-        "sub": "प्लेट की स्पष्ट फोटो"
+        "sub": "प्लेटचा स्पष्ट फोटो"
       },
       "VehicleFrontPhoto": {
         "title": "वाहन फ्रंट फोटो",
-        "sub": "पूरा सामने का दृश्य"
+        "sub": "पूर्ण समोरचा दृश्य"
       }
     }
   },
   "pickupNav": {
-    "headingToPickup": "पिकअप की ओर जा रहे हैं",
-    "etaValue": "ETA · 4 मिनट",
+    "headingToPickup": "पिकअपकडे जात आहे",
+    "etaValue": "ETA · 4 मिनिटे",
     "away": "{{dist}} दूर",
     "tripsSuffix": "· {{count}} ट्रिप्स",
     "pickupLabel": "पिकअप",
-    "arrivedButton": "पिकअप पर पहुँच गया"
+    "arrivedButton": "पिकअपला पोहोचलो"
   },
   "vehicle": {
-    "headerTitle": "वाहन विवरण",
+    "headerTitle": "वाहन तपशील",
     "activeVehicle": "सक्रिय वाहन",
-    "vehicleInfo": "वाहन जानकारी",
+    "vehicleInfo": "वाहन माहिती",
     "fields": {
       "type": "प्रकार",
       "serviceCategory": "सेवा श्रेणी",
-      "rcStatus": "RC स्थिति",
-      "insurance": "बीमा",
+      "rcStatus": "RC स्थिती",
+      "insurance": "विमा",
       "puc": "PUC"
     },
-    "validTillMar2027": "18 मार्च 2027 तक मान्य",
-    "validTillSep2026": "18 सितंबर 2026 तक मान्य",
-    "serviceAreasLabel": "सेवा क्षेत्र",
+    "validTillMar2027": "18 मार्च 2027 पर्यंत वैध",
+    "validTillSep2026": "18 सप्टेंबर 2026 पर्यंत वैध",
+    "serviceAreasLabel": "सेवा क्षेत्रे",
     "serviceAreas": {
-      "noida": "नोएडा · सभी सेक्टर",
+      "noida": "नोएडा · सर्व सेक्टर",
       "delhiNcr": "दिल्ली NCR",
-      "gurugram": "गुरुग्राम (चयनित रूट)",
+      "gurugram": "गुरुग्राम (निवडक मार्ग)",
       "greaterNoida": "ग्रेटर नोएडा"
     },
-    "updateVehicleDetails": "वाहन विवरण अपडेट करें"
+    "updateVehicleDetails": "वाहन तपशील अद्ययावत करा"
   },
   "tripDetail": {
-    "headerTitle": "ट्रिप विवरण",
+    "headerTitle": "ट्रिप तपशील",
     "earning": "कमाई",
-    "tripInfo": "ट्रिप जानकारी",
+    "tripInfo": "ट्रिप माहिती",
     "fields": {
-      "route": "रूट",
-      "dateTime": "तारीख और समय",
+      "route": "मार्ग",
+      "dateTime": "तारीख आणि वेळ",
       "vehicle": "वाहन",
-      "passengerRating": "पैसेंजर रेटिंग"
+      "passengerRating": "प्रवासी रेटिंग"
     },
-    "vehicleSub": "UP16 AB 4821 · मारुति स्विफ्ट डिज़ायर",
+    "vehicleSub": "UP16 AB 4821 · मारुती स्विफ्ट डिझायर",
     "passengerRatingSub": "4.8 ★ · प्रिया एस.",
-    "earningsDetail": "कमाई का विवरण",
-    "grossEarning": "सकल कमाई",
-    "platformFee": "प्लेटफ़ॉर्म शुल्क (8%)",
+    "earningsDetail": "कमाईचा तपशील",
+    "grossEarning": "एकूण कमाई",
+    "platformFee": "प्लॅटफॉर्म शुल्क (8%)",
     "tds": "TDS (1%)",
-    "netEarning": "शुद्ध कमाई",
-    "reportIssue": "समस्या की रिपोर्ट करें",
-    "reportIssueSub": "किराया विवाद, पैसेंजर शिकायत"
+    "netEarning": "निव्वळ कमाई",
+    "reportIssue": "समस्येची तक्रार करा",
+    "reportIssueSub": "भाडे वाद, प्रवासी तक्रार"
   },
   "profile": {
-    "title": "खाता",
+    "title": "खाते",
     "goldPartner": "गोल्ड पार्टनर",
     "stats": {
       "rating": "रेटिंग",
       "trips": "ट्रिप्स",
-      "acceptance": "स्वीकृति"
+      "acceptance": "स्वीकृती"
     },
     "rows": {
-      "vehicleDetails": "वाहन विवरण",
-      "documents": "दस्तावेज़",
+      "vehicleDetails": "वाहन तपशील",
+      "documents": "कागदपत्रे",
       "earnings": "कमाई",
-      "payouts": "भुगतान",
-      "notifications": "नोटिफिकेशन",
-      "appSettings": "ऐप सेटिंग्स",
-      "helpSupport": "मदद और सहायता",
-      "emergencySos": "आपातकालीन SOS",
+      "payouts": "पेआउट",
+      "notifications": "नोटिफिकेशन्स",
+      "appSettings": "अ‍ॅप सेटिंग्ज",
+      "helpSupport": "मदत आणि सहाय्य",
+      "emergencySos": "आणीबाणी SOS",
       "logOut": "लॉग आउट"
     },
-    "allVerified": "सभी 7 सत्यापित",
-    "earningsSub": "इस महीने {{amount}}",
-    "payoutDue": "₹{{amount}} {{date}} को देय",
-    "notificationsSub": "राइड रिक्वेस्ट, अलर्ट",
-    "appSettingsSub": "भाषा, प्राथमिकताएं",
+    "allVerified": "सर्व 7 पडताळले",
+    "earningsSub": "या महिन्यात {{amount}}",
+    "payoutDue": "₹{{amount}} {{date}} रोजी देय",
+    "notificationsSub": "राईड रिक्वेस्ट, अलर्ट",
+    "appSettingsSub": "भाषा, प्राधान्ये",
     "emergencySosSub": "त्वरित संपर्क",
-    "footer": "Alo Alo Partner · v 1.0.0 · मराठवाड़ा, भारत",
+    "footer": "Alo Alo Partner · v 1.0.0 · मराठवाडा, भारत",
     "plans": {
-      "title": "प्लान और क्रेडिट",
-      "activeSub": "सक्रिय · {{timeLeft}} बचा",
-      "lastPurchaseSub": "आखिरी प्लान: {{plan}} · {{date}}",
-      "noActiveSub": "कोई सक्रिय प्लान नहीं — क्रेडिट खरीदने के लिए टैप करें",
+      "title": "प्लॅन आणि क्रेडिट",
+      "activeSub": "सक्रिय · {{timeLeft}} शिल्लक",
+      "lastPurchaseSub": "शेवटचा प्लॅन: {{plan}} · {{date}}",
+      "noActiveSub": "कोणताही सक्रिय प्लॅन नाही — क्रेडिट खरेदी करण्यासाठी टॅप करा",
       "activeBadge": "सक्रिय"
     }
   },
   "support": {
-    "title": "सहायता",
-    "emergencySos": "आपातकालीन SOS",
-    "emergencySosSub": "तुरंत मदद और आपातकालीन संपर्कों के लिए टैप करें",
-    "open": "खोलें",
-    "chatWithSupport": "पार्टनर सपोर्ट से चैट करें",
-    "chatSub": "औसत जवाब 28 सेकंड · 24×7 पार्टनर सहायता",
-    "reportIssue": "समस्या की रिपोर्ट करें",
+    "title": "सहाय्य",
+    "emergencySos": "आणीबाणी SOS",
+    "emergencySosSub": "तात्काळ मदत आणि आणीबाणी संपर्कांसाठी टॅप करा",
+    "open": "उघडा",
+    "chatWithSupport": "पार्टनर सपोर्टशी चॅट करा",
+    "chatSub": "सरासरी उत्तर 28 सेकंद · 24×7 पार्टनर मदत",
+    "reportIssue": "समस्येची तक्रार करा",
     "helpline": "पार्टनर हेल्पलाइन (24×7)",
     "issues": {
       "tripFare": {
-        "title": "ट्रिप या किराया समस्या",
-        "sub": "गलत किराया, रूट या ट्रिप समस्या"
+        "title": "ट्रिप किंवा भाडे समस्या",
+        "sub": "चुकीचे भाडे, मार्ग किंवा ट्रिप समस्या"
       },
       "payment": {
-        "title": "भुगतान या पेआउट समस्या",
-        "sub": "गुम भुगतान या भुगतान बेमेल"
+        "title": "पेमेंट किंवा पेआउट समस्या",
+        "sub": "गहाळ पेआउट किंवा पेमेंट जुळत नाही"
       },
       "passengerBehavior": {
-        "title": "पैसेंजर व्यवहार",
-        "sub": "पैसेंजर से जुड़ी समस्या की रिपोर्ट करें"
+        "title": "प्रवासी वर्तन",
+        "sub": "प्रवाशासंबंधी समस्येची तक्रार करा"
       },
       "appTechnical": {
-        "title": "ऐप या तकनीकी समस्या",
-        "sub": "बग, क्रैश या ऐप समस्याएं"
+        "title": "अ‍ॅप किंवा तांत्रिक समस्या",
+        "sub": "बग्स, क्रॅश किंवा अ‍ॅप समस्या"
       }
     }
   },
   "arrived": {
-    "arrivedAtPickup": "पिकअप पॉइंट पर पहुंच गए",
-    "destination": "गंतव्य",
-    "destinationMeta": "अनुमानित {{duration}} · {{dist}} · कमाई ₹{{earning}}",
-    "askForOtp": "पैसेंजर से OTP मांगें",
-    "verifyNote": "ट्रिप शुरू करने से पहले OTP वेरिफ़ाई करें।",
-    "startTrip": "ट्रिप शुरू करें"
+    "arrivedAtPickup": "पिकअप पॉइंटवर पोहोचलो",
+    "destination": "गंतव्यस्थान",
+    "destinationMeta": "अंदाजे {{duration}} · {{dist}} · कमाई ₹{{earning}}",
+    "askForOtp": "प्रवाशाकडून OTP मागा",
+    "verifyNote": "ट्रिप सुरू करण्यापूर्वी OTP पडताळा.",
+    "startTrip": "ट्रिप सुरू करा"
   },
   "liveTrip": {
     "eta": "ETA {{duration}}",
-    "estEarning": "अनुमानित कमाई",
-    "passenger": "पैसेंजर",
-    "completeTrip": "ट्रिप पूरी करें",
+    "estEarning": "अंदाजे कमाई",
+    "passenger": "प्रवासी",
+    "completeTrip": "ट्रिप पूर्ण करा",
     "steps": {
-      "pickedUp": "पिक अप किया",
-      "onTrip": "ट्रिप पर",
-      "arriving": "पहुंच रहे हैं",
+      "pickedUp": "पिक अप केले",
+      "onTrip": "ट्रिपवर",
+      "arriving": "पोहोचत आहे",
       "complete": "पूर्ण"
     }
   },
   "tripEarnings": {
-    "tripComplete": "ट्रिप पूरी हुई!",
-    "yourNetEarning": "आपकी शुद्ध कमाई",
-    "fareBreakdown": "किराया विवरण",
-    "baseFare": "बेस किराया",
-    "distanceFare": "दूरी किराया",
-    "timeFare": "समय किराया",
+    "tripComplete": "ट्रिप पूर्ण झाली!",
+    "yourNetEarning": "तुमची निव्वळ कमाई",
+    "fareBreakdown": "भाड्याचा तपशील",
+    "baseFare": "बेस भाडे",
+    "distanceFare": "अंतर भाडे",
+    "timeFare": "वेळ भाडे",
     "surgeBonus": "सर्ज बोनस",
     "tripLog": "ट्रिप लॉग",
-    "ratePassenger": "पैसेंजर को रेट करें"
+    "ratePassenger": "प्रवाशाला रेट करा"
   },
   "rideRequestSheet": {
-    "newRideRequest": "नई राइड रिक्वेस्ट",
+    "newRideRequest": "नवीन राईड रिक्वेस्ट",
     "pickupAway": "पिकअप · {{dist}} दूर",
     "dropTrip": "ड्रॉप · {{dist}} ट्रिप",
     "tripsService": "{{count}} ट्रिप्स · {{service}}",
-    "acceptRide": "राइड स्वीकार करें",
+    "acceptRide": "राईड स्वीकारा",
     "stats": {
       "earning": "कमाई",
-      "duration": "अवधि",
-      "payment": "भुगतान"
-    }
+      "duration": "कालावधी",
+      "payment": "पेमेंट",
+      "eta": "ईटीए"
+    },
+    "vehicle": "वाहन",
+    "expiresIn": "{{sec}} सेकंदात संपेल"
   },
   "rideRequest": {
-    "incomingRequest": "आने वाली राइड रिक्वेस्ट",
-    "newTripAvailable": "नई ट्रिप उपलब्ध"
+    "incomingRequest": "येणारी राईड रिक्वेस्ट",
+    "newTripAvailable": "नवीन ट्रिप उपलब्ध"
   },
   "buyCredit": {
-    "headerTitle": "क्रेडिट खरीदें",
-    "headerSub": "ऑनलाइन जाने के लिए एक प्लान चुनें",
+    "headerTitle": "क्रेडिट खरेदी करा",
+    "headerSub": "ऑनलाइन जाण्यासाठी एक प्लॅन निवडा",
     "errors": {
-      "sessionNotFound": "सेशन नहीं मिला। कृपया फिर से लॉग इन करें।",
-      "loadPlansFailed": "अभी प्लान लोड नहीं हो सके।"
+      "sessionNotFound": "सेशन सापडले नाही. कृपया पुन्हा लॉग इन करा.",
+      "loadPlansFailed": "आत्ता प्लॅन लोड करता आले नाहीत."
     },
-    "creditActivated": "{{plan}} क्रेडिट सक्रिय हो गया",
-    "creditActive": "क्रेडिट सक्रिय है",
-    "timeLeftSuffix": "{{timeLeft}} · आप अभी ऑनलाइन जा सकते हैं",
-    "plansInRegion": "{{region}} में प्लान",
-    "availablePlans": "उपलब्ध प्लान",
-    "optionsCount": "{{count}} विकल्प",
-    "optionsCount_plural": "{{count}} विकल्प",
-    "loadingPlans": "प्लान लोड हो रहे हैं…",
-    "retry": "पुनः प्रयास करें",
-    "bestValue": "बेस्ट वैल्यू",
+    "creditActivated": "{{plan}} क्रेडिट सक्रिय झाले",
+    "creditActive": "क्रेडिट सक्रिय आहे",
+    "timeLeftSuffix": "{{timeLeft}} · तुम्ही आत्ता ऑनलाइन जाऊ शकता",
+    "plansInRegion": "{{region}} मधील प्लॅन",
+    "availablePlans": "उपलब्ध प्लॅन",
+    "optionsCount": "{{count}} पर्याय",
+    "optionsCount_plural": "{{count}} पर्याय",
+    "loadingPlans": "प्लॅन लोड होत आहेत…",
+    "retry": "पुन्हा प्रयत्न करा",
+    "bestValue": "बेस्ट व्हॅल्यू",
     "active": "सक्रिय",
-    "hr": "घंटा",
-    "hrs": "घंटे",
-    "planMeta": "{{time}} {{hrLabel}} · {{rides}} राइड्स · ₹{{rate}}/घंटा",
-    "buyNow": "अभी खरीदें",
-    "footNote": "दिखाई गई कीमतें और घंटे आपके क्षेत्र के सक्रिय प्लान से लाइव हैं।",
-    "doneBackToHome": "हो गया, होम पर वापस जाएं",
-    "recentPurchases": "हाल की खरीदारी"
+    "hr": "तास",
+    "hrs": "तास",
+    "planMeta": "{{time}} {{hrLabel}} · {{rides}} राईड्स · ₹{{rate}}/तास",
+    "buyNow": "आता खरेदी करा",
+    "footNote": "दाखवलेल्या किमती आणि तास तुमच्या क्षेत्रातील सक्रिय प्लॅनवरून लाइव्ह आहेत.",
+    "doneBackToHome": "झाले, होमवर परत जा",
+    "recentPurchases": "अलीकडील खरेदी"
   },
   "payment": {
-    "securedByRazorpay": "Razorpay द्वारा सुरक्षित",
-    "testMode": "भुगतान Razorpay द्वारा सुरक्षित है",
-    "amountPayable": "देय राशि",
-    "creditDuration": "{{time}} {{hrLabel}} की राइड क्रेडिट",
-    "allMethodsSupported": "सभी प्रमुख पेमेंट तरीके समर्थित",
-    "methodsCaption": "UPI · कार्ड · नेटबैंकिंग · वॉलेट",
-    "secureNote": "आप यह भुगतान Razorpay के सुरक्षित चेकआउट पर पूरा करेंगे। आपका कार्ड, UPI या बैंक विवरण इस ऐप को कभी नहीं दिखाया जाता।",
-    "paySecurely": "₹{{amount}} सुरक्षित रूप से भुगतान करें",
-    "processingPayment": "भुगतान प्रोसेस हो रहा है",
-    "confirmingNote": "Razorpay से पुष्टि हो रही है — इस स्क्रीन को बंद न करें",
-    "paymentSuccessful": "भुगतान सफल",
-    "creditNowActive": "{{plan}} क्रेडिट अब सक्रिय है",
+    "securedByRazorpay": "Razorpay द्वारे सुरक्षित",
+    "testMode": "पेमेंट Razorpay द्वारे सुरक्षित आहे",
+    "amountPayable": "देय रक्कम",
+    "creditDuration": "{{time}} {{hrLabel}} राईड क्रेडिट",
+    "allMethodsSupported": "सर्व प्रमुख पेमेंट पद्धती समर्थित",
+    "methodsCaption": "UPI · कार्ड्स · नेटबँकिंग · वॉलेट्स",
+    "secureNote": "तुम्ही हे पेमेंट Razorpay च्या सुरक्षित चेकआउटवर पूर्ण कराल. तुमचे कार्ड, UPI किंवा बँक तपशील या अ‍ॅपला कधीही दिसत नाहीत.",
+    "paySecurely": "₹{{amount}} सुरक्षितपणे भरा",
+    "processingPayment": "पेमेंट प्रक्रिया होत आहे",
+    "confirmingNote": "Razorpay कडून पुष्टी होत आहे — ही स्क्रीन बंद करू नका",
+    "paymentSuccessful": "पेमेंट यशस्वी",
+    "creditNowActive": "{{plan}} क्रेडिट आता सक्रिय आहे",
     "errors": {
-      "cancelledOrFailed": "भुगतान रद्द हो गया या पूरा नहीं हो सका।",
-      "sessionNotFound": "सत्र नहीं मिला। कृपया दोबारा लॉग इन करें।"
+      "cancelledOrFailed": "पेमेंट रद्द झाले किंवा पूर्ण होऊ शकले नाही.",
+      "sessionNotFound": "सत्र सापडले नाही. कृपया पुन्हा लॉग इन करा."
     }
   }
 }

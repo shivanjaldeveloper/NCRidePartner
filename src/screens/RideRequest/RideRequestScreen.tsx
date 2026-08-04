@@ -1,36 +1,59 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import Card from '../../components/common/Card';
+import Spinner from '../../components/common/Spinner';
 import CashIcon from '../../assets/icons/CashIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
-import UpiIcon from '../../assets/icons/UpiIcon';
-import StarFillIcon from '../../assets/icons/StarFillIcon';
+import LocateIcon from '../../assets/icons/LocateIcon';
+import CarIcon from '../../assets/icons/CarIcon';
 import CloseIcon from '../../assets/icons/CloseIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
-import { PARTNER_RIDE_REQUEST } from '../Home/mockHomeData';
+import { getCookie } from '../../utils/session';
+import { acceptRide } from '../../services/api/ridesService';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'RideRequest'>;
+type ScreenRoute = RouteProp<RootStackParamList, 'RideRequest'>;
 
 const TOTAL_SECONDS = 18;
 const RADIUS = 38;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
+function formatVehicleType(raw: string): string {
+  if (!raw) return '';
+  return raw
+    .toLowerCase()
+    .split(/[\s_]+/)
+    .map(w => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(' ');
+}
+
 const RideRequestScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const route = useRoute<ScreenRoute>();
   const { t } = useTranslation();
-  const req = PARTNER_RIDE_REQUEST;
+  const ride = route.params?.ride;
   const [timer, setTimer] = useState(TOTAL_SECONDS);
+  const [accepting, setAccepting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // No offer to show (e.g. screen opened directly without params) —
+  // nothing useful to render, bail back to the tab bar rather than show a
+  // broken screen.
   useEffect(() => {
+    if (!ride) navigation.navigate('MainTabs');
+  }, [ride, navigation]);
+
+  useEffect(() => {
+    if (!ride) return;
     intervalRef.current = setInterval(() => {
       setTimer(prev => {
         if (prev <= 1) {
@@ -44,13 +67,40 @@ const RideRequestScreen = () => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [navigation]);
+  }, [ride, navigation]);
+
+  if (!ride) return null;
 
   const pct = timer / TOTAL_SECONDS;
   const dashOffset = CIRCUMFERENCE * (1 - pct);
 
   const handleReject = () => navigation.navigate('MainTabs');
-  const handleAccept = () => navigation.navigate('PickupNav');
+
+  const handleAccept = async () => {
+    if (accepting) return;
+    setError(null);
+    setAccepting(true);
+    try {
+      const cookie = await getCookie();
+      if (!cookie) throw new Error('Session not found. Please log in again.');
+      const res = await acceptRide(cookie, ride.RideTran);
+      if (res.Result !== 'Success') {
+        throw new Error(res.Message || 'Could not accept this ride.');
+      }
+      navigation.navigate('PickupNav', { ride });
+    } catch (err: any) {
+      // Most common real-world case: another partner accepted it first —
+      // the offer disappears from GetPendingRides on the next poll, so
+      // sending them back to MainTabs (rather than leaving them stuck on
+      // a dead offer) is the right recovery.
+      setError(
+        err?.message ||
+          'Could not accept this ride. It may have already been taken.',
+      );
+    } finally {
+      setAccepting(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -100,9 +150,13 @@ const RideRequestScreen = () => {
             <View style={styles.pickupDot} />
             <View style={styles.routeTextWrap}>
               <Text style={styles.routeLabel}>
-                {t('rideRequestSheet.pickupAway', { dist: req.pickupDist })}
+                {t('rideRequestSheet.pickupAway', {
+                  dist: `${ride.DistanceToPickupKM} km`,
+                })}
               </Text>
-              <Text style={styles.routeValue}>{req.pickup}</Text>
+              <Text style={styles.routeValue} numberOfLines={1}>
+                {ride.Pickup.Address}
+              </Text>
             </View>
           </View>
           <View style={styles.routeConnector} />
@@ -110,9 +164,13 @@ const RideRequestScreen = () => {
             <View style={styles.dropDot} />
             <View style={styles.routeTextWrap}>
               <Text style={styles.routeLabel}>
-                {t('rideRequestSheet.dropTrip', { dist: req.tripDist })}
+                {t('rideRequestSheet.dropTrip', {
+                  dist: `${ride.TripDistanceKM} km`,
+                })}
               </Text>
-              <Text style={styles.routeValue}>{req.drop}</Text>
+              <Text style={styles.routeValue} numberOfLines={1}>
+                {ride.Drop.Address}
+              </Text>
             </View>
           </View>
         </Card>
@@ -121,23 +179,23 @@ const RideRequestScreen = () => {
       <View style={styles.chipsRow}>
         <View style={styles.chip}>
           <CashIcon size={16} color={Colors.lime} strokeWidth={1.8} />
-          <Text style={styles.chipValue}>₹{req.earning}</Text>
+          <Text style={styles.chipValue}>{ride.EstimatedFareText}</Text>
           <Text style={styles.chipLabel}>
             {t('rideRequestSheet.stats.earning')}
           </Text>
         </View>
         <View style={styles.chip}>
           <ClockIcon size={16} color={Colors.lime} strokeWidth={1.8} />
-          <Text style={styles.chipValue}>{req.duration}</Text>
+          <Text style={styles.chipValue}>{ride.TripDurationMinutes} min</Text>
           <Text style={styles.chipLabel}>
             {t('rideRequestSheet.stats.duration')}
           </Text>
         </View>
         <View style={styles.chip}>
-          <UpiIcon size={16} color={Colors.lime} strokeWidth={1.8} />
-          <Text style={styles.chipValue}>{req.payment}</Text>
+          <LocateIcon size={16} color={Colors.lime} strokeWidth={1.8} />
+          <Text style={styles.chipValue}>{ride.ETAToPickupMinutes} min</Text>
           <Text style={styles.chipLabel}>
-            {t('rideRequestSheet.stats.payment')}
+            {t('rideRequestSheet.stats.eta')}
           </Text>
         </View>
       </View>
@@ -145,45 +203,51 @@ const RideRequestScreen = () => {
       <View style={styles.passengerSection}>
         <View style={styles.passengerRow}>
           <View style={styles.passengerAvatar}>
-            <Text style={styles.passengerAvatarText}>
-              {req.passengerName
-                .split(' ')
-                .map(w => w[0])
-                .join('')
-                .slice(0, 2)}
-            </Text>
+            <CarIcon size={18} color={Colors.lime} strokeWidth={1.8} />
           </View>
           <View style={styles.passengerTextWrap}>
-            <Text style={styles.passengerName}>{req.passengerName}</Text>
-            <Text style={styles.passengerMeta}>
-              {t('rideRequestSheet.tripsService', {
-                count: req.passengerTrips,
-                service: req.service,
-              })}
+            <Text style={styles.passengerName}>
+              {t('rideRequestSheet.vehicle')}
             </Text>
-          </View>
-          <View style={styles.ratingWrap}>
-            <StarFillIcon size={14} color={Colors.amber} />
-            <Text style={styles.ratingText}>{req.passengerRating}</Text>
+            <Text style={styles.passengerMeta}>
+              {formatVehicleType(ride.VehicleType)}
+            </Text>
           </View>
         </View>
       </View>
 
+      {!!error && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
       <View style={styles.spacer} />
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity onPress={handleReject} style={styles.rejectButton}>
+        <TouchableOpacity
+          onPress={handleReject}
+          style={styles.rejectButton}
+          disabled={accepting}
+        >
           <CloseIcon size={22} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={handleAccept}
-          style={styles.acceptButton}
+          style={[styles.acceptButton, accepting && styles.acceptButtonBusy]}
           activeOpacity={0.9}
+          disabled={accepting}
         >
-          <CheckIcon size={22} color={Colors.ink} strokeWidth={2.4} />
-          <Text style={styles.acceptLabel}>
-            {t('rideRequestSheet.acceptRide')}
-          </Text>
+          {accepting ? (
+            <Spinner size={20} color={Colors.ink} />
+          ) : (
+            <>
+              <CheckIcon size={22} color={Colors.ink} strokeWidth={2.4} />
+              <Text style={styles.acceptLabel}>
+                {t('rideRequestSheet.acceptRide')}
+              </Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -322,11 +386,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  passengerAvatarText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: fscale(13),
-  },
   passengerTextWrap: {
     flex: 1,
   },
@@ -339,15 +398,20 @@ const styles = StyleSheet.create({
     fontSize: fscale(11.5),
     color: 'rgba(255,255,255,0.5)',
   },
-  ratingWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: hscale(4),
+  errorBanner: {
+    marginHorizontal: hscale(18),
+    marginTop: vscale(12),
+    paddingVertical: vscale(10),
+    paddingHorizontal: hscale(14),
+    borderRadius: hscale(12),
+    backgroundColor: 'rgba(224,82,78,0.14)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(224,82,78,0.3)',
   },
-  ratingText: {
-    fontSize: fscale(14),
-    fontWeight: '700',
-    color: '#FFFFFF',
+  errorText: {
+    fontSize: fscale(12.5),
+    fontWeight: '600',
+    color: Colors.red,
   },
   spacer: {
     flex: 1,
@@ -381,6 +445,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 24,
     elevation: 6,
+  },
+  acceptButtonBusy: {
+    opacity: 0.75,
   },
   acceptLabel: {
     fontSize: fscale(17),

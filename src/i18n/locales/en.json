@@ -573,8 +573,11 @@
     "stats": {
       "earning": "Earning",
       "duration": "Duration",
-      "payment": "Payment"
-    }
+      "payment": "Payment",
+      "eta": "ETA"
+    },
+    "vehicle": "Vehicle",
+    "expiresIn": "Expires in {{sec}}s"
   },
   "rideRequest": {
     "incomingRequest": "Incoming ride request",
