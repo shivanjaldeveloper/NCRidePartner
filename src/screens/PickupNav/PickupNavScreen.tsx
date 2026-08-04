@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -14,17 +14,61 @@ import PrimaryButton from '../../components/common/PrimaryButton';
 import SosIcon from '../../assets/icons/SosIcon';
 import ChatIcon from '../../assets/icons/ChatIcon';
 import PhoneIcon from '../../assets/icons/PhoneIcon';
+import CloseIcon from '../../assets/icons/CloseIcon';
 import { PARTNER_RIDE_REQUEST } from '../Home/mockHomeData';
+import { getCookie } from '../../utils/session';
+import { cancelAcceptedRide } from '../../services/api/ridesService';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'PickupNav'>;
+type ScreenRoute = RouteProp<RootStackParamList, 'PickupNav'>;
 
 const MAP_HEIGHT_RATIO = 0.6;
 
 const PickupNavScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const route = useRoute<ScreenRoute>();
   const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
+  const rideTran = route.params?.ride?.RideTran;
+  const [cancelling, setCancelling] = useState(false);
+
+  const confirmCancel = () => {
+    if (!rideTran || cancelling) return;
+    Alert.alert(
+      t('pickupNav.cancelConfirmTitle'),
+      t('pickupNav.cancelConfirmBody'),
+      [
+        { text: t('pickupNav.cancelConfirmBack'), style: 'cancel' },
+        {
+          text: t('pickupNav.cancelConfirmYes'),
+          style: 'destructive',
+          onPress: handleCancel,
+        },
+      ],
+    );
+  };
+
+  const handleCancel = async () => {
+    if (!rideTran) return;
+    setCancelling(true);
+    try {
+      const cookie = await getCookie();
+      if (!cookie) throw new Error('Session not found. Please log in again.');
+      const res = await cancelAcceptedRide(cookie, rideTran, 'CANCELLED');
+      if (res.Result !== 'Success') {
+        throw new Error(res.Message || 'Could not cancel this ride.');
+      }
+      navigation.navigate('MainTabs');
+    } catch (err: any) {
+      Alert.alert(
+        t('pickupNav.cancelFailedTitle'),
+        err?.message || 'Could not cancel this ride. Please try again.',
+      );
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -36,6 +80,25 @@ const PickupNavScreen = () => {
         <SosIcon size={14} color="#FFFFFF" strokeWidth={2} />
         <Text style={styles.sosLabel}>{t('common.sos')}</Text>
       </TouchableOpacity>
+
+      {!!rideTran && (
+        <TouchableOpacity
+          style={styles.cancelRideButton}
+          onPress={confirmCancel}
+          disabled={cancelling}
+        >
+          {cancelling ? (
+            <Spinner size={14} color="#FFFFFF" />
+          ) : (
+            <>
+              <CloseIcon size={13} color="#FFFFFF" strokeWidth={2} />
+              <Text style={styles.cancelRideLabel}>
+                {t('pickupNav.cancelRide')}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+      )}
 
       <View style={styles.sheetAnchor}>
         <BottomSheetPanel>
@@ -135,6 +198,28 @@ const styles = StyleSheet.create({
   sosLabel: {
     color: '#FFFFFF',
     fontSize: fscale(12),
+    fontWeight: '700',
+  },
+  cancelRideButton: {
+    position: 'absolute',
+    top: vscale(108),
+    right: hscale(18),
+    height: hscale(32),
+    minWidth: hscale(96),
+    paddingHorizontal: hscale(12),
+    borderRadius: hscale(12),
+    backgroundColor: 'rgba(15,17,21,0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: hscale(6),
+    zIndex: 10,
+  },
+  cancelRideLabel: {
+    color: '#FFFFFF',
+    fontSize: fscale(11.5),
     fontWeight: '700',
   },
   sheetAnchor: {

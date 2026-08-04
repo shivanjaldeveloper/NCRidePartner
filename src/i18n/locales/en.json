@@ -3,7 +3,8 @@
     "skip": "Skip",
     "next": "Next",
     "getStarted": "Get started",
-    "sos": "SOS"
+    "sos": "SOS",
+    "dropLabel": "Drop"
   },
   "onboarding": {
     "screen1": {
@@ -427,7 +428,13 @@
     "away": "{{dist}} away",
     "tripsSuffix": "· {{count}} trips",
     "pickupLabel": "Pickup",
-    "arrivedButton": "I've Arrived at Pickup"
+    "arrivedButton": "I've Arrived at Pickup",
+    "cancelRide": "Cancel ride",
+    "cancelConfirmTitle": "Cancel this ride?",
+    "cancelConfirmBody": "The ride will be released back to other partners nearby.",
+    "cancelConfirmBack": "Go back",
+    "cancelConfirmYes": "Yes, cancel",
+    "cancelFailedTitle": "Couldn't cancel ride"
   },
   "vehicle": {
     "headerTitle": "Vehicle details",
@@ -580,8 +587,9 @@
     "expiresIn": "Expires in {{sec}}s"
   },
   "rideRequest": {
-    "incomingRequest": "Incoming ride request",
-    "newTripAvailable": "New trip available"
+    "incomingRequest": "Incoming ride requests",
+    "titleOne": "1 new ride request",
+    "titleMany": "{{count}} new ride requests"
   },
   "buyCredit": {
     "headerTitle": "Buy Credit",

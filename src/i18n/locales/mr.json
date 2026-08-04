@@ -3,7 +3,8 @@
     "skip": "वगळा",
     "next": "पुढे",
     "getStarted": "सुरुवात करा",
-    "sos": "SOS"
+    "sos": "SOS",
+    "dropLabel": "ड्रॉप"
   },
   "onboarding": {
     "screen1": {
@@ -427,7 +428,13 @@
     "away": "{{dist}} दूर",
     "tripsSuffix": "· {{count}} ट्रिप्स",
     "pickupLabel": "पिकअप",
-    "arrivedButton": "पिकअपला पोहोचलो"
+    "arrivedButton": "पिकअपला पोहोचलो",
+    "cancelRide": "राईड रद्द करा",
+    "cancelConfirmTitle": "ही राईड रद्द करायची आहे का?",
+    "cancelConfirmBody": "राईड जवळपासच्या इतर पार्टनर्सना परत दिली जाईल.",
+    "cancelConfirmBack": "मागे जा",
+    "cancelConfirmYes": "होय, रद्द करा",
+    "cancelFailedTitle": "राईड रद्द करता आली नाही"
   },
   "vehicle": {
     "headerTitle": "वाहन तपशील",
@@ -573,12 +580,16 @@
     "stats": {
       "earning": "कमाई",
       "duration": "कालावधी",
-      "payment": "पेमेंट"
-    }
+      "payment": "पेमेंट",
+      "eta": "ईटीए"
+    },
+    "vehicle": "वाहन",
+    "expiresIn": "{{sec}} सेकंदात संपेल"
   },
   "rideRequest": {
-    "incomingRequest": "येणारी राईड रिक्वेस्ट",
-    "newTripAvailable": "नवीन ट्रिप उपलब्ध"
+    "incomingRequest": "नवीन राईड रिक्वेस्ट्स",
+    "titleOne": "1 नवीन राईड रिक्वेस्ट",
+    "titleMany": "{{count}} नवीन राईड रिक्वेस्ट्स"
   },
   "buyCredit": {
     "headerTitle": "क्रेडिट खरेदी करा",

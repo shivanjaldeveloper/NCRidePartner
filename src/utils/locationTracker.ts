@@ -93,7 +93,7 @@ function attemptPosition(options: {
   });
 }
 
-function getCurrentPositionQuick(): Promise<any> {
+export function getCurrentPositionQuick(): Promise<any> {
   return attemptPosition({
     enableHighAccuracy: false,
     timeout: 8000,

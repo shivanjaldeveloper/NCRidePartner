@@ -42,10 +42,12 @@ export type RootStackParamList = {
   Documents: undefined;
   DocumentDetail: { docId: string };
   // Optional only so navigation.navigate('RideRequest') without params
-  // doesn't error at the type level — RideRequestScreen itself requires
-  // a real ride and bails straight back to MainTabs if it's missing.
-  // HomeScreen always passes the real offer it just polled.
-  RideRequest: { ride: PendingRide } | undefined;
+  // doesn't error at the type level — RideRequestScreen requires at least
+  // one ride and bails straight back to MainTabs if it's missing. This is
+  // just the initial snapshot HomeScreen already had polled — the screen
+  // runs its own live useRidePolling once mounted, so the list keeps
+  // updating on its own after that.
+  RideRequest: { rides: PendingRide[] } | undefined;
   // Carries the AcceptRide response forward so PickupNav can eventually
   // read pickup coords/polyline for real navigation — PickupNavScreen
   // itself hasn't been wired to use it yet (still mock), this just avoids

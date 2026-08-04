@@ -30,7 +30,6 @@ import WalletIcon from '../../assets/icons/WalletIcon';
 import ChevronRightIcon from '../../assets/icons/ChevronRightIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import CloseIcon from '../../assets/icons/CloseIcon';
-import RideRequestSheet from './RideRequestSheet';
 import {
   PARTNER_PROFILE,
   PARTNER_STATS,
@@ -40,8 +39,7 @@ import {
   PARTNER_PAYOUTS,
   PARTNER_TRIPS,
 } from './mockHomeData';
-import { useRidePolling } from '../../utils/ridePolling';
-import { PendingRide } from '../../services/api/ridesService';
+import { useRidePollingContext } from '../../contexts/RidePollingContext';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
 import { getCookie } from '../../utils/session';
@@ -77,12 +75,35 @@ const HomeScreen = () => {
   const [creditInfo, setCreditInfo] = useState<ActiveCredit | null>(null);
   const creditTickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Polls GetPendingRides every few seconds while online and surfaces the
-  // sheet the instant an offer comes in — see utils/ridePolling.ts. Turns
-  // itself off (and clears any offer on screen) the moment `online` flips
-  // false, so goOffline below doesn't need to touch this directly.
-  const { incomingRide, offerExpirySeconds, dismissIncomingRide } =
-    useRidePolling(online);
+  // Polls GetPendingRides every few seconds while online — see
+  // contexts/RidePollingContext.tsx. This is a *shared* instance (also
+  // used by RideRequestScreen) rather than a hook called locally here, so
+  // there's only ever one source of truth for what's currently pending —
+  // see that file's comment for why that matters. HomeScreen just tells
+  // the shared poller when to turn on/off based on its own online state.
+  const { incomingRides, setPollingEnabled } = useRidePollingContext();
+  useEffect(() => {
+    setPollingEnabled(online);
+  }, [online, setPollingEnabled]);
+  // RideTrans that have already triggered a hand-off into RideRequestScreen
+  // this online session — without this, every single poll tick (~6s) would
+  // re-navigate the partner back into that screen even after they'd
+  // already seen and backed out of the exact same offer(s).
+  const seenRideTransRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!online) {
+      seenRideTransRef.current.clear();
+      return;
+    }
+    if (incomingRides.length === 0) return;
+    const hasNewOffer = incomingRides.some(
+      r => !seenRideTransRef.current.has(r.RideTran),
+    );
+    if (!hasNewOffer) return;
+    incomingRides.forEach(r => seenRideTransRef.current.add(r.RideTran));
+    navigation.navigate('RideRequest', { rides: incomingRides });
+  }, [online, incomingRides, navigation]);
 
   const [locationPrompt, setLocationPrompt] = useState<{
     title: string;
@@ -258,11 +279,6 @@ const HomeScreen = () => {
     } finally {
       setOnOffBusy(false);
     }
-  };
-
-  const handleAcceptRide = (ride: PendingRide) => {
-    dismissIncomingRide();
-    navigation.navigate('RideRequest', { ride });
   };
 
   return (
@@ -621,14 +637,6 @@ const HomeScreen = () => {
           </View>
         </View>
       </ScrollView>
-
-      <RideRequestSheet
-        visible={!!incomingRide}
-        ride={incomingRide}
-        expirySeconds={offerExpirySeconds}
-        onClose={dismissIncomingRide}
-        onAccept={handleAcceptRide}
-      />
 
       <LocationStatusModal
         visible={!!locationPrompt}

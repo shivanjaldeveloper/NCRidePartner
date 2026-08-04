@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Geolocation from '@react-native-community/geolocation';
 
 import { getCookie } from './session';
+import { getCurrentPositionQuick } from './locationTracker';
 import { getPendingRides, PendingRide } from '../services/api/ridesService';
 
 const LOG_PREFIX = '[RidePolling]';
@@ -14,62 +14,54 @@ const LOG_PREFIX = '[RidePolling]';
 const POLL_INTERVAL_MS = 6000;
 const DEFAULT_OFFER_EXPIRY_SECONDS = 30;
 
-// Low-accuracy + a generous maximumAge so most ticks resolve from the
-// OS/GPS cache instead of forcing a fresh fix every 6s — search-radius
-// matching doesn't need survey-grade precision, and this keeps the poll
-// cheap on battery. useLiveLocationTracker (separate hook) is still the
-// one sending high-accuracy speed/heading pings for live tracking.
-function getPollPosition(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    Geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: false,
-      timeout: 8000,
-      maximumAge: 20000,
-    });
-  });
-}
-
 export interface UseRidePollingResult {
-  /** The current ride offer to show in the sheet, or null if none. */
-  incomingRide: PendingRide | null;
+  /** Every currently-pending offer the partner hasn't declined, nearest first. */
+  incomingRides: PendingRide[];
   /** Server-reported offer countdown, in seconds. */
   offerExpirySeconds: number;
   /**
-   * Call on decline (or auto-expiry) — hides the sheet immediately and
-   * prevents the same RideTran from popping back up on the next poll tick
-   * for as long as the server keeps offering it. A genuinely new offer
-   * (different RideTran) will still show.
+   * True once at least one GetPendingRides call has actually completed —
+   * lets a consumer tell "haven't polled yet" apart from "polled, and
+   * there's genuinely nothing pending right now" (both look like an empty
+   * incomingRides array otherwise).
    */
-  dismissIncomingRide: () => void;
+  hasFetchedOnce: boolean;
+  /**
+   * Declines a single offer by RideTran — removes it from incomingRides
+   * immediately and keeps it out for as long as the server keeps offering
+   * it (a declined ride can still be sitting in the pending pool for other
+   * partners, so the next poll tick would otherwise resurface it).
+   */
+  dismissRide: (rideTran: string) => void;
 }
 
 /**
  * Mount with `enabled = true` while the partner is online (same gate as
  * useLiveLocationTracker). Polls GetPendingRides every POLL_INTERVAL_MS and
- * surfaces the first (nearest) offer that hasn't already been dismissed
- * this session. Stops and resets the moment `enabled` flips false.
+ * surfaces every offer that hasn't already been declined this session —
+ * the server itself can (and does) return more than one at once. Stops and
+ * resets the moment `enabled` flips false.
  */
 export function useRidePolling(enabled: boolean): UseRidePollingResult {
-  const [incomingRide, setIncomingRide] = useState<PendingRide | null>(null);
+  const [incomingRides, setIncomingRides] = useState<PendingRide[]>([]);
   const [offerExpirySeconds, setOfferExpirySeconds] = useState(
     DEFAULT_OFFER_EXPIRY_SECONDS,
   );
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   const inFlightRef = useRef(false);
-  // RideTrans the partner has already declined/let expire this online
-  // session — a declined ride can still be sitting in the pending pool for
-  // other partners, so the next poll tick would otherwise resurface it.
+  // RideTrans the partner has already declined this online session — see
+  // dismissRide's doc comment above.
   const dismissedRef = useRef<Set<string>>(new Set());
 
-  const dismissIncomingRide = useCallback(() => {
-    setIncomingRide(prev => {
-      if (prev) dismissedRef.current.add(prev.RideTran);
-      return null;
-    });
+  const dismissRide = useCallback((rideTran: string) => {
+    dismissedRef.current.add(rideTran);
+    setIncomingRides(prev => prev.filter(r => r.RideTran !== rideTran));
   }, []);
 
   useEffect(() => {
     if (!enabled) {
-      setIncomingRide(null);
+      setIncomingRides([]);
+      setHasFetchedOnce(false);
       dismissedRef.current.clear();
       return;
     }
@@ -82,6 +74,7 @@ export function useRidePolling(enabled: boolean): UseRidePollingResult {
         return;
       }
       inFlightRef.current = true;
+      console.log(`${LOG_PREFIX} tick start`, new Date().toISOString());
 
       try {
         const cookie = await getCookie();
@@ -92,7 +85,26 @@ export function useRidePolling(enabled: boolean): UseRidePollingResult {
 
         let position: any;
         try {
-          position = await getPollPosition();
+          // Same quick-fix-first, GPS-fallback strategy as
+          // useLiveLocationTracker — a plain low-accuracy-only fetch times
+          // out and fails silently on devices/emulators without a network
+          // location provider, which was previously making every poll
+          // tick bail before GetPendingRides was ever called.
+          if (typeof getCurrentPositionQuick !== 'function') {
+            // This specific failure means locationTracker.ts in the
+            // running app doesn't actually export getCurrentPositionQuick
+            // — an unexported name resolves to undefined at import time
+            // in RN/Metro rather than a build error, so this can silently
+            // ship. If you see this, check locationTracker.ts has:
+            //   export function getCurrentPositionQuick(): Promise<any> {
+            console.error(
+              `${LOG_PREFIX} getCurrentPositionQuick is not a function — ` +
+                'locationTracker.ts is missing the export on that function. ' +
+                'Every poll tick will silently no-op until it is exported.',
+            );
+            return;
+          }
+          position = await getCurrentPositionQuick();
         } catch (err: any) {
           console.warn(
             `${LOG_PREFIX} skip tick — location fix failed:`,
@@ -103,8 +115,18 @@ export function useRidePolling(enabled: boolean): UseRidePollingResult {
         if (cancelled) return;
 
         const { latitude, longitude } = position.coords;
+        console.log(`${LOG_PREFIX} requesting GetPendingRides`, {
+          latitude,
+          longitude,
+        });
         const res = await getPendingRides(cookie, latitude, longitude);
         if (cancelled) return;
+
+        console.log(`${LOG_PREFIX} response`, {
+          result: res.Result,
+          rideCount: res.RideCount,
+          rideTrans: (res.Rides || []).map(r => r.RideTran),
+        });
 
         if (res.Result !== 'Success') {
           console.warn(`${LOG_PREFIX} GetPendingRides rejected:`, res);
@@ -116,30 +138,43 @@ export function useRidePolling(enabled: boolean): UseRidePollingResult {
           setOfferExpirySeconds(expiry);
         }
 
-        const rides = res.Rides || [];
-        const next =
-          rides.find(r => !dismissedRef.current.has(r.RideTran)) || null;
+        const rides = (res.Rides || []).filter(
+          r => !dismissedRef.current.has(r.RideTran),
+        );
+        setHasFetchedOnce(true);
 
-        setIncomingRide(prev => {
-          // Same offer still showing — leave it (and its countdown) alone.
-          if (prev && next && prev.RideTran === next.RideTran) return prev;
-          // Offer the partner was looking at has disappeared server-side
-          // (expired / taken by someone else) — clear it.
-          if (prev && !next) {
+        setIncomingRides(prev => {
+          const prevIds = prev.map(r => r.RideTran).join(',');
+          const nextIds = rides.map(r => r.RideTran).join(',');
+          // Same set of offers (order included) — keep the same array
+          // reference so screens depending on it don't re-render/re-poll
+          // for nothing.
+          if (prevIds === nextIds) return prev;
+          const added = rides.filter(
+            r => !prev.some(p => p.RideTran === r.RideTran),
+          );
+          const removed = prev.filter(
+            p => !rides.some(r => r.RideTran === p.RideTran),
+          );
+          if (added.length) {
             console.log(
-              `${LOG_PREFIX} offer ${prev.RideTran} no longer pending`,
+              `${LOG_PREFIX} new offer(s):`,
+              added.map(r => r.RideTran),
             );
-            return null;
           }
-          if (next) {
-            console.log(`${LOG_PREFIX} new offer:`, next.RideTran);
+          if (removed.length) {
+            console.log(
+              `${LOG_PREFIX} offer(s) no longer pending:`,
+              removed.map(r => r.RideTran),
+            );
           }
-          return next;
+          return rides;
         });
       } catch (err: any) {
         console.warn(`${LOG_PREFIX} tick failed:`, err?.message || err);
       } finally {
         inFlightRef.current = false;
+        console.log(`${LOG_PREFIX} tick end`, new Date().toISOString());
       }
     };
 
@@ -154,5 +189,5 @@ export function useRidePolling(enabled: boolean): UseRidePollingResult {
     };
   }, [enabled]);
 
-  return { incomingRide, offerExpirySeconds, dismissIncomingRide };
+  return { incomingRides, offerExpirySeconds, hasFetchedOnce, dismissRide };
 }

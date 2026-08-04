@@ -86,3 +86,29 @@ export const acceptRide = (cookie: string, rideTran: string) =>
     { cookie, rideTran },
     API_RIDE_REQUEST_BASE_URL,
   );
+
+export interface CancelAcceptedRideResponse {
+  Result: string;
+  Message?: string;
+  Error?: string;
+  RideTran: string;
+  Status: string;
+  Reason: string;
+  ResponseDateTime: string;
+}
+
+/**
+ * Cancels a ride the partner already accepted (AcceptRide), releasing it
+ * back to search for other partners — confirmed via sample: Status flips
+ * from "ACCEPTED" to "SEARCHING" on success.
+ */
+export const cancelAcceptedRide = (
+  cookie: string,
+  rideTran: string,
+  reason: string = 'CANCELLED',
+) =>
+  postAuthForm<CancelAcceptedRideResponse>(
+    'CancelAcceptedRide',
+    { cookie, rideTran, reason },
+    API_RIDE_REQUEST_BASE_URL,
+  );
