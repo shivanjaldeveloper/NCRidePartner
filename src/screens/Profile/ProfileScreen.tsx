@@ -39,6 +39,8 @@ import {
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
 import { getCookie } from '../../utils/session';
+import { useUser } from '../../contexts/UserContext';
+import { getInitials, formatPhone } from '../../utils/profileFormat';
 import {
   refreshActiveCreditFromServer,
   formatTimeLeft,
@@ -57,7 +59,16 @@ type NavProp = CompositeNavigationProp<
 const ProfileScreen = () => {
   const navigation = useNavigation<NavProp>();
   const { t } = useTranslation();
-  const p = PARTNER_PROFILE;
+  const { profile } = useUser();
+  // Real Name/Username from VerifyCookie (UserContext), falling back to the
+  // PARTNER_PROFILE mock only if the profile hasn't loaded yet.
+  const p = {
+    name: profile?.name || PARTNER_PROFILE.name,
+    initials: getInitials(profile?.name) || PARTNER_PROFILE.initials,
+    phone: profile?.username
+      ? formatPhone(profile.username)
+      : PARTNER_PROFILE.phone,
+  };
   const s = PARTNER_STATS;
   const vehicle = PARTNER_VEHICLES[0];
   const payout = PARTNER_PAYOUTS[0];

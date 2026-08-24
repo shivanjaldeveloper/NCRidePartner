@@ -4,7 +4,8 @@
     "next": "पुढे",
     "getStarted": "सुरुवात करा",
     "sos": "SOS",
-    "dropLabel": "ड्रॉप"
+    "dropLabel": "ड्रॉप",
+    "passenger": "प्रवासी"
   },
   "onboarding": {
     "screen1": {
@@ -311,7 +312,13 @@
       "completed": "पूर्ण",
       "cancelled": "रद्द"
     },
-    "emptyFor": "अजून {{filter}} ट्रिप नाही."
+    "emptyFor": "अजून {{filter}} ट्रिप नाही.",
+    "loading": "ट्रिप लोड होत आहेत…",
+    "retry": "पुन्हा प्रयत्न करा",
+    "errors": {
+      "sessionNotFound": "सेशन सापडले नाही. कृपया पुन्हा लॉग इन करा.",
+      "loadFailed": "आत्ता ट्रिप लोड करता आल्या नाहीत."
+    }
   },
   "wallet": {
     "headerTitle": "वॉलेट",
@@ -424,7 +431,7 @@
   },
   "pickupNav": {
     "headingToPickup": "पिकअपकडे जात आहे",
-    "etaValue": "ETA · 4 मिनिटे",
+    "etaValue": "ETA · {{duration}}",
     "away": "{{dist}} दूर",
     "tripsSuffix": "· {{count}} ट्रिप्स",
     "pickupLabel": "पिकअप",
@@ -434,7 +441,9 @@
     "cancelConfirmBody": "राईड जवळपासच्या इतर पार्टनर्सना परत दिली जाईल.",
     "cancelConfirmBack": "मागे जा",
     "cancelConfirmYes": "होय, रद्द करा",
-    "cancelFailedTitle": "राईड रद्द करता आली नाही"
+    "cancelFailedTitle": "राईड रद्द करता आली नाही",
+    "navigateButton": "नेव्हिगेट करा",
+    "then": "मग"
   },
   "vehicle": {
     "headerTitle": "वाहन तपशील",
@@ -460,6 +469,12 @@
   },
   "tripDetail": {
     "headerTitle": "ट्रिप तपशील",
+    "loading": "ट्रिप लोड होत आहे…",
+    "retry": "पुन्हा प्रयत्न करा",
+    "errors": {
+      "sessionNotFound": "सेशन सापडले नाही. कृपया पुन्हा लॉग इन करा.",
+      "loadFailed": "आत्ता ट्रिप तपशील लोड करता आले नाहीत."
+    },
     "earning": "कमाई",
     "tripInfo": "ट्रिप माहिती",
     "fields": {
@@ -546,7 +561,8 @@
     "destinationMeta": "अंदाजे {{duration}} · {{dist}} · कमाई ₹{{earning}}",
     "askForOtp": "प्रवाशाकडून OTP मागा",
     "verifyNote": "ट्रिप सुरू करण्यापूर्वी OTP पडताळा.",
-    "startTrip": "ट्रिप सुरू करा"
+    "startTrip": "ट्रिप सुरू करा",
+    "startingTrip": "ट्रिप सुरू होत आहे..."
   },
   "liveTrip": {
     "eta": "ETA {{duration}}",
@@ -558,7 +574,8 @@
       "onTrip": "ट्रिपवर",
       "arriving": "पोहोचत आहे",
       "complete": "पूर्ण"
-    }
+    },
+    "completing": "पूर्ण होत आहे..."
   },
   "tripEarnings": {
     "tripComplete": "ट्रिप पूर्ण झाली!",

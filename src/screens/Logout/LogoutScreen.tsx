@@ -10,17 +10,20 @@ import PrimaryButton from '../../components/common/PrimaryButton';
 import LogoutIcon from '../../assets/icons/LogoutIcon';
 import { clearCookie } from '../../utils/session';
 import { RootStackParamList } from '../../navigation/types';
+import { useUser } from '../../contexts/UserContext';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 const LogoutScreen = () => {
   const navigation = useNavigation<NavProp>();
   const { t } = useTranslation();
+  const { clearProfile } = useUser();
 
   const dismiss = () => navigation.goBack();
 
   const handleLogout = async () => {
     await clearCookie();
+    clearProfile();
     navigation.reset({ index: 0, routes: [{ name: 'Splash' }] });
   };
 

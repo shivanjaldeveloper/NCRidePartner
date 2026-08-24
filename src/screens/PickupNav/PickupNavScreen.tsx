@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Linking,
+  useWindowDimensions,
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +15,9 @@ import { useTranslation } from 'react-i18next';
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import RouteMapIllustration from '../../components/common/RouteMapIllustration';
+import LiveRouteMap, {
+  RouteProgress,
+} from '../../components/common/LiveRouteMap';
 import BottomSheetPanel from '../../components/common/BottomSheetPanel';
 import Spinner from '../../components/common/Spinner';
 import RatingStars from '../../components/common/RatingStars';
@@ -15,23 +26,67 @@ import SosIcon from '../../assets/icons/SosIcon';
 import ChatIcon from '../../assets/icons/ChatIcon';
 import PhoneIcon from '../../assets/icons/PhoneIcon';
 import CloseIcon from '../../assets/icons/CloseIcon';
+import RouteIcon from '../../assets/icons/RouteIcon';
 import { PARTNER_RIDE_REQUEST } from '../Home/mockHomeData';
 import { getCookie } from '../../utils/session';
 import { cancelAcceptedRide } from '../../services/api/ridesService';
+import { openTurnByTurnNavigation } from '../../utils/externalNavigation';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'PickupNav'>;
 type ScreenRoute = RouteProp<RootStackParamList, 'PickupNav'>;
 
 const MAP_HEIGHT_RATIO = 0.6;
+// Height of each button in the bottom row plus the gap we want to keep
+// above the bottom sheet. Used below both to size the row's own bottom
+// offset and to lift the map's recenter button clear of it.
+const BUTTON_ROW_HEIGHT = hscale(36);
+const BUTTON_ROW_MARGIN = vscale(14);
 
 const PickupNavScreen = () => {
   const navigation = useNavigation<NavProp>();
   const route = useRoute<ScreenRoute>();
   const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
-  const rideTran = route.params?.ride?.RideTran;
+  const ride = route.params?.ride;
+  const rideTran = ride?.RideTran;
+  // Real passenger name — confirmed live in AcceptRide as flat
+  // CustomerName/CustomerMobile fields. Falls back to a generic label
+  // (never a fake specific name) for the rare case it's missing.
+  const passengerName = ride?.CustomerName || t('common.passenger');
   const [cancelling, setCancelling] = useState(false);
+  const [liveProgress, setLiveProgress] = useState<RouteProgress | null>(null);
+  const [sheetHeight, setSheetHeight] = useState(0);
+  const { height: windowHeight } = useWindowDimensions();
+  // The bottom sheet's height is driven by its own content (ETA strip,
+  // passenger row, pickup box, button — plus the safe-area inset it pads
+  // itself with), not a fixed fraction of the screen, so on a short
+  // device or one with a tall gesture bar it can grow past the ~40% of
+  // screen height left below the map and creep up over the map's bottom
+  // edge — covering the button row if that row sits at a fixed offset.
+  // Measuring the sheet's real height and comparing it against the space
+  // actually reserved for it (window height minus the map's height)
+  // tells us exactly how far it's intruding, so the row can be pushed up
+  // by exactly that much on every device instead of a guessed constant.
+  const nonMapHeight = windowHeight * (1 - MAP_HEIGHT_RATIO);
+  const sheetOverlap = Math.max(0, sheetHeight - nonMapHeight);
+  const buttonRowBottom = BUTTON_ROW_MARGIN + sheetOverlap;
+
+  const handleNavigate = () => {
+    if (!ride) return;
+    openTurnByTurnNavigation({
+      latitude: parseFloat(ride.Pickup.Latitude),
+      longitude: parseFloat(ride.Pickup.Longitude),
+      label: ride.Pickup.Address,
+    });
+  };
+
+  // Confirmed live in AcceptRide as CustomerMobile — dials straight out.
+  const handleCall = () => {
+    const mobile = ride?.CustomerMobile;
+    if (!mobile) return;
+    Linking.openURL(`tel:${mobile}`);
+  };
 
   const confirmCancel = () => {
     if (!rideTran || cancelling) return;
@@ -73,34 +128,77 @@ const PickupNavScreen = () => {
   return (
     <View style={styles.container}>
       <View style={[styles.mapWrap, { height: `${MAP_HEIGHT_RATIO * 100}%` }]}>
-        <RouteMapIllustration />
+        {ride ? (
+          <LiveRouteMap
+            destination={{
+              latitude: parseFloat(ride.Pickup.Latitude),
+              longitude: parseFloat(ride.Pickup.Longitude),
+            }}
+            destinationColor={Colors.green}
+            // NOT ride.Route — that's the Pickup->Drop trip route, not
+            // the driver->pickup leg this screen is for (that was
+            // showing the wrong line, cutting across from pickup to
+            // drop instead of starting from wherever the driver actually
+            // is). No encodedPolyline here at all lets LiveRouteMap fall
+            // back to its own Google Directions route, computed live from
+            // the driver's current position straight to the pickup pin —
+            // the same in-app map, just anchored to the right two points.
+            polylineColor={Colors.blue}
+            onProgressChange={setLiveProgress}
+            // Clears the SOS/Navigate/Cancel row anchored along the
+            // bottom of the map — recalculated below alongside the row
+            // itself so it always floats just above it, on every device.
+            recenterOffsetBottom={
+              buttonRowBottom + BUTTON_ROW_HEIGHT + vscale(12)
+            }
+          />
+        ) : (
+          <RouteMapIllustration />
+        )}
+
+        <View style={[styles.buttonRow, { bottom: buttonRowBottom }]}>
+          <TouchableOpacity style={styles.sosButton}>
+            <SosIcon size={14} color="#FFFFFF" strokeWidth={2} />
+            <Text style={styles.sosLabel}>{t('common.sos')}</Text>
+          </TouchableOpacity>
+
+          {!!ride && (
+            <TouchableOpacity
+              style={styles.navigateButton}
+              onPress={handleNavigate}
+            >
+              <RouteIcon size={13} color="#FFFFFF" strokeWidth={2} />
+              <Text style={styles.navigateLabel}>
+                {t('pickupNav.navigateButton')}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {!!rideTran && (
+            <TouchableOpacity
+              style={styles.cancelRideButton}
+              onPress={confirmCancel}
+              disabled={cancelling}
+            >
+              {cancelling ? (
+                <Spinner size={14} color="#FFFFFF" />
+              ) : (
+                <>
+                  <CloseIcon size={13} color="#FFFFFF" strokeWidth={2} />
+                  <Text style={styles.cancelRideLabel}>
+                    {t('pickupNav.cancelRide')}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
-      <TouchableOpacity style={styles.sosButton}>
-        <SosIcon size={14} color="#FFFFFF" strokeWidth={2} />
-        <Text style={styles.sosLabel}>{t('common.sos')}</Text>
-      </TouchableOpacity>
-
-      {!!rideTran && (
-        <TouchableOpacity
-          style={styles.cancelRideButton}
-          onPress={confirmCancel}
-          disabled={cancelling}
-        >
-          {cancelling ? (
-            <Spinner size={14} color="#FFFFFF" />
-          ) : (
-            <>
-              <CloseIcon size={13} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.cancelRideLabel}>
-                {t('pickupNav.cancelRide')}
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
-      )}
-
-      <View style={styles.sheetAnchor}>
+      <View
+        style={styles.sheetAnchor}
+        onLayout={e => setSheetHeight(e.nativeEvent.layout.height)}
+      >
         <BottomSheetPanel>
           <View style={styles.etaStrip}>
             <View style={styles.etaSpinnerWrap}>
@@ -110,17 +208,34 @@ const PickupNavScreen = () => {
               <Text style={styles.etaEyebrow}>
                 {t('pickupNav.headingToPickup')}
               </Text>
-              <Text style={styles.etaValue}>{t('pickupNav.etaValue')}</Text>
+              <Text style={styles.etaValue}>
+                {t('pickupNav.etaValue', {
+                  duration: liveProgress
+                    ? `${Math.max(
+                        1,
+                        Math.round(liveProgress.etaSeconds / 60),
+                      )} min`
+                    : ride
+                    ? `${ride.ETAToPickupMinutes} min`
+                    : '4 min',
+                })}
+              </Text>
             </View>
             <Text style={styles.etaDist}>
-              {t('pickupNav.away', { dist: req.pickupDist })}
+              {t('pickupNav.away', {
+                dist: liveProgress
+                  ? `${(liveProgress.distanceMeters / 1000).toFixed(1)} km`
+                  : ride
+                  ? `${ride.DistanceToPickupKM} km`
+                  : req.pickupDist,
+              })}
             </Text>
           </View>
 
           <View style={styles.passengerRow}>
             <View style={styles.passengerAvatar}>
               <Text style={styles.passengerAvatarText}>
-                {req.passengerName
+                {passengerName
                   .split(' ')
                   .map(w => w[0])
                   .join('')
@@ -128,7 +243,7 @@ const PickupNavScreen = () => {
               </Text>
             </View>
             <View style={styles.passengerTextWrap}>
-              <Text style={styles.passengerName}>{req.passengerName}</Text>
+              <Text style={styles.passengerName}>{passengerName}</Text>
               <View style={styles.passengerMetaRow}>
                 <RatingStars value={req.passengerRating} />
                 <Text style={styles.passengerMetaText}>
@@ -140,7 +255,7 @@ const PickupNavScreen = () => {
               <TouchableOpacity style={styles.chatButton}>
                 <ChatIcon size={20} color={Colors.ink} strokeWidth={1.8} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.callButton}>
+              <TouchableOpacity style={styles.callButton} onPress={handleCall}>
                 <PhoneIcon size={20} color={Colors.lime} strokeWidth={1.8} />
               </TouchableOpacity>
             </View>
@@ -152,13 +267,15 @@ const PickupNavScreen = () => {
               <Text style={styles.pickupEyebrow}>
                 {t('pickupNav.pickupLabel')}
               </Text>
-              <Text style={styles.pickupValue}>{req.pickup}</Text>
+              <Text style={styles.pickupValue}>
+                {ride?.Pickup.Address || req.pickup}
+              </Text>
             </View>
           </View>
 
           <PrimaryButton
             label={t('pickupNav.arrivedButton')}
-            onPress={() => navigation.navigate('Arrived')}
+            onPress={() => navigation.navigate('Arrived', { ride })}
             icon="none"
             style={styles.fullButton}
           />
@@ -182,30 +299,50 @@ const styles = StyleSheet.create({
     right: 0,
     overflow: 'hidden',
   },
-  sosButton: {
+  buttonRow: {
     position: 'absolute',
-    top: vscale(64),
+    left: hscale(18),
     right: hscale(18),
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: hscale(8),
+    zIndex: 10,
+  },
+  sosButton: {
     height: hscale(36),
     paddingHorizontal: hscale(12),
     borderRadius: hscale(12),
     backgroundColor: Colors.red,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: hscale(6),
-    zIndex: 10,
+    flex: 1,
   },
   sosLabel: {
     color: '#FFFFFF',
     fontSize: fscale(12),
     fontWeight: '700',
   },
+  navigateButton: {
+    height: hscale(36),
+    paddingHorizontal: hscale(12),
+    borderRadius: hscale(12),
+    backgroundColor: Colors.blue,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: hscale(6),
+    flex: 1,
+  },
+  navigateLabel: {
+    color: '#FFFFFF',
+    fontSize: fscale(11.5),
+    fontWeight: '700',
+  },
   cancelRideButton: {
-    position: 'absolute',
-    top: vscale(108),
-    right: hscale(18),
-    height: hscale(32),
-    minWidth: hscale(96),
+    height: hscale(36),
     paddingHorizontal: hscale(12),
     borderRadius: hscale(12),
     backgroundColor: 'rgba(15,17,21,0.85)',
@@ -215,7 +352,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: hscale(6),
-    zIndex: 10,
+    flex: 1,
   },
   cancelRideLabel: {
     color: '#FFFFFF',

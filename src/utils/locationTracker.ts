@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, PermissionsAndroid, Linking } from 'react-native';
 // Assumes @react-native-community/geolocation is already/about to be a
 // dependency of this project (same "assume it's installed, flag it if
@@ -55,6 +55,38 @@ async function ensureLocationPermission(): Promise<boolean> {
     return ok;
   } catch (err) {
     console.warn(`${LOG_PREFIX} permission request threw:`, err);
+    return false;
+  }
+}
+
+// Read-only — never shows a dialog. Used by LiveRouteMap to decide whether
+// it's safe to turn on showsUserLocation, and by anything else that just
+// needs to know "do we already have it" without prompting.
+//
+// Checks EITHER fine or coarse being granted, not fine alone —
+// ensureLocationPermission above only ever requests FINE, but Android 12+
+// lets the user grant just "Approximate" (COARSE) instead, which Settings
+// shows as location being ON. Checking FINE only here would report "not
+// granted" for that user forever, even though they said yes.
+export async function hasLocationPermission(): Promise<boolean> {
+  if (Platform.OS !== 'android') {
+    // Mirrors ensureLocationPermission's own iOS assumption — if this app
+    // is already doing live location tracking elsewhere, the OS prompt
+    // has already been through once.
+    return true;
+  }
+  try {
+    const [fine, coarse] = await Promise.all([
+      PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      ),
+      PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+      ),
+    ]);
+    return fine || coarse;
+  } catch (err) {
+    console.warn(`${LOG_PREFIX} permission check threw:`, err);
     return false;
   }
 }
@@ -426,6 +458,161 @@ export function useLiveLocationTracker(
       console.log(`${LOG_PREFIX} stopped`);
     };
   }, [enabled, rideTran]);
+}
+
+export interface WatchedPosition {
+  latitude: number;
+  longitude: number;
+  /** Degrees, 0-360, null when the device can't report one (e.g. stationary). */
+  heading: number | null;
+  /** m/s, null when unavailable or non-positive (treated as "no reading"). */
+  speed: number | null;
+  accuracy: number | null;
+  timestamp: number;
+}
+
+// How far (meters) the partner has to actually move before the OS pushes
+// a new fix — small enough to feel live while driving, large enough that
+// GPS jitter while stationary at a light doesn't spam updates/re-renders.
+const WATCH_DISTANCE_FILTER_M = 8;
+
+/**
+ * Continuous, JS-side copy of the partner's position while `enabled` —
+ * separate from useLiveLocationTracker above, which is the periodic
+ * "ping the server" tracker. This one is purely local: it's what powers
+ * LiveRouteMap's follow-camera and the "trim the route as you drive"
+ * behaviour on PickupNav/LiveTrip, and doesn't touch the network at all.
+ *
+ * Never prompts for permission itself — by the time a partner reaches a
+ * screen using this, they've already gone online once (which does
+ * prompt), so this only ever does a silent read-only check. If somehow
+ * permission isn't there, it just stays null rather than surprise the
+ * partner with a permission dialog mid-navigation.
+ */
+export function useWatchPosition(enabled: boolean): WatchedPosition | null {
+  const [position, setPosition] = useState<WatchedPosition | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!enabled) {
+      if (watchIdRef.current !== null) {
+        Geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      setPosition(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      const granted = await hasLocationPermission();
+      if (cancelled) return;
+      if (!granted) {
+        console.warn(
+          `${LOG_PREFIX} useWatchPosition — permission not granted, skipping live watch`,
+        );
+        return;
+      }
+
+      // Seed a position immediately using the same quick(low-accuracy)
+      // -> GPS fallback strategy proven elsewhere in this file, instead
+      // of waiting on watchPosition's first callback. On devices where
+      // high-accuracy GPS times out (confirmed happening repeatedly via
+      // getCurrentPositionAccurate's own logs on some test devices/
+      // emulators), watchPosition below can go a very long time — or
+      // effectively forever — without ever calling back OR erroring,
+      // leaving driverPosition stuck at null indefinitely with nothing
+      // in the logs to explain why. This guarantees SOME position (even
+      // a coarse network one) lands quickly, which is what unblocks the
+      // fallback-route fetch and the follow-camera; true GPS fixes just
+      // refine it further once/if they arrive via the watch below.
+      try {
+        const seed = await getCurrentPositionQuick();
+        if (cancelled) return;
+        const { latitude, longitude, heading, speed, accuracy } = seed.coords;
+        console.log(
+          `${LOG_PREFIX} useWatchPosition — seeded initial position (quick fix):`,
+          { latitude, longitude, accuracy },
+        );
+        setPosition({
+          latitude,
+          longitude,
+          heading: heading ?? null,
+          speed: speed && speed > 0 ? speed : null,
+          accuracy: accuracy ?? null,
+          timestamp: seed.timestamp,
+        });
+      } catch (err: any) {
+        console.warn(
+          `${LOG_PREFIX} useWatchPosition — seed fix failed (will still try the live watch below):`,
+          err?.message || err,
+        );
+      }
+      if (cancelled) return;
+
+      console.log(`${LOG_PREFIX} useWatchPosition — starting GPS watch`);
+      let fixCount = 0;
+      watchIdRef.current = Geolocation.watchPosition(
+        (pos: any) => {
+          if (cancelled) return;
+          const { latitude, longitude, heading, speed, accuracy } = pos.coords;
+          fixCount += 1;
+          // Log the first fix in full (that's the one everything else is
+          // waiting on), then just a short heartbeat after that so this
+          // doesn't flood logcat on a long drive.
+          if (fixCount === 1) {
+            console.log(
+              `${LOG_PREFIX} useWatchPosition — FIRST live watch fix:`,
+              { latitude, longitude, heading, speed, accuracy },
+            );
+          } else if (fixCount % 5 === 0) {
+            console.log(
+              `${LOG_PREFIX} useWatchPosition — fix #${fixCount}:`,
+              latitude.toFixed(5),
+              longitude.toFixed(5),
+            );
+          }
+          setPosition({
+            latitude,
+            longitude,
+            heading: heading ?? null,
+            speed: speed && speed > 0 ? speed : null,
+            accuracy: accuracy ?? null,
+            timestamp: pos.timestamp,
+          });
+        },
+        (err: any) => {
+          // Expected/harmless on devices with flaky high-accuracy GPS —
+          // the seed above already got something on screen, this is just
+          // the live watch occasionally missing a beat.
+          console.warn(
+            `${LOG_PREFIX} watchPosition error:`,
+            err?.code,
+            err?.message || err,
+          );
+        },
+        {
+          enableHighAccuracy: true,
+          distanceFilter: WATCH_DISTANCE_FILTER_M,
+          interval: 4000,
+          fastestInterval: 2000,
+          timeout: 15000,
+          maximumAge: 10000,
+        },
+      );
+    })();
+
+    return () => {
+      cancelled = true;
+      if (watchIdRef.current !== null) {
+        Geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [enabled]);
+
+  return position;
 }
 
 // NOTE on "background": this sends on a JS setInterval, same mechanism as

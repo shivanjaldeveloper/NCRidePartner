@@ -40,6 +40,8 @@ import {
   PARTNER_TRIPS,
 } from './mockHomeData';
 import { useRidePollingContext } from '../../contexts/RidePollingContext';
+import { useUser } from '../../contexts/UserContext';
+import { getInitials, getGreeting } from '../../utils/profileFormat';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
 import { getCookie } from '../../utils/session';
@@ -67,6 +69,7 @@ type NavProp = CompositeNavigationProp<
 
 const HomeScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const { profile } = useUser();
 
   const [now, setNow] = useState(Date.now());
   const [online, setOnline] = useState(false);
@@ -219,6 +222,15 @@ const HomeScreen = () => {
 
   const creditMsLeft = creditInfo ? Math.max(0, creditInfo.expiresAt - now) : 0;
 
+  // Real partner details from VerifyCookie (UserContext), falling back to
+  // the PARTNER_PROFILE mock only if the profile hasn't loaded yet (e.g.
+  // first-ever launch before Splash's VerifyCookie call resolves).
+  const displayName = profile?.name || PARTNER_PROFILE.name;
+  const initials = getInitials(profile?.name) || PARTNER_PROFILE.initials;
+  // `now` already ticks every second above, so the greeting flips over
+  // live (e.g. right at 12:00) without a separate interval.
+  const greeting = getGreeting(new Date(now));
+
   // If the local countdown hits zero before the next scheduled server
   // poll, resync right away instead of showing "0s" for up to 30s.
   useEffect(() => {
@@ -296,11 +308,11 @@ const HomeScreen = () => {
             style={styles.avatar}
             onPress={() => navigation.navigate('AccountTab')}
           >
-            <Text style={styles.avatarText}>{PARTNER_PROFILE.initials}</Text>
+            <Text style={styles.avatarText}>{initials}</Text>
           </TouchableOpacity>
           <View style={styles.headerTextWrap}>
-            <Text style={styles.greeting}>Good morning</Text>
-            <Text style={styles.name}>{PARTNER_PROFILE.name}</Text>
+            <Text style={styles.greeting}>{greeting}</Text>
+            <Text style={styles.name}>{displayName}</Text>
           </View>
           <View
             style={[

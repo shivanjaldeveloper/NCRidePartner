@@ -35,7 +35,7 @@ export type RootStackParamList = {
   Vehicle: undefined;
   Payouts: undefined;
   Wallet: undefined;
-  TripDetail: { tripId: string };
+  TripDetail: { tripId: string; createdDate?: string; createdTime?: string };
   Settings: undefined;
   SOS: undefined;
   Logout: undefined;
@@ -53,8 +53,12 @@ export type RootStackParamList = {
   // itself hasn't been wired to use it yet (still mock), this just avoids
   // the data getting dropped on the floor between screens.
   PickupNav: { ride?: PendingRide } | undefined;
-  Arrived: undefined;
-  LiveTrip: undefined;
-  TripEarnings: undefined;
+  Arrived: { ride?: PendingRide } | undefined;
+  LiveTrip: { ride?: PendingRide } | undefined;
+  // Carries the real CompleteRide response forward — fare/fareText are the
+  // confirmed final fare from that call; ride is the same trip context
+  // threaded through since CompleteRide's own response doesn't repeat
+  // Pickup/Route/TripDistanceKM/TripDurationMinutes.
+  TripEarnings: { ride?: PendingRide; fare?: string; fareText?: string } | undefined;
   PassengerRating: undefined;
 };

@@ -9,9 +9,10 @@ import {
   StyleSheet,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
@@ -23,21 +24,32 @@ import { PARTNER_RIDE_REQUEST } from '../Home/mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'TripEarnings'>;
+type ScreenRoute = RouteProp<RootStackParamList, 'TripEarnings'>;
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const TripEarningsScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const route = useRoute<ScreenRoute>();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const req = PARTNER_RIDE_REQUEST;
+  const { ride, fare, fareText } = route.params ?? {};
 
-  const earning = req.earning || 186;
-  const base = 45;
-  const dist = 112;
-  const time = 36;
+  // CompleteRide's response only ever returns the final total fare
+  // (EstimatedFare/EstimatedFareText) — there's no per-component
+  // base/distance/time/surge split from the API, so this screen no longer
+  // fabricates one. Platform fee + TDS are display-only estimates against
+  // that real total (same 8%/1% shown in TripDetailScreen's breakdown).
+  const earning = Number(fare) || req.earning || 186;
   const platform = Math.round(earning * 0.08);
   const tds = Math.round(earning * 0.01);
   const net = earning - platform - tds;
+
+  const pickupLabel = ride?.Pickup?.Address || req.pickup;
+  const dropLabel = ride?.Drop?.Address || req.drop;
+  const distLabel = ride ? `${ride.TripDistanceKM} km` : req.tripDist;
+  const durationLabel = ride ? `${ride.TripDurationMinutes} min` : req.duration;
 
   const checkProgress = useRef(new Animated.Value(0)).current;
 
@@ -81,7 +93,7 @@ const TripEarningsScreen = () => {
             {t('tripEarnings.tripComplete')}
           </Text>
           <Text style={styles.successSub}>
-            {req.pickup} → {req.drop}
+            {pickupLabel} → {dropLabel}
           </Text>
         </View>
 
@@ -99,11 +111,9 @@ const TripEarningsScreen = () => {
               </View>
             </View>
             <View style={styles.netMetaRow}>
-              <Text style={styles.netMetaText}>{req.tripDist}</Text>
+              <Text style={styles.netMetaText}>{distLabel}</Text>
               <Text style={styles.netMetaText}>·</Text>
-              <Text style={styles.netMetaText}>{req.duration}</Text>
-              <Text style={styles.netMetaText}>·</Text>
-              <Text style={styles.netMetaText}>{req.payment}</Text>
+              <Text style={styles.netMetaText}>{durationLabel}</Text>
             </View>
           </Card>
 
@@ -111,21 +121,14 @@ const TripEarningsScreen = () => {
             <Text style={styles.breakdownLabel}>
               {t('tripEarnings.fareBreakdown')}
             </Text>
-            {[
-              [t('tripEarnings.baseFare'), `₹${base}`, Colors.ink2],
-              [t('tripEarnings.distanceFare'), `₹${dist}`, Colors.ink2],
-              [t('tripEarnings.timeFare'), `₹${time}`, Colors.ink2],
-              [t('tripEarnings.surgeBonus'), '₹0', Colors.ink2],
-            ].map(([k, v, c]) => (
-              <View key={k} style={styles.breakdownRow}>
-                <Text style={[styles.breakdownKey, { color: c as string }]}>
-                  {k}
-                </Text>
-                <Text style={[styles.breakdownValue, { color: c as string }]}>
-                  {v}
-                </Text>
-              </View>
-            ))}
+            <View style={styles.breakdownRow}>
+              <Text style={[styles.breakdownKey, { color: Colors.ink2 }]}>
+                {t('tripDetail.grossEarning')}
+              </Text>
+              <Text style={[styles.breakdownValue, { color: Colors.ink2 }]}>
+                {fareText || `₹${earning}`}
+              </Text>
+            </View>
             <View style={styles.breakdownRow}>
               <Text style={[styles.breakdownKey, { color: Colors.red }]}>
                 {t('tripDetail.platformFee')}
@@ -152,7 +155,9 @@ const TripEarningsScreen = () => {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View
+        style={[styles.footer, { paddingBottom: vscale(20) + insets.bottom }]}
+      >
         <TouchableOpacity style={styles.tripLogButton}>
           <ActivityIcon size={18} color={Colors.ink} strokeWidth={1.8} />
           <Text style={styles.tripLogLabel}>{t('tripEarnings.tripLog')}</Text>
@@ -303,7 +308,6 @@ const styles = StyleSheet.create({
     gap: hscale(8),
     paddingHorizontal: hscale(18),
     paddingTop: vscale(12),
-    paddingBottom: vscale(30),
     backgroundColor: Colors.bg,
     borderTopWidth: 0.5,
     borderTopColor: Colors.line,

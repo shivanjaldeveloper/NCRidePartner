@@ -82,7 +82,18 @@ const RideRequestScreen = () => {
       if (res.Result !== 'Success') {
         throw new Error(res.Message || 'Could not accept this ride.');
       }
-      navigation.navigate('PickupNav', { ride });
+      // GetPendingRides never sends CustomerName/CustomerMobile — only
+      // AcceptRide's response (res) does. Without this merge, the real
+      // passenger name/number gets fetched here and then silently
+      // dropped, and every downstream screen falls back to the generic
+      // "Passenger" label forever, even on a successful accept.
+      navigation.navigate('PickupNav', {
+        ride: {
+          ...ride,
+          CustomerName: res.CustomerName ?? ride.CustomerName,
+          CustomerMobile: res.CustomerMobile ?? ride.CustomerMobile,
+        },
+      });
     } catch (err: any) {
       // Most common real-world case: another partner accepted it first —
       // it'll drop out of the list on the next poll tick regardless; the

@@ -17,6 +17,7 @@ import { refineOnboardingRoute } from '../../services/api/resolveOnboardingRoute
 import { hasAcceptedCurrentTerms } from '../../utils/terms';
 import { hasSeenOnboarding } from '../../utils/onboarding';
 import { hasChosenLanguage } from '../../utils/language';
+import { useUser } from '../../contexts/UserContext';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
@@ -43,6 +44,7 @@ const ring = (
 const SplashScreen = () => {
   const navigation = useNavigation<NavProp>();
   const { t } = useTranslation();
+  const { setProfile } = useUser();
   const spin = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -110,6 +112,15 @@ const SplashScreen = () => {
         if (res.Cookie) {
           await saveCookie(res.Cookie);
         }
+
+        // Cache Name/Email/Username from VerifyCookie so HomeScreen,
+        // ProfileScreen, etc. can show the real partner details everywhere
+        // instead of the PARTNER_PROFILE mock.
+        setProfile({
+          username: res.Username ?? '',
+          name: res.Name ?? '',
+          email: res.Email ?? '',
+        });
 
         const initialResolved = resolveProcessingStatus(res.ProcessingStatus);
         const resolved = await refineOnboardingRoute(

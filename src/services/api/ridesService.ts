@@ -28,6 +28,13 @@ export interface PendingRide {
   EstimatedFareText: string;
   DistanceToPickupKM: string;
   ETAToPickupMinutes: string;
+  // Confirmed via a real AcceptRide sample response: flat fields, not
+  // nested under a "Customer" object. Not yet confirmed whether
+  // GetPendingRides also sends these pre-accept (plausibly withheld
+  // there for privacy) — both optional either way, screens fall back to
+  // a generic "Passenger" label when absent rather than a fake name.
+  CustomerName?: string;
+  CustomerMobile?: string;
 }
 
 export interface GetPendingRidesResponse {
@@ -71,6 +78,10 @@ export interface AcceptRideResponse {
   TripDurationMinutes: string;
   EstimatedFare: string;
   EstimatedFareText: string;
+  // Confirmed via a real sample response — flat fields, present here
+  // (unlike GetPendingRides, which doesn't send these pre-accept).
+  CustomerName?: string;
+  CustomerMobile?: string;
   ResponseDateTime: string;
 }
 
@@ -83,6 +94,138 @@ export interface AcceptRideResponse {
 export const acceptRide = (cookie: string, rideTran: string) =>
   postAuthForm<AcceptRideResponse>(
     'AcceptRide',
+    { cookie, rideTran },
+    API_RIDE_REQUEST_BASE_URL,
+  );
+
+export interface StartRideResponse {
+  Result: string;
+  Message?: string;
+  Error?: string;
+  RideTran: string;
+  Status: string;
+  Drop: RidePoint;
+  EstimatedFare: string;
+  EstimatedFareText: string;
+  ResponseDateTime: string;
+}
+
+/**
+ * Starts the trip once the partner has entered the OTP the customer gives
+ * them in person at pickup — confirmed via sample: Status flips to
+ * "ONGOING" on success. Wrong/expired OTP comes back as a non-"Success"
+ * Result (exact rejection Message not yet confirmed against a real
+ * failure response, so the UI falls back to a generic message when one
+ * isn't provided).
+ */
+export const startRide = (cookie: string, rideTran: string, otp: string) =>
+  postAuthForm<StartRideResponse>(
+    'StartRide',
+    { cookie, rideTran, otp },
+    API_RIDE_REQUEST_BASE_URL,
+  );
+
+export interface CompleteRideResponse {
+  Result: string;
+  Message?: string;
+  Error?: string;
+  RideTran: string;
+  Status: string;
+  EstimatedFare: string;
+  EstimatedFareText: string;
+  ResponseDateTime: string;
+}
+
+/**
+ * Completes the trip once the partner has dropped the passenger — needs
+ * the partner's current position at drop-off (confirmed via sample: same
+ * lat/lng pattern as GetPendingRides). Status flips to "COMPLETED" on
+ * success and EstimatedFareText here is the real, final fare.
+ */
+export const completeRide = (
+  cookie: string,
+  rideTran: string,
+  latitude: number,
+  longitude: number,
+) =>
+  postAuthForm<CompleteRideResponse>(
+    'CompleteRide',
+    { cookie, rideTran, latitude, longitude },
+    API_RIDE_REQUEST_BASE_URL,
+  );
+
+export interface RideHistoryItem {
+  RideId: string;
+  RideTran: string;
+  VehicleType: string;
+  PickupAddress: string;
+  DropAddress: string;
+  DistanceKM: string;
+  DurationMinutes: string;
+  FinalFare: string;
+  FinalFareText: string;
+  Status: string;
+  CustomerName: string;
+  CustomerMobile: string;
+  CreatedDate: string;
+  CreatedTime: string;
+  CompletedDate: string;
+  CompletedTime: string;
+}
+
+export interface GetRideHistoryResponse {
+  Result: string;
+  Message?: string;
+  Error?: string;
+  Rides: RideHistoryItem[];
+}
+
+/**
+ * Fetches the partner's past ride/trip list for the Trips tab — confirmed
+ * via the GetRideHistory curl + response sample. Same host/token/base as
+ * the rest of this service (partner-riderequest.asmx).
+ */
+export const getRideHistory = (cookie: string) =>
+  postAuthForm<GetRideHistoryResponse>(
+    'GetRideHistory',
+    { cookie },
+    API_RIDE_REQUEST_BASE_URL,
+  );
+
+export interface RideDetailCustomer {
+  Name: string;
+  Mobile: string;
+}
+
+export interface GetRideDetailResponse {
+  Result: string;
+  Message?: string;
+  Error?: string;
+  RideTran: string;
+  Status: string;
+  VehicleType: string;
+  Pickup: RidePoint;
+  Drop: RidePoint;
+  Route: RideRoute & { DistanceKM: string; DurationMinutes: string };
+  EstimatedFare: string;
+  EstimatedFareText: string;
+  Customer: RideDetailCustomer;
+  ResponseDateTime: string;
+}
+
+/**
+ * Fetches full details for a single past ride, keyed by RideTran (not
+ * RideId — GetRideHistory returns both per row, but this endpoint only
+ * accepts the transaction id) — confirmed via the GetRideDetail curl +
+ * response sample. Note EstimatedFare/EstimatedFareText here is the real
+ * final fare for COMPLETED rides (same value as GetRideHistory's
+ * FinalFare/FinalFareText), it's just not renamed for this endpoint.
+ * Doesn't include CreatedDate/CreatedTime — pull those from the
+ * GetRideHistory row instead if needed for display.
+ */
+export const getRideDetail = (cookie: string, rideTran: string) =>
+  postAuthForm<GetRideDetailResponse>(
+    'GetRideDetail',
     { cookie, rideTran },
     API_RIDE_REQUEST_BASE_URL,
   );

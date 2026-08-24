@@ -4,7 +4,8 @@
     "next": "Next",
     "getStarted": "Get started",
     "sos": "SOS",
-    "dropLabel": "Drop"
+    "dropLabel": "Drop",
+    "passenger": "Passenger"
   },
   "onboarding": {
     "screen1": {
@@ -311,7 +312,13 @@
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
-    "emptyFor": "No {{filter}} trips yet."
+    "emptyFor": "No {{filter}} trips yet.",
+    "loading": "Loading trips…",
+    "retry": "Retry",
+    "errors": {
+      "sessionNotFound": "Session not found. Please log in again.",
+      "loadFailed": "Could not load trips right now."
+    }
   },
   "wallet": {
     "headerTitle": "Wallet",
@@ -424,7 +431,7 @@
   },
   "pickupNav": {
     "headingToPickup": "Heading to pickup",
-    "etaValue": "ETA · 4 min",
+    "etaValue": "ETA · {{duration}}",
     "away": "{{dist}} away",
     "tripsSuffix": "· {{count}} trips",
     "pickupLabel": "Pickup",
@@ -434,7 +441,9 @@
     "cancelConfirmBody": "The ride will be released back to other partners nearby.",
     "cancelConfirmBack": "Go back",
     "cancelConfirmYes": "Yes, cancel",
-    "cancelFailedTitle": "Couldn't cancel ride"
+    "cancelFailedTitle": "Couldn't cancel ride",
+    "navigateButton": "Navigate",
+    "then": "Then"
   },
   "vehicle": {
     "headerTitle": "Vehicle details",
@@ -460,6 +469,12 @@
   },
   "tripDetail": {
     "headerTitle": "Trip details",
+    "loading": "Loading trip…",
+    "retry": "Retry",
+    "errors": {
+      "sessionNotFound": "Session not found. Please log in again.",
+      "loadFailed": "Could not load trip details right now."
+    },
     "earning": "Earning",
     "tripInfo": "Trip info",
     "fields": {
@@ -546,7 +561,8 @@
     "destinationMeta": "Est. {{duration}} · {{dist}} · Earning ₹{{earning}}",
     "askForOtp": "Ask passenger for OTP",
     "verifyNote": "Verify OTP before starting the trip.",
-    "startTrip": "Start Trip"
+    "startTrip": "Start Trip",
+    "startingTrip": "Starting trip..."
   },
   "liveTrip": {
     "eta": "ETA {{duration}}",
@@ -558,7 +574,8 @@
       "onTrip": "On trip",
       "arriving": "Arriving",
       "complete": "Complete"
-    }
+    },
+    "completing": "Completing..."
   },
   "tripEarnings": {
     "tripComplete": "Trip complete!",

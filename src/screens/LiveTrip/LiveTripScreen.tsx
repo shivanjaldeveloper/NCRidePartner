@@ -1,23 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import RouteMapIllustration from '../../components/common/RouteMapIllustration';
+import LiveRouteMap, {
+  RouteProgress,
+} from '../../components/common/LiveRouteMap';
 import BottomSheetPanel from '../../components/common/BottomSheetPanel';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import SosIcon from '../../assets/icons/SosIcon';
-import ClockIcon from '../../assets/icons/ClockIcon';
 import CashIcon from '../../assets/icons/CashIcon';
 import StarFillIcon from '../../assets/icons/StarFillIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
+import RouteIcon from '../../assets/icons/RouteIcon';
 import { PARTNER_RIDE_REQUEST } from '../Home/mockHomeData';
+import { getCookie } from '../../utils/session';
+import { getCurrentPositionQuick } from '../../utils/locationTracker';
+import { completeRide } from '../../services/api/ridesService';
+import { openTurnByTurnNavigation } from '../../utils/externalNavigation';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'LiveTrip'>;
+type ScreenRoute = RouteProp<RootStackParamList, 'LiveTrip'>;
 
 const MAP_HEIGHT_RATIO = 0.6;
 // id is the stable identity for the key prop; labelKey resolves through the
@@ -32,22 +40,82 @@ const ACTIVE_STEP_INDEX = 1; // trip is in progress — "On trip" is current
 
 const LiveTripScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const route = useRoute<ScreenRoute>();
   const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
-  const [elapsed, setElapsed] = useState(0);
+  const ride = route.params?.ride;
+  const [completing, setCompleting] = useState(false);
+  const [liveProgress, setLiveProgress] = useState<RouteProgress | null>(null);
 
-  useEffect(() => {
-    const interval = setInterval(() => setElapsed(v => v + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const handleNavigate = () => {
+    if (!ride) return;
+    openTurnByTurnNavigation({
+      latitude: parseFloat(ride.Drop.Latitude),
+      longitude: parseFloat(ride.Drop.Longitude),
+      label: ride.Drop.Address,
+    });
+  };
 
-  const minutes = Math.floor(elapsed / 60);
-  const seconds = elapsed % 60;
+  const handleCompleteTrip = async () => {
+    if (completing) return;
+    if (!ride?.RideTran) {
+      Alert.alert('', 'Missing ride details. Please go back and try again.');
+      return;
+    }
+    setCompleting(true);
+    try {
+      const cookie = await getCookie();
+      if (!cookie) throw new Error('Session not found. Please log in again.');
+      const position = await getCurrentPositionQuick();
+      const { latitude, longitude } = position.coords;
+      const res = await completeRide(
+        cookie,
+        ride.RideTran,
+        latitude,
+        longitude,
+      );
+      if (res.Result !== 'Success') {
+        throw new Error(res.Message || 'Could not complete this ride.');
+      }
+      navigation.navigate('TripEarnings', {
+        ride,
+        fare: res.EstimatedFare,
+        fareText: res.EstimatedFareText,
+      });
+    } catch (err: any) {
+      Alert.alert(
+        'Could not complete ride',
+        err?.message || 'Please try again.',
+      );
+    } finally {
+      setCompleting(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={[styles.mapWrap, { height: `${MAP_HEIGHT_RATIO * 100}%` }]}>
-        <RouteMapIllustration />
+        {ride ? (
+          <LiveRouteMap
+            destination={{
+              latitude: parseFloat(ride.Drop.Latitude),
+              longitude: parseFloat(ride.Drop.Longitude),
+            }}
+            destinationColor={Colors.ink}
+            encodedPolyline={ride.Route?.EncodedPolyline}
+            polylineColor={ride.Route?.PolylineColor || Colors.blue}
+            // This is the server's real Pickup->Drop route — always draw
+            // that, never a route computed from the driver's current
+            // position to Drop. fallbackRoute off means no Google
+            // Directions call (fallback or off-route reroute) happens on
+            // this screen at all, so the drawn line stays exactly the
+            // backend polyline no matter where the driver actually is.
+            fallbackRoute={false}
+            onProgressChange={setLiveProgress}
+          />
+        ) : (
+          <RouteMapIllustration />
+        )}
       </View>
 
       <TouchableOpacity style={styles.sosButton}>
@@ -55,12 +123,17 @@ const LiveTripScreen = () => {
         <Text style={styles.sosLabel}>{t('common.sos')}</Text>
       </TouchableOpacity>
 
-      <View style={styles.timerBadge}>
-        <ClockIcon size={14} color={Colors.lime} strokeWidth={1.8} />
-        <Text style={styles.timerText}>
-          {minutes}:{seconds.toString().padStart(2, '0')}
-        </Text>
-      </View>
+      {!!ride && (
+        <TouchableOpacity
+          style={styles.navigateButton}
+          onPress={handleNavigate}
+        >
+          <RouteIcon size={13} color="#FFFFFF" strokeWidth={2} />
+          <Text style={styles.navigateLabel}>
+            {t('pickupNav.navigateButton')}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.sheetAnchor}>
         <BottomSheetPanel>
@@ -70,13 +143,30 @@ const LiveTripScreen = () => {
               <Text style={styles.destinationEyebrow}>
                 {t('arrived.destination')}
               </Text>
-              <Text style={styles.destinationValue}>{req.drop}</Text>
+              <Text style={styles.destinationValue}>
+                {ride?.Drop.Address || req.drop}
+              </Text>
             </View>
             <View style={styles.destinationEtaWrap}>
               <Text style={styles.destinationEta}>
-                {t('liveTrip.eta', { duration: req.duration })}
+                {t('liveTrip.eta', {
+                  duration: liveProgress
+                    ? `${Math.max(
+                        1,
+                        Math.round(liveProgress.etaSeconds / 60),
+                      )} min`
+                    : ride
+                    ? `${ride.TripDurationMinutes} min`
+                    : req.duration,
+                })}
               </Text>
-              <Text style={styles.destinationDist}>{req.tripDist}</Text>
+              <Text style={styles.destinationDist}>
+                {liveProgress
+                  ? `${(liveProgress.distanceMeters / 1000).toFixed(1)} km`
+                  : ride
+                  ? `${ride.TripDistanceKM} km`
+                  : req.tripDist}
+              </Text>
             </View>
           </View>
 
@@ -136,7 +226,9 @@ const LiveTripScreen = () => {
             <View style={styles.earningsBox}>
               <CashIcon size={16} color={Colors.ink} strokeWidth={1.8} />
               <View>
-                <Text style={styles.earningsValue}>₹{req.earning}</Text>
+                <Text style={styles.earningsValue}>
+                  {ride?.EstimatedFareText || `₹${req.earning}`}
+                </Text>
                 <Text style={styles.earningsLabel}>
                   {t('liveTrip.estEarning')}
                 </Text>
@@ -154,9 +246,12 @@ const LiveTripScreen = () => {
           </View>
 
           <PrimaryButton
-            label={t('liveTrip.completeTrip')}
-            onPress={() => navigation.navigate('TripEarnings')}
-            icon="check"
+            label={
+              completing ? t('liveTrip.completing') : t('liveTrip.completeTrip')
+            }
+            onPress={handleCompleteTrip}
+            icon={completing ? 'none' : 'check'}
+            disabled={completing}
             style={styles.fullButton}
           />
         </BottomSheetPanel>
@@ -197,24 +292,25 @@ const styles = StyleSheet.create({
     fontSize: fscale(12),
     fontWeight: '700',
   },
-  timerBadge: {
+  navigateButton: {
     position: 'absolute',
-    top: vscale(64),
-    left: hscale(18),
-    paddingVertical: vscale(8),
-    paddingHorizontal: hscale(14),
-    borderRadius: hscale(14),
-    backgroundColor: Colors.ink,
+    top: vscale(108),
+    right: hscale(18),
+    height: hscale(32),
+    minWidth: hscale(96),
+    paddingHorizontal: hscale(12),
+    borderRadius: hscale(12),
+    backgroundColor: Colors.blue,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: hscale(8),
+    justifyContent: 'center',
+    gap: hscale(6),
     zIndex: 10,
   },
-  timerText: {
-    fontSize: fscale(14),
-    fontWeight: '700',
+  navigateLabel: {
     color: '#FFFFFF',
-    fontFamily: 'monospace',
+    fontSize: fscale(11.5),
+    fontWeight: '700',
   },
   sheetAnchor: {
     position: 'absolute',

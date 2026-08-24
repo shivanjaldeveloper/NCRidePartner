@@ -5,6 +5,7 @@ import { RootStackParamList } from './types';
 import { navigationRef } from './navigationRef';
 import { useSessionWatcher } from '../utils/sessionWatcher';
 import { RidePollingProvider } from '../contexts/RidePollingContext';
+import { UserProvider } from '../contexts/UserContext';
 
 import SplashScreen from '../screens/Splash/SplashScreen';
 import LanguageSelectScreen from '../screens/LanguageSelect/LanguageSelectScreen';
@@ -43,75 +44,83 @@ const RootNavigator = () => {
   useSessionWatcher();
 
   return (
-    <RidePollingProvider>
-      <NavigationContainer ref={navigationRef}>
-        <Stack.Navigator
-          initialRouteName="Splash"
-          screenOptions={{ headerShown: false, animation: 'fade' }}
-        >
-          <Stack.Screen name="Splash" component={SplashScreen} />
-          <Stack.Screen
-            name="LanguageSelect"
-            component={LanguageSelectScreen}
-          />
-          <Stack.Screen name="Onboarding1" component={OnboardingScreen1} />
-          <Stack.Screen name="Onboarding2" component={OnboardingScreen2} />
-          <Stack.Screen name="Onboarding3" component={OnboardingScreen3} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="TermsUpdate" component={TermsUpdateScreen} />
-          <Stack.Screen name="BasicDetails" component={BasicDetailsScreen} />
-          <Stack.Screen
-            name="PartnerDocuments"
-            component={PartnerDocumentsScreen}
-          />
-          <Stack.Screen
-            name="ApplicationProcessing"
-            component={ApplicationProcessingScreen}
-          />
-          <Stack.Screen name="Permissions" component={PermissionsScreen} />
-          <Stack.Screen name="Verification" component={VerificationScreen} />
-          <Stack.Screen name="MainTabs" component={TabNavigator} />
-          <Stack.Screen name="Vehicle" component={VehicleScreen} />
-          <Stack.Screen
-            name="BuyCredit"
-            component={BuyCreditScreen}
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-          />
-          <Stack.Screen
-            name="Payment"
-            component={PaymentScreen}
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-          />
-          <Stack.Screen name="Payouts" component={PayoutsScreen} />
-          <Stack.Screen name="Wallet" component={WalletScreen} />
-          <Stack.Screen name="TripDetail" component={TripDetailScreen} />
-          <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="SOS" component={SOSScreen} />
-          <Stack.Screen
-            name="Logout"
-            component={LogoutScreen}
-            options={{
-              presentation: 'transparentModal',
-              animation: 'fade',
-            }}
-          />
-          <Stack.Screen name="Documents" component={DocumentsScreen} />
-          <Stack.Screen
-            name="DocumentDetail"
-            component={DocumentDetailScreen}
-          />
-          <Stack.Screen name="RideRequest" component={RideRequestScreen} />
-          <Stack.Screen name="PickupNav" component={PickupNavScreen} />
-          <Stack.Screen name="Arrived" component={ArrivedScreen} />
-          <Stack.Screen name="LiveTrip" component={LiveTripScreen} />
-          <Stack.Screen name="TripEarnings" component={TripEarningsScreen} />
-          <Stack.Screen
-            name="PassengerRating"
-            component={PassengerRatingScreen}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </RidePollingProvider>
+    <UserProvider>
+      <RidePollingProvider>
+        <NavigationContainer ref={navigationRef}>
+          <Stack.Navigator
+            initialRouteName="Splash"
+            screenOptions={{ headerShown: false, animation: 'fade' }}
+          >
+            <Stack.Screen name="Splash" component={SplashScreen} />
+            <Stack.Screen
+              name="LanguageSelect"
+              component={LanguageSelectScreen}
+            />
+            <Stack.Screen name="Onboarding1" component={OnboardingScreen1} />
+            <Stack.Screen name="Onboarding2" component={OnboardingScreen2} />
+            <Stack.Screen name="Onboarding3" component={OnboardingScreen3} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="TermsUpdate" component={TermsUpdateScreen} />
+            <Stack.Screen name="BasicDetails" component={BasicDetailsScreen} />
+            <Stack.Screen
+              name="PartnerDocuments"
+              component={PartnerDocumentsScreen}
+            />
+            <Stack.Screen
+              name="ApplicationProcessing"
+              component={ApplicationProcessingScreen}
+            />
+            <Stack.Screen name="Permissions" component={PermissionsScreen} />
+            <Stack.Screen name="Verification" component={VerificationScreen} />
+            <Stack.Screen name="MainTabs" component={TabNavigator} />
+            <Stack.Screen name="Vehicle" component={VehicleScreen} />
+            <Stack.Screen
+              name="BuyCredit"
+              component={BuyCreditScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            />
+            <Stack.Screen
+              name="Payment"
+              component={PaymentScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            />
+            <Stack.Screen name="Payouts" component={PayoutsScreen} />
+            <Stack.Screen name="Wallet" component={WalletScreen} />
+            <Stack.Screen name="TripDetail" component={TripDetailScreen} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="SOS" component={SOSScreen} />
+            <Stack.Screen
+              name="Logout"
+              component={LogoutScreen}
+              options={{
+                presentation: 'transparentModal',
+                animation: 'fade',
+              }}
+            />
+            <Stack.Screen name="Documents" component={DocumentsScreen} />
+            <Stack.Screen
+              name="DocumentDetail"
+              component={DocumentDetailScreen}
+            />
+            <Stack.Screen name="RideRequest" component={RideRequestScreen} />
+            <Stack.Screen name="PickupNav" component={PickupNavScreen} />
+            <Stack.Screen name="Arrived" component={ArrivedScreen} />
+            <Stack.Screen name="LiveTrip" component={LiveTripScreen} />
+            <Stack.Screen name="TripEarnings" component={TripEarningsScreen} />
+            <Stack.Screen
+              name="PassengerRating"
+              component={PassengerRatingScreen}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </RidePollingProvider>
+    </UserProvider>
   );
 };
 
