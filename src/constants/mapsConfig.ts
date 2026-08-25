@@ -25,7 +25,12 @@
 // this app's package name + SHA-1 added as an extra allowed Android app
 // under the *same* key (Google Cloud Console → Credentials → that key →
 // Android app restrictions) rather than provisioning a whole new key.
-export const GOOGLE_MAPS_API_KEY = 'AIzaSyAU4PPy7jML1IcDSHgwWjoZHm-AaIDt1JI';
+//
+// Comes from .env (see .env.example) — never hardcode a real key here,
+// it would ship inside the JS bundle and be committed to git.
+import { GOOGLE_MAPS_API_KEY as ENV_GOOGLE_MAPS_API_KEY } from '@env';
+
+export const GOOGLE_MAPS_API_KEY = ENV_GOOGLE_MAPS_API_KEY;
 
 // Places API (New) base URL — only relevant once/if GOOGLE_MAPS_API_KEY
 // above is filled in and this app adds its own geocode.ts.

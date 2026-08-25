@@ -63,6 +63,10 @@ import {
   RideHistoryItem,
 } from '../../services/api/ridesService';
 import {
+  getPartnerHome,
+  PartnerHomeResponse,
+} from '../../services/api/homeService';
+import {
   getCachedRideHistory,
   setCachedRideHistory,
 } from '../../utils/rideHistoryCache';
@@ -86,6 +90,18 @@ type NavProp = CompositeNavigationProp<
 const isCompletedStatus = (status: string) =>
   status?.toUpperCase() === 'COMPLETED';
 
+// Maps PartnerHome's HotZones[].DemandLevel to the same tag text/dot colour
+// the mock zone cards used (HIGH DEMAND=red, SURGE=orange, else STEADY=
+// green) — DemandLevel values confirmed so far are "NORMAL", but the
+// mapping is written defensively for HIGH/SURGE since those are the
+// values the design's mock data implies the backend will eventually send.
+const zoneTagStyle = (demandLevel?: string): { tag: string; dot: string } => {
+  const level = (demandLevel || '').toUpperCase();
+  if (level.includes('HIGH')) return { tag: 'HIGH DEMAND', dot: '#E0524E' };
+  if (level.includes('SURGE')) return { tag: 'SURGE', dot: '#F2A03D' };
+  return { tag: 'STEADY', dot: '#1F9D6B' };
+};
+
 const HomeScreen = () => {
   const navigation = useNavigation<NavProp>();
   const { profile } = useUser();
@@ -105,13 +121,21 @@ const HomeScreen = () => {
   const [planHistory, setPlanHistory] = useState<PartnerPlanHistoryItem[]>([]);
   const [financeLoading, setFinanceLoading] = useState(true);
 
+  // PartnerHome — server-computed Today/ThisWeek/ThisMonth stat blocks
+  // (Earnings, TripsCompleted, OnlineMinutes, Rating). Backs the "Earned /
+  // Completed / Online / Rating" stat cards below; Income/Expense split
+  // still comes from rides+planHistory via financeCalc since PartnerHome
+  // only returns the net Earnings figure.
+  const [homeData, setHomeData] = useState<PartnerHomeResponse | null>(null);
+
   const loadFinancials = useCallback(async () => {
     try {
       const cookie = await getCookie();
       if (!cookie) return;
-      const [ridesRes, planRes] = await Promise.all([
+      const [ridesRes, planRes, homeRes] = await Promise.all([
         getRideHistory(cookie).catch(() => null),
         getPartnerPlanHistory(cookie).catch(() => null),
+        getPartnerHome(cookie).catch(() => null),
       ]);
       if (ridesRes && ridesRes.Result === 'Success' && ridesRes.Rides) {
         setRides(ridesRes.Rides);
@@ -119,6 +143,9 @@ const HomeScreen = () => {
       }
       if (planRes && planRes.Result === 'Success' && planRes.History) {
         setPlanHistory(planRes.History);
+      }
+      if (homeRes && homeRes.Result === 'Success') {
+        setHomeData(homeRes);
       }
     } catch (err) {
       console.warn('[HomeScreen] loadFinancials failed:', err);
@@ -224,7 +251,22 @@ const HomeScreen = () => {
     },
   });
 
-  const vehicle = PARTNER_VEHICLES[0];
+  // Real ActiveVehicle from PartnerHome when the partner has one on file;
+  // falls back to the PARTNER_VEHICLES mock (color/year aren't in the API
+  // response, so those two always come from the mock either way).
+  const apiVehicle =
+    homeData?.ActiveVehicle?.VehicleAvailable === 'YES'
+      ? homeData.ActiveVehicle
+      : null;
+  const mockVehicle = PARTNER_VEHICLES[0];
+  const vehicle = {
+    number: apiVehicle?.VehicleRegistration || mockVehicle.number,
+    type: apiVehicle?.VehicleType || mockVehicle.type,
+    model: apiVehicle?.VehicleModel || mockVehicle.model,
+    color: mockVehicle.color,
+    year: mockVehicle.year,
+    verified: apiVehicle ? apiVehicle.Verified === 'YES' : true,
+  };
   const incentive = PARTNER_INCENTIVES[0];
 
   const refreshCredit = useCallback(async () => {
@@ -508,7 +550,11 @@ const HomeScreen = () => {
               <Text style={styles.statCardValue}>
                 {financeLoading
                   ? '—'
-                  : `₹${todaySummary.earnings.toLocaleString('en-IN')}`}
+                  : `₹${Math.round(
+                      homeData?.Today
+                        ? parseFloat(homeData.Today.Earnings)
+                        : todaySummary.earnings,
+                    ).toLocaleString('en-IN')}`}
               </Text>
               <Text style={styles.statCardLabel}>Earned</Text>
             </View>
@@ -519,7 +565,11 @@ const HomeScreen = () => {
                 <TaxiIcon size={17} color={Colors.ink} strokeWidth={1.8} />
               </View>
               <Text style={styles.statCardValue}>
-                {financeLoading ? '—' : `${todaySummary.tripCount} trips`}
+                {financeLoading
+                  ? '—'
+                  : `${
+                      homeData?.Today?.TripsCompleted ?? todaySummary.tripCount
+                    } trips`}
               </Text>
               <Text style={styles.statCardLabel}>Completed</Text>
             </View>
@@ -530,7 +580,10 @@ const HomeScreen = () => {
                 <ClockIcon size={17} color={Colors.ink} strokeWidth={1.8} />
               </View>
               <Text style={styles.statCardValue}>
-                {PARTNER_STATS.onlineHours}
+                {financeLoading
+                  ? '—'
+                  : homeData?.Today?.OnlineDurationText ||
+                    PARTNER_STATS.onlineHours}
               </Text>
               <Text style={styles.statCardLabel}>Online</Text>
             </View>
@@ -540,7 +593,11 @@ const HomeScreen = () => {
               >
                 <StarIcon size={17} color={Colors.ink} strokeWidth={1.8} />
               </View>
-              <Text style={styles.statCardValue}>{PARTNER_STATS.rating}</Text>
+              <Text style={styles.statCardValue}>
+                {financeLoading
+                  ? '—'
+                  : homeData?.Today?.Rating || PARTNER_STATS.rating}
+              </Text>
               <Text style={styles.statCardLabel}>Rating</Text>
             </View>
           </View>
@@ -554,7 +611,13 @@ const HomeScreen = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.zonesRow}
           >
-            {PARTNER_DEMAND_ZONES.map(zone => (
+            {(homeData?.HotZones && homeData.HotZones.length > 0
+              ? homeData.HotZones.map(z => ({
+                  name: z.AreaName,
+                  ...zoneTagStyle(z.DemandLevel),
+                }))
+              : PARTNER_DEMAND_ZONES
+            ).map(zone => (
               <View key={zone.name} style={styles.zoneCard}>
                 <View style={styles.zoneTagRow}>
                   <View
@@ -587,8 +650,20 @@ const HomeScreen = () => {
                 {vehicle.type} · {vehicle.model}
               </Text>
             </View>
-            <View style={styles.verifiedChip}>
-              <Text style={styles.verifiedText}>Verified</Text>
+            <View
+              style={[
+                styles.verifiedChip,
+                !vehicle.verified && styles.unverifiedChip,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.verifiedText,
+                  !vehicle.verified && styles.unverifiedText,
+                ]}
+              >
+                {vehicle.verified ? 'Verified' : 'Unverified'}
+              </Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -1021,10 +1096,16 @@ const styles = StyleSheet.create({
     borderRadius: hscale(8),
     backgroundColor: '#E9F8E4',
   },
+  unverifiedChip: {
+    backgroundColor: '#FBE7E5',
+  },
   verifiedText: {
     color: Colors.green,
     fontSize: fscale(10.5),
     fontWeight: '700',
+  },
+  unverifiedText: {
+    color: Colors.red,
   },
   incentiveCard: {
     borderRadius: hscale(22),

@@ -15,7 +15,8 @@
 // uses it to recompute the payment signature.
 //
 // If this ever needs to change (e.g. switching to the live key), update
-// it here only — PaymentScreen.tsx just imports RAZORPAY_KEY_ID.
-export const RAZORPAY_KEY_ID = 'rzp_test_TGuVycUJXGAtAe';
+// it in .env (see .env.example) only — PaymentScreen.tsx just imports
+// RAZORPAY_KEY_ID from here.
+import { RAZORPAY_KEY_ID as ENV_RAZORPAY_KEY_ID } from '@env';
 
-//export const RAZORPAY_KEY_ID = 'pO1jBjg1Am4PTdDgGjG7520h';
+export const RAZORPAY_KEY_ID = ENV_RAZORPAY_KEY_ID;

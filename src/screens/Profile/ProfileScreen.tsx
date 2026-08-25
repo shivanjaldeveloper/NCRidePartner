@@ -50,6 +50,10 @@ import {
 } from '../../services/api/plansService';
 import { getRideHistory } from '../../services/api/ridesService';
 import {
+  getPartnerHome,
+  PartnerHomeActiveVehicle,
+} from '../../services/api/homeService';
+import {
   getCachedRideHistory,
   setCachedRideHistory,
 } from '../../utils/rideHistoryCache';
@@ -73,7 +77,7 @@ const ProfileScreen = () => {
       : PARTNER_PROFILE.phone,
   };
   const s = PARTNER_STATS;
-  const vehicle = PARTNER_VEHICLES[0];
+  const mockVehicle = PARTNER_VEHICLES[0];
 
   const [activeCredit, setActiveCredit] = useState<ActiveCredit | null>(null);
   const [lastPurchase, setLastPurchase] =
@@ -83,6 +87,15 @@ const ProfileScreen = () => {
   // the stat shows "—" instead of a misleading 0.
   const [tripCount, setTripCount] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
+  // Real ActiveVehicle from PartnerHome — backs the "Vehicle details" row's
+  // subtitle below. null (falls back to the mock) until it loads or if the
+  // partner has no vehicle on file.
+  const [apiVehicle, setApiVehicle] = useState<PartnerHomeActiveVehicle | null>(
+    null,
+  );
+  // Real rating from PartnerHome's Today block — PARTNER_STATS.rating was
+  // a mock. null (falls back to the mock) until the fetch resolves.
+  const [rating, setRating] = useState<string | null>(null);
 
   // On focus (e.g. after buying a plan and coming back here): pull
   // active-credit status and the most recent purchase off a single
@@ -94,10 +107,11 @@ const ProfileScreen = () => {
         const cookie = await getCookie();
         if (!cookie) return;
 
-        const [active, historyRes, ridesRes] = await Promise.all([
+        const [active, historyRes, ridesRes, homeRes] = await Promise.all([
           refreshActiveCreditFromServer(cookie),
           getPartnerPlanHistory(cookie).catch(() => null),
           getRideHistory(cookie).catch(() => null),
+          getPartnerHome(cookie).catch(() => null),
         ]);
 
         setActiveCredit(active);
@@ -111,6 +125,14 @@ const ProfileScreen = () => {
         if (ridesRes && ridesRes.Result === 'Success' && ridesRes.Rides) {
           setTripCount(ridesRes.Rides.length);
           setCachedRideHistory(ridesRes.Rides);
+        }
+        if (homeRes && homeRes.Result === 'Success') {
+          if (homeRes.ActiveVehicle?.VehicleAvailable === 'YES') {
+            setApiVehicle(homeRes.ActiveVehicle);
+          }
+          if (homeRes.Today?.Rating) {
+            setRating(homeRes.Today.Rating);
+          }
         }
       })();
     }, []),
@@ -170,7 +192,11 @@ const ProfileScreen = () => {
 
             <View style={styles.statsRow}>
               {[
-                { v: s.rating, l: 'rating', labelKey: 'profile.stats.rating' },
+                {
+                  v: rating ?? s.rating,
+                  l: 'rating',
+                  labelKey: 'profile.stats.rating',
+                },
                 {
                   v:
                     tripCount === null
@@ -250,7 +276,11 @@ const ProfileScreen = () => {
             <Row
               icon={<CarIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title={t('profile.rows.vehicleDetails')}
-              sub={`${vehicle.number} · ${vehicle.type}`}
+              sub={
+                apiVehicle
+                  ? `${apiVehicle.VehicleRegistration} · ${apiVehicle.VehicleType}`
+                  : `${mockVehicle.number} · ${mockVehicle.type}`
+              }
               onPress={() => navigation.navigate('Vehicle')}
               showDivider
             />

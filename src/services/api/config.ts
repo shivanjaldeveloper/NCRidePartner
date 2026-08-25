@@ -1,7 +1,9 @@
 // Central config for the aloapp.shop partner APIs.
-// The bearer token below is the static app-level token from your curl
-// samples — if this is meant to be per-environment (dev/staging/prod),
-// move it into an env file (e.g. react-native-config) instead of hardcoding.
+// API_BEARER_TOKEN comes from .env (see .env.example) — it must never be
+// hardcoded here or committed to git. See react-native-dotenv setup notes
+// in the project README / .env.example.
+import { API_BEARER_TOKEN as ENV_API_BEARER_TOKEN } from '@env';
+
 export const API_BASE_URL =
   'https://aloapp.shop/apiv1/partner/partnerauth.asmx';
 
@@ -29,4 +31,9 @@ export const API_PAYMENTS_BASE_URL =
 export const API_RIDE_REQUEST_BASE_URL =
   'https://aloapp.shop/apiv1/partner/partner-riderequest.asmx';
 
-export const API_BEARER_TOKEN = 'LrhTJugsRqEnefmaykA4wKNY';
+// Home dashboard summary (PartnerHome) — same host/token, separate .asmx
+// service. Confirmed via the PartnerHome curl + response sample.
+export const API_HOME_BASE_URL =
+  'https://aloapp.shop/apiv1/partner/partner-home.asmx';
+
+export const API_BEARER_TOKEN = ENV_API_BEARER_TOKEN;

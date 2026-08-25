@@ -36,6 +36,10 @@ import {
   PartnerPlanHistoryItem,
 } from '../../services/api/plansService';
 import {
+  getPartnerHome,
+  PartnerHomeResponse,
+} from '../../services/api/homeService';
+import {
   summarize,
   todayRange,
   weekRange,
@@ -69,6 +73,13 @@ const EarningsScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // PartnerHome — server-computed Today/ThisWeek/ThisMonth Earnings +
+  // TripsCompleted. Backs the headline amount/trip-count on each tab below;
+  // the Income/Expense breakdown strip and the week's daily chart still use
+  // rides+planHistory via financeCalc, since PartnerHome doesn't break
+  // earnings down that far.
+  const [homeData, setHomeData] = useState<PartnerHomeResponse | null>(null);
+
   const loadData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     setError(null);
@@ -78,9 +89,10 @@ const EarningsScreen = () => {
         if (!silent) setError('Session not found. Please log in again.');
         return;
       }
-      const [ridesRes, planRes] = await Promise.all([
+      const [ridesRes, planRes, homeRes] = await Promise.all([
         getRideHistory(cookie).catch(() => null),
         getPartnerPlanHistory(cookie).catch(() => null),
+        getPartnerHome(cookie).catch(() => null),
       ]);
       if (ridesRes && ridesRes.Result === 'Success' && ridesRes.Rides) {
         setRides(ridesRes.Rides);
@@ -88,6 +100,9 @@ const EarningsScreen = () => {
       }
       if (planRes && planRes.Result === 'Success' && planRes.History) {
         setPlanHistory(planRes.History);
+      }
+      if (homeRes && homeRes.Result === 'Success') {
+        setHomeData(homeRes);
       }
       if (
         (!ridesRes || ridesRes.Result !== 'Success') &&
@@ -239,7 +254,12 @@ const EarningsScreen = () => {
                     <View>
                       <Text style={styles.darkEyebrow}>Today's earnings</Text>
                       <Text style={styles.darkAmount}>
-                        ₹{todaySummary.earnings.toLocaleString('en-IN')}
+                        ₹
+                        {Math.round(
+                          homeData?.Today
+                            ? parseFloat(homeData.Today.Earnings)
+                            : todaySummary.earnings,
+                        ).toLocaleString('en-IN')}
                       </Text>
                     </View>
                     <View style={styles.darkIconWrap}>
@@ -253,7 +273,8 @@ const EarningsScreen = () => {
                   <View style={styles.darkMetaRow}>
                     <Text style={styles.darkMetaText}>
                       <Text style={styles.darkMetaStrong}>
-                        {todaySummary.tripCount}
+                        {homeData?.Today?.TripsCompleted ??
+                          todaySummary.tripCount}
                       </Text>{' '}
                       trips
                     </Text>
@@ -277,10 +298,17 @@ const EarningsScreen = () => {
                 <Card pad={16}>
                   <Text style={styles.breakdownLabel}>This week</Text>
                   <Text style={styles.weekAmount}>
-                    ₹{weekSummary.earnings.toLocaleString('en-IN')}
+                    ₹
+                    {Math.round(
+                      homeData?.ThisWeek
+                        ? parseFloat(homeData.ThisWeek.Earnings)
+                        : weekSummary.earnings,
+                    ).toLocaleString('en-IN')}
                   </Text>
                   <Text style={styles.weekMeta}>
-                    {weekSummary.tripCount} trips · Mon–Sun
+                    {homeData?.ThisWeek?.TripsCompleted ??
+                      weekSummary.tripCount}{' '}
+                    trips · Mon–Sun
                   </Text>
 
                   <View style={styles.chartRow}>
@@ -373,12 +401,18 @@ const EarningsScreen = () => {
                 <Card pad={20} style={styles.darkCard}>
                   <Text style={styles.darkEyebrow}>This month</Text>
                   <Text style={styles.darkAmount}>
-                    ₹{monthSummary.earnings.toLocaleString('en-IN')}
+                    ₹
+                    {Math.round(
+                      homeData?.ThisMonth
+                        ? parseFloat(homeData.ThisMonth.Earnings)
+                        : monthSummary.earnings,
+                    ).toLocaleString('en-IN')}
                   </Text>
                   <View style={styles.darkMetaRow}>
                     <Text style={styles.darkMetaText}>
                       <Text style={styles.darkMetaStrong}>
-                        {monthSummary.tripCount}
+                        {homeData?.ThisMonth?.TripsCompleted ??
+                          monthSummary.tripCount}
                       </Text>{' '}
                       trips
                     </Text>

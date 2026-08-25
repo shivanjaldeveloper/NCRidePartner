@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -24,6 +24,11 @@ import CheckIcon from '../../assets/icons/CheckIcon';
 import EditIcon from '../../assets/icons/EditIcon';
 import { PARTNER_VEHICLES } from '../Home/mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
+import { getCookie } from '../../utils/session';
+import {
+  getPartnerHome,
+  PartnerHomeActiveVehicle,
+} from '../../services/api/homeService';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -37,7 +42,51 @@ const SERVICE_AREA_KEYS = [
 const VehicleScreen = () => {
   const navigation = useNavigation<NavProp>();
   const { t } = useTranslation();
-  const v = PARTNER_VEHICLES[0];
+  const mockVehicle = PARTNER_VEHICLES[0];
+
+  const [apiVehicle, setApiVehicle] = useState<PartnerHomeActiveVehicle | null>(
+    null,
+  );
+
+  const loadVehicle = useCallback(async () => {
+    try {
+      const cookie = await getCookie();
+      if (!cookie) return;
+      const res = await getPartnerHome(cookie);
+      if (
+        res.Result === 'Success' &&
+        res.ActiveVehicle?.VehicleAvailable === 'YES'
+      ) {
+        setApiVehicle(res.ActiveVehicle);
+      }
+    } catch (err) {
+      console.warn('[VehicleScreen] loadVehicle failed:', err);
+    }
+  }, []);
+
+  // Fetches on mount and every refocus (e.g. after updating vehicle
+  // details elsewhere) — same pattern as EarningsScreen's loadData(true).
+  useFocusEffect(
+    useCallback(() => {
+      loadVehicle();
+    }, [loadVehicle]),
+  );
+
+  // color/year aren't in the PartnerHome response, so those two always
+  // come from the mock; everything else prefers the live ActiveVehicle.
+  const v = {
+    number: apiVehicle?.VehicleRegistration || mockVehicle.number,
+    type: apiVehicle?.VehicleType || mockVehicle.type,
+    model: apiVehicle?.VehicleModel || mockVehicle.model,
+    color: mockVehicle.color,
+    year: mockVehicle.year,
+    service: mockVehicle.service,
+    status: apiVehicle
+      ? apiVehicle.Verified === 'YES'
+        ? 'Verified'
+        : 'Not verified'
+      : mockVehicle.status,
+  };
 
   return (
     <View style={styles.container}>
