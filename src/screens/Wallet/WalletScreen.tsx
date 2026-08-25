@@ -17,7 +17,6 @@ import HeaderBack from '../../components/common/HeaderBack';
 import WalletIcon from '../../assets/icons/WalletIcon';
 import CashIcon from '../../assets/icons/CashIcon';
 import TaxiIcon from '../../assets/icons/TaxiIcon';
-import ArrowRightIcon from '../../assets/icons/ArrowRightIcon';
 import {
   PARTNER_WALLET_BALANCE,
   PARTNER_WALLET_TRANSACTIONS,
@@ -61,16 +60,6 @@ const WalletScreen = () => {
                 <WalletIcon size={22} color={Colors.lime} strokeWidth={1.8} />
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.viewPayoutsButton}
-              activeOpacity={0.85}
-              onPress={() => navigation.navigate('Payouts')}
-            >
-              <Text style={styles.viewPayoutsLabel}>
-                {t('wallet.viewPayouts')}
-              </Text>
-              <ArrowRightIcon size={16} color={Colors.ink} strokeWidth={2} />
-            </TouchableOpacity>
           </View>
         </Card>
 
@@ -183,22 +172,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  viewPayoutsButton: {
-    marginTop: vscale(14),
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: hscale(8),
-    paddingVertical: vscale(10),
-    paddingHorizontal: hscale(16),
-    borderRadius: hscale(13),
-    backgroundColor: Colors.lime,
-  },
-  viewPayoutsLabel: {
-    fontSize: fscale(13.5),
-    fontWeight: '700',
-    color: Colors.ink,
   },
   sectionLabel: {
     marginTop: vscale(14),

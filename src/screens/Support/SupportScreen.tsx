@@ -6,18 +6,11 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import {
-  useNavigation,
-  CompositeNavigationProp,
-} from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 
 import { Colors } from '../../constants/Colors';
 import { hscale, vscale, fscale } from '../../theme/scale';
 import Card from '../../components/common/Card';
-import SosIcon from '../../assets/icons/SosIcon';
 import ChatIcon from '../../assets/icons/ChatIcon';
 import CarIcon from '../../assets/icons/CarIcon';
 import CashIcon from '../../assets/icons/CashIcon';
@@ -25,13 +18,6 @@ import UserIcon from '../../assets/icons/UserIcon';
 import SettingsIcon from '../../assets/icons/SettingsIcon';
 import ChevronRightIcon from '../../assets/icons/ChevronRightIcon';
 import { PARTNER_SUPPORT_ITEMS, SupportItem } from './mockSupportData';
-import { RootStackParamList } from '../../navigation/types';
-import { TabParamList } from '../../navigation/tabTypes';
-
-type NavProp = CompositeNavigationProp<
-  BottomTabNavigationProp<TabParamList, 'SupportTab'>,
-  NativeStackNavigationProp<RootStackParamList>
->;
 
 const ISSUE_ICONS: Record<
   SupportItem['icon'],
@@ -44,9 +30,7 @@ const ISSUE_ICONS: Record<
 };
 
 const SupportScreen = () => {
-  const navigation = useNavigation<NavProp>();
   const { t } = useTranslation();
-  const openSos = () => navigation.navigate('SOS');
   const openChat = () => console.log('TODO: open live chat');
 
   return (
@@ -61,23 +45,6 @@ const SupportScreen = () => {
         </View>
 
         <View style={styles.body}>
-          <Card pad={16} style={styles.sosCard}>
-            <View style={styles.sosRow}>
-              <View style={styles.sosIconWrap}>
-                <SosIcon size={24} color="#FFFFFF" strokeWidth={2.2} />
-              </View>
-              <View style={styles.sosTextWrap}>
-                <Text style={styles.sosTitle}>{t('support.emergencySos')}</Text>
-                <Text style={styles.sosSub}>
-                  {t('support.emergencySosSub')}
-                </Text>
-              </View>
-              <TouchableOpacity style={styles.sosButton} onPress={openSos}>
-                <Text style={styles.sosButtonLabel}>{t('support.open')}</Text>
-              </TouchableOpacity>
-            </View>
-          </Card>
-
           <TouchableOpacity onPress={openChat} activeOpacity={0.8}>
             <Card pad={14} style={styles.chatCard}>
               <View style={styles.chatRow}>
@@ -170,47 +137,6 @@ const styles = StyleSheet.create({
   body: {
     paddingHorizontal: hscale(18),
     paddingTop: vscale(14),
-  },
-  sosCard: {
-    backgroundColor: Colors.red,
-    borderColor: 'transparent',
-  },
-  sosRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: hscale(12),
-  },
-  sosIconWrap: {
-    width: hscale(48),
-    height: hscale(48),
-    borderRadius: hscale(24),
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sosTextWrap: {
-    flex: 1,
-  },
-  sosTitle: {
-    fontSize: fscale(16),
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  sosSub: {
-    fontSize: fscale(12),
-    color: 'rgba(255,255,255,0.85)',
-    marginTop: vscale(2),
-  },
-  sosButton: {
-    paddingVertical: vscale(8),
-    paddingHorizontal: hscale(14),
-    borderRadius: hscale(12),
-    backgroundColor: 'rgba(255,255,255,0.9)',
-  },
-  sosButtonLabel: {
-    color: Colors.red,
-    fontSize: fscale(13),
-    fontWeight: '700',
   },
   chatCard: {
     marginTop: vscale(12),

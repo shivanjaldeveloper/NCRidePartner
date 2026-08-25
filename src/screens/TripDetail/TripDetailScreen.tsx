@@ -75,6 +75,8 @@ const TripDetailScreen = () => {
   }, [loadDetail]);
 
   const isCompleted = detail ? isCompletedStatus(detail.Status) : false;
+  const customerName = detail?.Customer?.Name || 'Passenger';
+  const customerMobile = detail?.Customer?.Mobile;
   const fare = detail ? Number(detail.EstimatedFare) || 0 : 0;
   const gross = Math.round(fare * 1.1);
   const platformFee = Math.round(fare * 0.08);
@@ -178,7 +180,7 @@ const TripDetailScreen = () => {
                   </Text>
                 </View>
                 <Text style={styles.earningDist}>
-                  {detail.Route.DistanceKM} km
+                  {detail.Route?.DistanceKM ?? '—'} km
                 </Text>
               </View>
             </View>
@@ -216,7 +218,11 @@ const TripDetailScreen = () => {
             <Row
               icon={<UserIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title={t('tripDetail.fields.customer')}
-              sub={`${detail.Customer.Name} · ${detail.Customer.Mobile}`}
+              sub={
+                customerMobile
+                  ? `${customerName} · ${customerMobile}`
+                  : customerName
+              }
               showChevron={false}
             />
           </Card>

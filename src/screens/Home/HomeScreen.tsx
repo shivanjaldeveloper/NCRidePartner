@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -20,14 +26,12 @@ import TopSafeStrap from '../../components/layout/TopSafeStrap';
 import Card from '../../components/common/Card';
 import Spinner from '../../components/common/Spinner';
 import LocateIcon from '../../assets/icons/LocateIcon';
-import SosIcon from '../../assets/icons/SosIcon';
 import CashIcon from '../../assets/icons/CashIcon';
 import TaxiIcon from '../../assets/icons/TaxiIcon';
 import ClockIcon from '../../assets/icons/ClockIcon';
 import StarIcon from '../../assets/icons/StarIcon';
 import CarIcon from '../../assets/icons/CarIcon';
 import WalletIcon from '../../assets/icons/WalletIcon';
-import ChevronRightIcon from '../../assets/icons/ChevronRightIcon';
 import CheckIcon from '../../assets/icons/CheckIcon';
 import CloseIcon from '../../assets/icons/CloseIcon';
 import {
@@ -36,8 +40,6 @@ import {
   PARTNER_DEMAND_ZONES,
   PARTNER_INCENTIVES,
   PARTNER_VEHICLES,
-  PARTNER_PAYOUTS,
-  PARTNER_TRIPS,
 } from './mockHomeData';
 import { useRidePollingContext } from '../../contexts/RidePollingContext';
 import { useUser } from '../../contexts/UserContext';
@@ -53,7 +55,18 @@ import {
 import {
   getPartnerOnOffStatus,
   setPartnerOnOffStatus,
+  getPartnerPlanHistory,
+  PartnerPlanHistoryItem,
 } from '../../services/api/plansService';
+import {
+  getRideHistory,
+  RideHistoryItem,
+} from '../../services/api/ridesService';
+import {
+  getCachedRideHistory,
+  setCachedRideHistory,
+} from '../../utils/rideHistoryCache';
+import { summarize, todayRange } from '../../utils/financeCalc';
 import {
   useLiveLocationTracker,
   checkLocationReady,
@@ -67,6 +80,12 @@ type NavProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
+// Mirrors TripHistoryScreen's isCompletedStatus — GetRideHistory is only
+// confirmed to return COMPLETED so far, everything else (CANCELLED,
+// REJECTED, etc.) is treated as not-completed for the amount colour/label.
+const isCompletedStatus = (status: string) =>
+  status?.toUpperCase() === 'COMPLETED';
+
 const HomeScreen = () => {
   const navigation = useNavigation<NavProp>();
   const { profile } = useUser();
@@ -77,6 +96,55 @@ const HomeScreen = () => {
   const [onOffError, setOnOffError] = useState<string | null>(null);
   const [creditInfo, setCreditInfo] = useState<ActiveCredit | null>(null);
   const creditTickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Real ride list + plan purchase history — Income = sum(ride list),
+  // Expense = sum(plan history), Earnings = Income - Expense. See
+  // utils/financeCalc.ts for the shared definition used here and on
+  // EarningsScreen.
+  const [rides, setRides] = useState<RideHistoryItem[]>([]);
+  const [planHistory, setPlanHistory] = useState<PartnerPlanHistoryItem[]>([]);
+  const [financeLoading, setFinanceLoading] = useState(true);
+
+  const loadFinancials = useCallback(async () => {
+    try {
+      const cookie = await getCookie();
+      if (!cookie) return;
+      const [ridesRes, planRes] = await Promise.all([
+        getRideHistory(cookie).catch(() => null),
+        getPartnerPlanHistory(cookie).catch(() => null),
+      ]);
+      if (ridesRes && ridesRes.Result === 'Success' && ridesRes.Rides) {
+        setRides(ridesRes.Rides);
+        setCachedRideHistory(ridesRes.Rides);
+      }
+      if (planRes && planRes.Result === 'Success' && planRes.History) {
+        setPlanHistory(planRes.History);
+      }
+    } catch (err) {
+      console.warn('[HomeScreen] loadFinancials failed:', err);
+    } finally {
+      setFinanceLoading(false);
+    }
+  }, []);
+
+  // Cache-first seed on mount — paints Today's numbers and Recent trips
+  // immediately from the last-known list (shared with TripHistoryScreen
+  // and EarningsScreen), while loadFinancials still runs via the focus
+  // effect below to revalidate against the server.
+  useEffect(() => {
+    (async () => {
+      const cached = await getCachedRideHistory();
+      if (cached && cached.length > 0) {
+        setRides(cached);
+        setFinanceLoading(false);
+      }
+    })();
+  }, []);
+
+  const todaySummary = useMemo(
+    () => summarize(rides, planHistory, todayRange(now)),
+    [rides, planHistory, now],
+  );
 
   // Polls GetPendingRides every few seconds while online — see
   // contexts/RidePollingContext.tsx. This is a *shared* instance (also
@@ -157,7 +225,6 @@ const HomeScreen = () => {
   });
 
   const vehicle = PARTNER_VEHICLES[0];
-  const payout = PARTNER_PAYOUTS[0];
   const incentive = PARTNER_INCENTIVES[0];
 
   const refreshCredit = useCallback(async () => {
@@ -194,22 +261,30 @@ const HomeScreen = () => {
     }
   }, []);
 
-  // Re-check whenever Home regains focus (e.g. coming back from BuyCredit).
+  // Re-check whenever Home regains focus (e.g. coming back from BuyCredit,
+  // or after completing a ride) so credit, on/off state, and the
+  // Income/Expense/Earnings numbers all reflect the latest server data.
   useFocusEffect(
     useCallback(() => {
       refreshCredit();
       syncOnOffStatus();
-    }, [refreshCredit, syncOnOffStatus]),
+      loadFinancials();
+    }, [refreshCredit, syncOnOffStatus, loadFinancials]),
   );
 
   // Server-truth re-check every 30s while Home is mounted — this is the
   // "is the plan still actually valid" poll, separate from the display.
+  // Financials refresh on the same cadence so a just-completed ride or
+  // just-purchased plan shows up on Home without needing to leave/return.
   useEffect(() => {
-    creditTickRef.current = setInterval(refreshCredit, 30000);
+    creditTickRef.current = setInterval(() => {
+      refreshCredit();
+      loadFinancials();
+    }, 30000);
     return () => {
       if (creditTickRef.current) clearInterval(creditTickRef.current);
     };
-  }, [refreshCredit]);
+  }, [refreshCredit, loadFinancials]);
 
   // Purely local 1s tick so the "time left" text counts down smoothly
   // instead of sitting frozen between the 30s server polls above and
@@ -293,6 +368,12 @@ const HomeScreen = () => {
     }
   };
 
+  // Most recent 3 rides for the "Recent trips" card — same data source
+  // (GetRideHistory) that today's Income/Expense/Earnings is computed
+  // from, just unfiltered by date so the card isn't empty outside of
+  // today's rides.
+  const recentTrips = rides.slice(0, 3);
+
   return (
     <View style={styles.container}>
       <TopSafeStrap backgroundColor={Colors.bg} />
@@ -341,12 +422,6 @@ const HomeScreen = () => {
               {online ? 'Online' : 'Offline'}
             </Text>
           </View>
-          <TouchableOpacity
-            style={styles.sosButton}
-            onPress={() => navigation.navigate('SOS')}
-          >
-            <SosIcon size={20} color={Colors.red} strokeWidth={1.8} />
-          </TouchableOpacity>
         </View>
 
         {/* Online toggle */}
@@ -416,7 +491,6 @@ const HomeScreen = () => {
               <Text style={styles.creditRowText}>
                 No active credit — tap to buy
               </Text>
-              <ChevronRightIcon size={12} color={Colors.mute} strokeWidth={2} />
             </TouchableOpacity>
           )}
         </View>
@@ -432,7 +506,9 @@ const HomeScreen = () => {
                 <CashIcon size={17} color={Colors.ink} strokeWidth={1.8} />
               </View>
               <Text style={styles.statCardValue}>
-                ₹{PARTNER_STATS.todayEarnings.toLocaleString('en-IN')}
+                {financeLoading
+                  ? '—'
+                  : `₹${todaySummary.earnings.toLocaleString('en-IN')}`}
               </Text>
               <Text style={styles.statCardLabel}>Earned</Text>
             </View>
@@ -443,7 +519,7 @@ const HomeScreen = () => {
                 <TaxiIcon size={17} color={Colors.ink} strokeWidth={1.8} />
               </View>
               <Text style={styles.statCardValue}>
-                {PARTNER_STATS.todayTrips} trips
+                {financeLoading ? '—' : `${todaySummary.tripCount} trips`}
               </Text>
               <Text style={styles.statCardLabel}>Completed</Text>
             </View>
@@ -542,29 +618,39 @@ const HomeScreen = () => {
           </View>
         )}
 
-        {/* Next payout */}
+        {/* Today's Income / Expense / Earnings — replaces the old "Next
+            payout" block. Same numbers that back the "Earned" stat card
+            above, shown here with the Income/Expense split. */}
         <View style={styles.section}>
-          <TouchableOpacity
-            style={styles.payoutRow}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('Payouts')}
-          >
-            <View style={styles.payoutIconWrap}>
-              <WalletIcon size={20} color={Colors.lime} strokeWidth={1.8} />
+          <View style={styles.financeCard}>
+            <Text style={styles.financeEyebrow}>Today's summary</Text>
+            <View style={styles.financeRow}>
+              <View style={styles.financeCol}>
+                <Text style={styles.financeColLabel}>Income</Text>
+                <Text style={styles.financeColValue}>
+                  {financeLoading
+                    ? '—'
+                    : `₹${todaySummary.income.toLocaleString('en-IN')}`}
+                </Text>
+              </View>
+              <View style={[styles.financeCol, styles.financeColDivider]}>
+                <Text style={styles.financeColLabel}>Expense</Text>
+                <Text style={[styles.financeColValue, { color: '#FF9B8A' }]}>
+                  {financeLoading
+                    ? '—'
+                    : `₹${todaySummary.expense.toLocaleString('en-IN')}`}
+                </Text>
+              </View>
+              <View style={styles.financeCol}>
+                <Text style={styles.financeColLabel}>Earnings</Text>
+                <Text style={[styles.financeColValue, { color: Colors.lime }]}>
+                  {financeLoading
+                    ? '—'
+                    : `₹${todaySummary.earnings.toLocaleString('en-IN')}`}
+                </Text>
+              </View>
             </View>
-            <View style={styles.payoutTextWrap}>
-              <Text style={styles.payoutEyebrow}>Next payout</Text>
-              <Text style={styles.payoutAmount}>
-                ₹{payout.amount.toLocaleString('en-IN')}
-              </Text>
-              <Text style={styles.payoutDate}>Due {payout.date}</Text>
-            </View>
-            <ChevronRightIcon
-              size={18}
-              color="rgba(255,255,255,0.5)"
-              strokeWidth={2}
-            />
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* Recent trips */}
@@ -576,54 +662,68 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </View>
           <Card pad={4}>
-            {PARTNER_TRIPS.slice(0, 3).map((trip, i) => (
-              <TouchableOpacity
-                key={trip.id}
-                activeOpacity={0.7}
-                onPress={() =>
-                  navigation.navigate('TripDetail', { tripId: trip.id })
-                }
-                style={[styles.tripRow, i < 2 && styles.tripRowDivider]}
-              >
-                <View style={styles.tripIconWrap}>
-                  <TaxiIcon size={18} color={Colors.ink} strokeWidth={1.8} />
-                </View>
-                <View style={styles.tripTextWrap}>
-                  <Text style={styles.tripRoute} numberOfLines={1}>
-                    {trip.from} → {trip.to}
-                  </Text>
-                  <Text style={styles.tripMeta}>
-                    {trip.date} · {trip.dist}
-                  </Text>
-                </View>
-                <View style={styles.tripAmountWrap}>
-                  <Text
+            {recentTrips.length === 0 ? (
+              <View style={styles.emptyTrips}>
+                <Text style={styles.emptyTripsText}>
+                  {financeLoading ? 'Loading…' : 'No trips yet'}
+                </Text>
+              </View>
+            ) : (
+              recentTrips.map((trip, i) => {
+                const completed = isCompletedStatus(trip.Status);
+                return (
+                  <TouchableOpacity
+                    key={trip.RideTran}
+                    activeOpacity={0.7}
+                    onPress={() =>
+                      navigation.navigate('TripDetail', {
+                        tripId: trip.RideTran,
+                        createdDate: trip.CreatedDate,
+                        createdTime: trip.CreatedTime,
+                      })
+                    }
                     style={[
-                      styles.tripEarning,
-                      {
-                        color:
-                          trip.status === 'Cancelled' ? Colors.red : Colors.ink,
-                      },
+                      styles.tripRow,
+                      i < recentTrips.length - 1 && styles.tripRowDivider,
                     ]}
                   >
-                    ₹{trip.earning}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.tripStatus,
-                      {
-                        color:
-                          trip.status === 'Completed'
-                            ? Colors.green
-                            : Colors.red,
-                      },
-                    ]}
-                  >
-                    {trip.status}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+                    <View style={styles.tripIconWrap}>
+                      <TaxiIcon
+                        size={18}
+                        color={Colors.ink}
+                        strokeWidth={1.8}
+                      />
+                    </View>
+                    <View style={styles.tripTextWrap}>
+                      <Text style={styles.tripRoute} numberOfLines={1}>
+                        {trip.PickupAddress} → {trip.DropAddress}
+                      </Text>
+                      <Text style={styles.tripMeta}>
+                        {trip.CreatedDate} · {trip.DistanceKM} km
+                      </Text>
+                    </View>
+                    <View style={styles.tripAmountWrap}>
+                      <Text
+                        style={[
+                          styles.tripEarning,
+                          { color: completed ? Colors.ink : Colors.red },
+                        ]}
+                      >
+                        ₹{trip.FinalFare}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.tripStatus,
+                          { color: completed ? Colors.green : Colors.red },
+                        ]}
+                      >
+                        {trip.Status}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
           </Card>
         </View>
 
@@ -732,16 +832,6 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: fscale(11.5),
     fontWeight: '700',
-  },
-  sosButton: {
-    width: hscale(40),
-    height: hscale(40),
-    borderRadius: hscale(14),
-    backgroundColor: Colors.surface,
-    borderWidth: 0.5,
-    borderColor: Colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   section: {
     paddingHorizontal: hscale(18),
@@ -996,11 +1086,8 @@ const styles = StyleSheet.create({
     color: Colors.ink,
     opacity: 0.6,
   },
-  payoutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: hscale(12),
-    paddingVertical: vscale(14),
+  financeCard: {
+    paddingVertical: vscale(16),
     paddingHorizontal: hscale(16),
     backgroundColor: Colors.ink,
     borderRadius: hscale(18),
@@ -1010,33 +1097,37 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 4,
   },
-  payoutIconWrap: {
-    width: hscale(42),
-    height: hscale(42),
-    borderRadius: hscale(12),
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  payoutTextWrap: {
-    flex: 1,
-  },
-  payoutEyebrow: {
+  financeEyebrow: {
     fontSize: fscale(11),
     color: 'rgba(255,255,255,0.5)',
     textTransform: 'uppercase',
     fontWeight: '600',
     letterSpacing: 0.4,
+    marginBottom: vscale(12),
   },
-  payoutAmount: {
-    fontSize: fscale(20),
+  financeRow: {
+    flexDirection: 'row',
+  },
+  financeCol: {
+    flex: 1,
+  },
+  financeColDivider: {
+    borderLeftWidth: 0.5,
+    borderRightWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: hscale(8),
+  },
+  financeColLabel: {
+    fontSize: fscale(11),
+    color: 'rgba(255,255,255,0.5)',
+    fontWeight: '600',
+    marginBottom: vscale(3),
+  },
+  financeColValue: {
+    fontSize: fscale(16),
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: -0.5,
-  },
-  payoutDate: {
-    fontSize: fscale(11.5),
-    color: 'rgba(255,255,255,0.55)',
+    letterSpacing: -0.3,
   },
   tripsHeaderRow: {
     flexDirection: 'row',
@@ -1054,6 +1145,16 @@ const styles = StyleSheet.create({
   tripsSeeAll: {
     fontSize: fscale(12),
     color: Colors.blue,
+    fontWeight: '600',
+  },
+  emptyTrips: {
+    paddingVertical: vscale(24),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTripsText: {
+    fontSize: fscale(12.5),
+    color: Colors.mute,
     fontWeight: '600',
   },
   tripRow: {

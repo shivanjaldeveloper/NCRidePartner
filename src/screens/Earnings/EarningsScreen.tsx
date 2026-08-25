@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import {
   useNavigation,
+  useFocusEffect,
   CompositeNavigationProp,
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,17 +19,31 @@ import { hscale, vscale, fscale } from '../../theme/scale';
 import Card from '../../components/common/Card';
 import SegmentedTabs from '../../components/common/SegmentedTabs';
 import CashIcon from '../../assets/icons/CashIcon';
-import RewardIcon from '../../assets/icons/RewardIcon';
-import InvoiceIcon from '../../assets/icons/InvoiceIcon';
 import WalletIcon from '../../assets/icons/WalletIcon';
-import {
-  PARTNER_EARNINGS_TODAY,
-  PARTNER_EARNINGS_WEEK,
-  PARTNER_EARNINGS_MONTH,
-} from './mockEarningsData';
-import { PARTNER_INCENTIVES } from '../Home/mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
+import { getCookie } from '../../utils/session';
+import {
+  getRideHistory,
+  RideHistoryItem,
+} from '../../services/api/ridesService';
+import {
+  getCachedRideHistory,
+  setCachedRideHistory,
+} from '../../utils/rideHistoryCache';
+import {
+  getPartnerPlanHistory,
+  PartnerPlanHistoryItem,
+} from '../../services/api/plansService';
+import {
+  summarize,
+  todayRange,
+  weekRange,
+  monthRange,
+  parseDdMmYyyyHms,
+  ridesInRange,
+  FinancialSummary,
+} from '../../utils/financeCalc';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'EarningsTab'>,
@@ -43,17 +58,141 @@ const TAB_OPTIONS = [
   { id: 'month', label: 'This month' },
 ];
 
+const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
 const EarningsScreen = () => {
   const navigation = useNavigation<NavProp>();
   const [tab, setTab] = useState<EarningsTab>('today');
-  const today = PARTNER_EARNINGS_TODAY;
-  const week = PARTNER_EARNINGS_WEEK;
-  const month = PARTNER_EARNINGS_MONTH;
-  const incentive = PARTNER_INCENTIVES[0];
-  const maxDay = Math.max(...week.days.map(d => d.amount), 1);
 
-  const goToPayouts = () => navigation.navigate('Payouts');
+  const [rides, setRides] = useState<RideHistoryItem[]>([]);
+  const [planHistory, setPlanHistory] = useState<PartnerPlanHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    setError(null);
+    try {
+      const cookie = await getCookie();
+      if (!cookie) {
+        if (!silent) setError('Session not found. Please log in again.');
+        return;
+      }
+      const [ridesRes, planRes] = await Promise.all([
+        getRideHistory(cookie).catch(() => null),
+        getPartnerPlanHistory(cookie).catch(() => null),
+      ]);
+      if (ridesRes && ridesRes.Result === 'Success' && ridesRes.Rides) {
+        setRides(ridesRes.Rides);
+        setCachedRideHistory(ridesRes.Rides);
+      }
+      if (planRes && planRes.Result === 'Success' && planRes.History) {
+        setPlanHistory(planRes.History);
+      }
+      if (
+        (!ridesRes || ridesRes.Result !== 'Success') &&
+        (!planRes || planRes.Result !== 'Success')
+      ) {
+        if (!silent) setError('Could not load earnings right now.');
+      }
+    } catch (err: any) {
+      if (!silent)
+        setError(err?.message || 'Could not load earnings right now.');
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const cached = await getCachedRideHistory();
+      if (cached && cached.length > 0) {
+        setRides(cached);
+        setLoading(false);
+        loadData(true);
+      } else {
+        loadData();
+      }
+    })();
+    // Only run once on mount — loadData is stable, refetching on refocus
+    // is handled by the focus effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Silent refetch on refocus (e.g. after completing a ride or buying a
+  // plan) so the numbers stay current without flashing a loader every time.
+  useFocusEffect(
+    useCallback(() => {
+      loadData(true);
+    }, [loadData]),
+  );
+
+  const todaySummary = useMemo(
+    () => summarize(rides, planHistory, todayRange()),
+    [rides, planHistory],
+  );
+  const weekSummary = useMemo(
+    () => summarize(rides, planHistory, weekRange()),
+    [rides, planHistory],
+  );
+  const monthSummary = useMemo(
+    () => summarize(rides, planHistory, monthRange()),
+    [rides, planHistory],
+  );
+
+  // Per-weekday income + trip count for the week chart/daily breakdown —
+  // grouped from the same ride list weekSummary is built from.
+  const weekDays = useMemo(() => {
+    const range = weekRange();
+    const ridesThisWeek = ridesInRange(rides, range);
+    const buckets = WEEKDAY_LABELS.map(label => ({
+      day: label,
+      amount: 0,
+      trips: 0,
+    }));
+    ridesThisWeek.forEach(r => {
+      const ms = parseDdMmYyyyHms(r.CreatedDate, r.CreatedTime);
+      if (ms === null) return;
+      const jsDay = new Date(ms).getDay(); // 0 = Sun ... 6 = Sat
+      const idx = jsDay === 0 ? 6 : jsDay - 1; // Mon-first index
+      const fare = parseFloat(r.FinalFare);
+      buckets[idx].amount += Number.isFinite(fare) ? fare : 0;
+      buckets[idx].trips += 1;
+    });
+    return buckets;
+  }, [rides]);
+
+  const maxDay = Math.max(...weekDays.map(d => d.amount), 1);
+  const todayLabel =
+    WEEKDAY_LABELS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+
   const goToWallet = () => navigation.navigate('Wallet');
+
+  const renderSummaryStrip = (s: FinancialSummary) => (
+    <Card style={styles.breakdownCard} pad={16}>
+      <Text style={styles.breakdownLabel}>Summary</Text>
+      <View style={styles.breakdownRow}>
+        <Text style={styles.breakdownKey}>Income</Text>
+        <Text style={styles.breakdownValue}>
+          ₹{s.income.toLocaleString('en-IN')}
+        </Text>
+      </View>
+      <View style={styles.breakdownRow}>
+        <Text style={[styles.breakdownKey, { color: Colors.red }]}>
+          Expense (plans)
+        </Text>
+        <Text style={[styles.breakdownValue, { color: Colors.red }]}>
+          −₹{s.expense.toLocaleString('en-IN')}
+        </Text>
+      </View>
+      <View style={styles.breakdownTotal}>
+        <Text style={styles.breakdownTotalLabel}>Net earnings</Text>
+        <Text style={styles.breakdownTotalValue}>
+          ₹{s.earnings.toLocaleString('en-IN')}
+        </Text>
+      </View>
+    </Card>
+  );
 
   return (
     <View style={styles.container}>
@@ -77,256 +216,179 @@ const EarningsScreen = () => {
           />
         </View>
 
-        {tab === 'today' && (
-          <View style={styles.body}>
-            <Card pad={20} style={styles.darkCard}>
-              <View style={styles.darkCardRow}>
-                <View>
-                  <Text style={styles.darkEyebrow}>Today's earnings</Text>
-                  <Text style={styles.darkAmount}>
-                    ₹{today.amount.toLocaleString('en-IN')}
-                  </Text>
-                </View>
-                <View style={styles.darkIconWrap}>
-                  <CashIcon size={22} color={Colors.lime} strokeWidth={1.8} />
-                </View>
-              </View>
-              <View style={styles.darkMetaRow}>
-                <Text style={styles.darkMetaText}>
-                  <Text style={styles.darkMetaStrong}>{today.trips}</Text> trips
-                </Text>
-                <Text style={styles.darkMetaText}>
-                  <Text style={styles.darkMetaStrong}>{today.hours}</Text>{' '}
-                  online
-                </Text>
-              </View>
-            </Card>
-
-            <Card style={styles.breakdownCard} pad={16}>
-              <Text style={styles.breakdownLabel}>Breakdown</Text>
-              {[
-                ['Base fares', today.base],
-                ['Distance charges', today.distance],
-                ['Time charges', today.time],
-                ['Surge / bonus', 0],
-              ].map(([k, v]) => (
-                <View key={k as string}>
-                  <View style={styles.breakdownRow}>
-                    <Text style={styles.breakdownKey}>{k}</Text>
-                    <Text style={styles.breakdownValue}>₹{v}</Text>
-                  </View>
-                  <View style={styles.breakdownTrack}>
-                    <View
-                      style={[
-                        styles.breakdownFill,
-                        {
-                          width: `${Math.min(
-                            ((v as number) / today.amount) * 100,
-                            100,
-                          )}%`,
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
-              ))}
-              <View style={styles.breakdownRow}>
-                <Text style={[styles.breakdownKey, { color: Colors.red }]}>
-                  Platform fee
-                </Text>
-                <Text style={[styles.breakdownValue, { color: Colors.red }]}>
-                  −₹{today.platform}
-                </Text>
-              </View>
-              <View style={styles.breakdownTotal}>
-                <Text style={styles.breakdownTotalLabel}>Net earnings</Text>
-                <Text style={styles.breakdownTotalValue}>
-                  ₹{today.amount - today.platform}
-                </Text>
-              </View>
-            </Card>
-
-            {incentive && (
-              <Card style={styles.incentiveCard} pad={14}>
-                <View style={styles.incentiveRow}>
-                  <RewardIcon size={20} color={Colors.ink} strokeWidth={1.8} />
-                  <View style={styles.incentiveTextWrap}>
-                    <Text style={styles.incentiveTitle}>{incentive.title}</Text>
-                    <Text style={styles.incentiveSub}>{incentive.sub}</Text>
-                  </View>
-                  <Text style={styles.incentiveReward}>
-                    +₹{incentive.reward}
-                  </Text>
-                </View>
-              </Card>
-            )}
-
-            <View style={styles.buttonsRow}>
-              <TouchableOpacity
-                style={styles.ghostButton}
-                onPress={goToPayouts}
-              >
-                <InvoiceIcon size={17} color={Colors.ink} strokeWidth={1.8} />
-                <Text style={styles.ghostButtonLabel}>Payouts</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={goToWallet}
-              >
-                <WalletIcon size={17} color={Colors.lime} strokeWidth={1.8} />
-                <Text style={styles.primaryButtonLabel}>Wallet</Text>
-              </TouchableOpacity>
-            </View>
+        {loading ? (
+          <View style={styles.stateWrap}>
+            <Text style={styles.stateText}>Loading…</Text>
           </View>
-        )}
-
-        {tab === 'week' && (
-          <View style={styles.body}>
-            <Card pad={16}>
-              <Text style={styles.breakdownLabel}>This week</Text>
-              <Text style={styles.weekAmount}>
-                ₹{week.amount.toLocaleString('en-IN')}
-              </Text>
-              <Text style={styles.weekMeta}>{week.trips} trips · Mon–Sun</Text>
-
-              <View style={styles.chartRow}>
-                {week.days.map((d, i) => (
-                  <View key={d.day} style={styles.chartBarWrap}>
-                    <Text style={styles.chartValue}>
-                      ₹{Math.round(d.amount / 1000)}k
-                    </Text>
-                    <View
-                      style={[
-                        styles.chartBar,
-                        {
-                          height: vscale((d.amount / maxDay) * 68),
-                          backgroundColor:
-                            i === 4 ? Colors.ink : 'rgba(15,17,21,0.12)',
-                        },
-                      ]}
-                    />
-                    <Text
-                      style={[
-                        styles.chartDay,
-                        {
-                          color: i === 4 ? Colors.ink : Colors.mute,
-                          fontWeight: i === 4 ? '700' : '500',
-                        },
-                      ]}
-                    >
-                      {d.day}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </Card>
-
-            <Card pad={4} style={styles.dailyCard}>
-              <Text style={styles.dailyHeader}>Daily breakdown</Text>
-              {week.days.map((d, i) => (
-                <View
-                  key={d.day}
-                  style={[styles.dailyRow, i > 0 && styles.dailyRowBorder]}
-                >
-                  <View
-                    style={[
-                      styles.dailyBadge,
-                      { backgroundColor: i === 4 ? Colors.ink : Colors.bg },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.dailyBadgeText,
-                        { color: i === 4 ? Colors.lime : Colors.mute },
-                      ]}
-                    >
-                      {d.day}
-                    </Text>
-                  </View>
-                  <Text style={styles.dailyTrips}>{d.trips} trips</Text>
-                  <Text style={styles.dailyAmount}>
-                    ₹{d.amount.toLocaleString('en-IN')}
-                  </Text>
-                </View>
-              ))}
-            </Card>
-
-            <View style={styles.buttonsRow}>
-              <TouchableOpacity
-                style={styles.ghostButton}
-                onPress={goToPayouts}
-              >
-                <InvoiceIcon size={17} color={Colors.ink} strokeWidth={1.8} />
-                <Text style={styles.ghostButtonLabel}>Payouts</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={goToWallet}
-              >
-                <WalletIcon size={17} color={Colors.lime} strokeWidth={1.8} />
-                <Text style={styles.primaryButtonLabel}>Wallet</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {tab === 'month' && (
-          <View style={styles.body}>
-            <Card pad={20} style={styles.darkCard}>
-              <Text style={styles.darkEyebrow}>{month.label}</Text>
-              <Text style={styles.darkAmount}>
-                ₹{month.net.toLocaleString('en-IN')}
-              </Text>
-              <View style={styles.darkMetaRow}>
-                <Text style={styles.darkMetaText}>
-                  <Text style={styles.darkMetaStrong}>{month.trips}</Text> trips
-                </Text>
-                <Text style={styles.darkMetaText}>
-                  <Text style={styles.darkMetaStrong}>{month.acceptance}%</Text>{' '}
-                  acceptance
-                </Text>
-              </View>
-            </Card>
-
-            <Card style={styles.breakdownCard} pad={16}>
-              <Text style={styles.breakdownLabel}>Monthly summary</Text>
-              {[
-                ['Total gross', `₹${month.gross.toLocaleString('en-IN')}`],
-                [
-                  'Platform fees (8%)',
-                  `−₹${month.platformFees.toLocaleString('en-IN')}`,
-                ],
-                ['TDS (1%)', `−₹${month.tds.toLocaleString('en-IN')}`],
-                [
-                  'Incentives & bonuses',
-                  `+₹${month.incentives.toLocaleString('en-IN')}`,
-                ],
-              ].map(([k, v]) => (
-                <View
-                  key={k}
-                  style={[styles.breakdownRow, styles.monthlyRowBorder]}
-                >
-                  <Text style={styles.breakdownKey}>{k}</Text>
-                  <Text style={[styles.breakdownValue, { fontWeight: '700' }]}>
-                    {v}
-                  </Text>
-                </View>
-              ))}
-              <View style={styles.breakdownTotal}>
-                <Text style={styles.breakdownTotalLabel}>Net income</Text>
-                <Text style={styles.breakdownTotalValue}>
-                  ₹{month.net.toLocaleString('en-IN')}
-                </Text>
-              </View>
-            </Card>
-
-            <TouchableOpacity style={styles.downloadButton}>
-              <InvoiceIcon size={17} color={Colors.ink} strokeWidth={1.8} />
-              <Text style={styles.downloadButtonLabel}>
-                Download tax statement
-              </Text>
+        ) : error ? (
+          <View style={styles.stateWrap}>
+            <Text style={styles.stateText}>{error}</Text>
+            <TouchableOpacity
+              onPress={() => loadData()}
+              style={styles.retryButton}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
           </View>
+        ) : (
+          <>
+            {tab === 'today' && (
+              <View style={styles.body}>
+                <Card pad={20} style={styles.darkCard}>
+                  <View style={styles.darkCardRow}>
+                    <View>
+                      <Text style={styles.darkEyebrow}>Today's earnings</Text>
+                      <Text style={styles.darkAmount}>
+                        ₹{todaySummary.earnings.toLocaleString('en-IN')}
+                      </Text>
+                    </View>
+                    <View style={styles.darkIconWrap}>
+                      <CashIcon
+                        size={22}
+                        color={Colors.lime}
+                        strokeWidth={1.8}
+                      />
+                    </View>
+                  </View>
+                  <View style={styles.darkMetaRow}>
+                    <Text style={styles.darkMetaText}>
+                      <Text style={styles.darkMetaStrong}>
+                        {todaySummary.tripCount}
+                      </Text>{' '}
+                      trips
+                    </Text>
+                  </View>
+                </Card>
+
+                {renderSummaryStrip(todaySummary)}
+
+                <TouchableOpacity
+                  style={styles.primaryButtonFull}
+                  onPress={goToWallet}
+                >
+                  <WalletIcon size={17} color={Colors.lime} strokeWidth={1.8} />
+                  <Text style={styles.primaryButtonLabel}>Wallet</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {tab === 'week' && (
+              <View style={styles.body}>
+                <Card pad={16}>
+                  <Text style={styles.breakdownLabel}>This week</Text>
+                  <Text style={styles.weekAmount}>
+                    ₹{weekSummary.earnings.toLocaleString('en-IN')}
+                  </Text>
+                  <Text style={styles.weekMeta}>
+                    {weekSummary.tripCount} trips · Mon–Sun
+                  </Text>
+
+                  <View style={styles.chartRow}>
+                    {weekDays.map(d => (
+                      <View key={d.day} style={styles.chartBarWrap}>
+                        <Text style={styles.chartValue}>
+                          ₹{Math.round(d.amount / 1000)}k
+                        </Text>
+                        <View
+                          style={[
+                            styles.chartBar,
+                            {
+                              height: vscale((d.amount / maxDay) * 68),
+                              backgroundColor:
+                                d.day === todayLabel
+                                  ? Colors.ink
+                                  : 'rgba(15,17,21,0.12)',
+                            },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.chartDay,
+                            {
+                              color:
+                                d.day === todayLabel ? Colors.ink : Colors.mute,
+                              fontWeight: d.day === todayLabel ? '700' : '500',
+                            },
+                          ]}
+                        >
+                          {d.day}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </Card>
+
+                <Card pad={4} style={styles.dailyCard}>
+                  <Text style={styles.dailyHeader}>Daily breakdown</Text>
+                  {weekDays.map((d, i) => (
+                    <View
+                      key={d.day}
+                      style={[styles.dailyRow, i > 0 && styles.dailyRowBorder]}
+                    >
+                      <View
+                        style={[
+                          styles.dailyBadge,
+                          {
+                            backgroundColor:
+                              d.day === todayLabel ? Colors.ink : Colors.bg,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.dailyBadgeText,
+                            {
+                              color:
+                                d.day === todayLabel
+                                  ? Colors.lime
+                                  : Colors.mute,
+                            },
+                          ]}
+                        >
+                          {d.day}
+                        </Text>
+                      </View>
+                      <Text style={styles.dailyTrips}>{d.trips} trips</Text>
+                      <Text style={styles.dailyAmount}>
+                        ₹{d.amount.toLocaleString('en-IN')}
+                      </Text>
+                    </View>
+                  ))}
+                </Card>
+
+                {renderSummaryStrip(weekSummary)}
+
+                <TouchableOpacity
+                  style={styles.primaryButtonFull}
+                  onPress={goToWallet}
+                >
+                  <WalletIcon size={17} color={Colors.lime} strokeWidth={1.8} />
+                  <Text style={styles.primaryButtonLabel}>Wallet</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {tab === 'month' && (
+              <View style={styles.body}>
+                <Card pad={20} style={styles.darkCard}>
+                  <Text style={styles.darkEyebrow}>This month</Text>
+                  <Text style={styles.darkAmount}>
+                    ₹{monthSummary.earnings.toLocaleString('en-IN')}
+                  </Text>
+                  <View style={styles.darkMetaRow}>
+                    <Text style={styles.darkMetaText}>
+                      <Text style={styles.darkMetaStrong}>
+                        {monthSummary.tripCount}
+                      </Text>{' '}
+                      trips
+                    </Text>
+                  </View>
+                </Card>
+
+                {renderSummaryStrip(monthSummary)}
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
     </View>
@@ -364,6 +426,28 @@ const styles = StyleSheet.create({
   tabsWrap: {
     paddingHorizontal: hscale(18),
     paddingTop: vscale(14),
+  },
+  stateWrap: {
+    paddingHorizontal: hscale(18),
+    paddingTop: vscale(60),
+    alignItems: 'center',
+  },
+  stateText: {
+    fontSize: fscale(13.5),
+    color: Colors.mute,
+    fontWeight: '600',
+  },
+  retryButton: {
+    marginTop: vscale(12),
+    paddingVertical: vscale(8),
+    paddingHorizontal: hscale(16),
+    borderRadius: hscale(12),
+    backgroundColor: Colors.ink,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: fscale(12.5),
+    fontWeight: '700',
   },
   body: {
     paddingHorizontal: hscale(18),
@@ -438,17 +522,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.ink2,
   },
-  breakdownTrack: {
-    height: vscale(4),
-    borderRadius: 2,
-    backgroundColor: Colors.bg,
-    marginBottom: vscale(4),
-  },
-  breakdownFill: {
-    height: '100%',
-    borderRadius: 2,
-    backgroundColor: Colors.lime,
-  },
   breakdownTotal: {
     borderTopWidth: 0.5,
     borderTopColor: Colors.line,
@@ -467,57 +540,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: Colors.green,
   },
-  incentiveCard: {
+  primaryButtonFull: {
     marginTop: vscale(12),
-    backgroundColor: 'rgba(200,242,96,0.12)',
-    borderColor: 'rgba(200,242,96,0.3)',
-  },
-  incentiveRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: hscale(10),
-  },
-  incentiveTextWrap: {
-    flex: 1,
-  },
-  incentiveTitle: {
-    fontSize: fscale(13.5),
-    fontWeight: '700',
-    color: Colors.ink,
-  },
-  incentiveSub: {
-    fontSize: fscale(11.5),
-    color: Colors.mute,
-  },
-  incentiveReward: {
-    fontSize: fscale(14),
-    fontWeight: '800',
-    color: Colors.green,
-  },
-  buttonsRow: {
-    flexDirection: 'row',
-    gap: hscale(8),
-    marginTop: vscale(12),
-  },
-  ghostButton: {
-    flex: 1,
-    height: hscale(52),
-    borderRadius: hscale(16),
-    backgroundColor: 'rgba(255,255,255,0.65)',
-    borderWidth: 0.5,
-    borderColor: Colors.line,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: hscale(8),
-  },
-  ghostButtonLabel: {
-    fontSize: fscale(13.5),
-    fontWeight: '700',
-    color: Colors.ink,
-  },
-  primaryButton: {
-    flex: 1,
     height: hscale(52),
     borderRadius: hscale(16),
     backgroundColor: Colors.ink,
@@ -612,26 +636,6 @@ const styles = StyleSheet.create({
   dailyAmount: {
     fontSize: fscale(14),
     fontWeight: '800',
-    color: Colors.ink,
-  },
-  monthlyRowBorder: {
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.line2,
-  },
-  downloadButton: {
-    marginTop: vscale(12),
-    height: hscale(52),
-    borderRadius: hscale(16),
-    borderWidth: 0.5,
-    borderColor: Colors.line,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: hscale(8),
-  },
-  downloadButtonLabel: {
-    fontSize: fscale(13.5),
-    fontWeight: '700',
     color: Colors.ink,
   },
 });

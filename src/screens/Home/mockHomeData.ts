@@ -8,14 +8,16 @@ export interface PartnerProfile {
   phone: string;
 }
 
+// todayEarnings/todayTrips/totalTrips were removed — HomeScreen now
+// computes those from real GetRideHistory + PartnerPlanHistory data via
+// utils/financeCalc.ts instead of this mock. onlineHours/rating/
+// acceptanceRate/cancellationRate stay mocked — there's no API for them
+// yet.
 export interface PartnerStats {
-  todayEarnings: number;
-  todayTrips: number;
   onlineHours: string;
   rating: number;
   acceptanceRate: number;
   cancellationRate: number;
-  totalTrips: number;
 }
 
 export interface DemandZone {
@@ -42,31 +44,6 @@ export interface Vehicle {
   year: string;
 }
 
-export interface Payout {
-  id: string;
-  amount: number;
-  date: string;
-  trips: number;
-  status: 'Upcoming' | 'Paid';
-}
-
-export interface BankAccount {
-  bankName: string;
-  maskedNumber: string;
-  verified: boolean;
-}
-
-export interface Trip {
-  id: string;
-  from: string;
-  to: string;
-  date: string;
-  dist: string;
-  earning: number;
-  status: 'Completed' | 'Cancelled';
-  type?: 'intercity' | 'local';
-}
-
 export interface RideRequest {
   pickup: string;
   pickupDist: string;
@@ -88,13 +65,10 @@ export const PARTNER_PROFILE: PartnerProfile = {
 };
 
 export const PARTNER_STATS: PartnerStats = {
-  todayEarnings: 2840,
-  todayTrips: 14,
   onlineHours: '4h 35m',
   rating: 4.8,
   acceptanceRate: 92,
   cancellationRate: 3,
-  totalTrips: 2847,
 };
 
 export const PARTNER_DEMAND_ZONES: DemandZone[] = [
@@ -125,76 +99,6 @@ export const PARTNER_VEHICLES: Vehicle[] = [
   },
 ];
 
-export const PARTNER_PAYOUTS: Payout[] = [
-  {
-    id: 'PO-2607-04',
-    amount: 8740,
-    date: 'Monday, 14 Jul',
-    trips: 42,
-    status: 'Upcoming',
-  },
-  {
-    id: 'PO-2606-27',
-    amount: 9210,
-    date: 'Monday, 7 Jul',
-    trips: 45,
-    status: 'Paid',
-  },
-  {
-    id: 'PO-2606-20',
-    amount: 8460,
-    date: 'Monday, 30 Jun',
-    trips: 39,
-    status: 'Paid',
-  },
-  {
-    id: 'PO-2606-13',
-    amount: 7890,
-    date: 'Monday, 23 Jun',
-    trips: 36,
-    status: 'Paid',
-  },
-];
-
-export const PARTNER_BANK_ACCOUNT: BankAccount = {
-  bankName: 'HDFC Bank',
-  maskedNumber: '••3421',
-  verified: true,
-};
-
-export const PARTNER_TRIPS: Trip[] = [
-  {
-    id: 't1',
-    from: 'Sector 62',
-    to: 'Cyber Hub',
-    date: 'Today, 2:10 PM',
-    dist: '8.4 km',
-    earning: 186,
-    status: 'Completed',
-    type: 'local',
-  },
-  {
-    id: 't2',
-    from: 'Sector 18',
-    to: 'Botanical Garden',
-    date: 'Today, 1:05 PM',
-    dist: '4.1 km',
-    earning: 98,
-    status: 'Completed',
-    type: 'local',
-  },
-  {
-    id: 't3',
-    from: 'Noida Extension',
-    to: 'Kalindi Kunj',
-    date: 'Today, 11:40 AM',
-    dist: '6.7 km',
-    earning: 0,
-    status: 'Cancelled',
-    type: 'local',
-  },
-];
-
 export const PARTNER_RIDE_REQUEST: RideRequest = {
   pickup: 'Sector 62 Metro, Noida',
   pickupDist: '1.2 km',
@@ -208,13 +112,3 @@ export const PARTNER_RIDE_REQUEST: RideRequest = {
   passengerRating: 4.8,
   service: 'Car · Sedan',
 };
-
-// Status literals (Trip['status'], Payout['status']) stay untranslated data —
-// they're also used for filtering/colour branching (e.g. TripHistoryScreen's
-// tab filter, PayoutsScreen's chip colour). Resolve to a translation key at
-// render time instead of translating the stored value itself.
-export const tripStatusKey = (status: Trip['status']) =>
-  status === 'Completed' ? 'trips.status.completed' : 'trips.status.cancelled';
-
-export const payoutStatusKey = (status: Payout['status']) =>
-  status === 'Paid' ? 'payouts.status.paid' : 'payouts.status.upcoming';

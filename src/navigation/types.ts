@@ -33,7 +33,6 @@ export type RootStackParamList = {
   Verification: undefined;
   MainTabs: undefined;
   Vehicle: undefined;
-  Payouts: undefined;
   Wallet: undefined;
   TripDetail: { tripId: string; createdDate?: string; createdTime?: string };
   Settings: undefined;
@@ -59,6 +58,8 @@ export type RootStackParamList = {
   // confirmed final fare from that call; ride is the same trip context
   // threaded through since CompleteRide's own response doesn't repeat
   // Pickup/Route/TripDistanceKM/TripDurationMinutes.
-  TripEarnings: { ride?: PendingRide; fare?: string; fareText?: string } | undefined;
+  TripEarnings:
+    | { ride?: PendingRide; fare?: string; fareText?: string }
+    | undefined;
   PassengerRating: undefined;
 };

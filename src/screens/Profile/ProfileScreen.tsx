@@ -28,13 +28,11 @@ import ClockIcon from '../../assets/icons/ClockIcon';
 import BellIcon from '../../assets/icons/BellIcon';
 import SettingsIcon from '../../assets/icons/SettingsIcon';
 import ChatIcon from '../../assets/icons/ChatIcon';
-import SosIcon from '../../assets/icons/SosIcon';
 import LogoutIcon from '../../assets/icons/LogoutIcon';
 import {
   PARTNER_PROFILE,
   PARTNER_STATS,
   PARTNER_VEHICLES,
-  PARTNER_PAYOUTS,
 } from '../Home/mockHomeData';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
@@ -50,6 +48,11 @@ import {
   getPartnerPlanHistory,
   PartnerPlanHistoryItem,
 } from '../../services/api/plansService';
+import { getRideHistory } from '../../services/api/ridesService';
+import {
+  getCachedRideHistory,
+  setCachedRideHistory,
+} from '../../utils/rideHistoryCache';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'AccountTab'>,
@@ -71,11 +74,14 @@ const ProfileScreen = () => {
   };
   const s = PARTNER_STATS;
   const vehicle = PARTNER_VEHICLES[0];
-  const payout = PARTNER_PAYOUTS[0];
 
   const [activeCredit, setActiveCredit] = useState<ActiveCredit | null>(null);
   const [lastPurchase, setLastPurchase] =
     useState<PartnerPlanHistoryItem | null>(null);
+  // Real total trip count from GetRideHistory — PARTNER_STATS.totalTrips
+  // was removed since it was purely a mock number. null while loading so
+  // the stat shows "—" instead of a misleading 0.
+  const [tripCount, setTripCount] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
 
   // On focus (e.g. after buying a plan and coming back here): pull
@@ -88,9 +94,10 @@ const ProfileScreen = () => {
         const cookie = await getCookie();
         if (!cookie) return;
 
-        const [active, historyRes] = await Promise.all([
+        const [active, historyRes, ridesRes] = await Promise.all([
           refreshActiveCreditFromServer(cookie),
           getPartnerPlanHistory(cookie).catch(() => null),
+          getRideHistory(cookie).catch(() => null),
         ]);
 
         setActiveCredit(active);
@@ -101,9 +108,25 @@ const ProfileScreen = () => {
         ) {
           setLastPurchase(historyRes.History[0]);
         }
+        if (ridesRes && ridesRes.Result === 'Success' && ridesRes.Rides) {
+          setTripCount(ridesRes.Rides.length);
+          setCachedRideHistory(ridesRes.Rides);
+        }
       })();
     }, []),
   );
+
+  // Cache-first seed on mount — shows a real trip count immediately
+  // (shared cache with Home/Earnings/Trips) instead of "—" until the
+  // focus effect above's fetch resolves.
+  useEffect(() => {
+    (async () => {
+      const cached = await getCachedRideHistory();
+      if (cached && cached.length > 0) {
+        setTripCount(cached.length);
+      }
+    })();
+  }, []);
 
   // Purely local 1s tick so the countdown reads smoothly here too,
   // instead of only refreshing whenever this screen happens to refocus.
@@ -149,7 +172,10 @@ const ProfileScreen = () => {
               {[
                 { v: s.rating, l: 'rating', labelKey: 'profile.stats.rating' },
                 {
-                  v: s.totalTrips.toLocaleString('en-IN'),
+                  v:
+                    tripCount === null
+                      ? '—'
+                      : tripCount.toLocaleString('en-IN'),
                   l: 'trips',
                   labelKey: 'profile.stats.trips',
                 },
@@ -240,18 +266,6 @@ const ProfileScreen = () => {
               title={t('profile.rows.earnings')}
               sub={t('profile.earningsSub', { amount: '₹72,800' })}
               onPress={() => navigation.navigate('EarningsTab')}
-              showDivider
-            />
-            <Row
-              icon={
-                <WalletIcon size={18} color={Colors.ink} strokeWidth={1.8} />
-              }
-              title={t('profile.rows.payouts')}
-              sub={t('profile.payoutDue', {
-                amount: payout.amount.toLocaleString('en-IN'),
-                date: payout.date,
-              })}
-              onPress={() => navigation.navigate('Payouts')}
             />
           </Card>
 
@@ -276,13 +290,6 @@ const ProfileScreen = () => {
               icon={<ChatIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title={t('profile.rows.helpSupport')}
               onPress={() => navigation.navigate('SupportTab')}
-              showDivider
-            />
-            <Row
-              icon={<SosIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
-              title={t('profile.rows.emergencySos')}
-              sub={t('profile.emergencySosSub')}
-              onPress={() => navigation.navigate('SOS')}
               showDivider
             />
             <Row

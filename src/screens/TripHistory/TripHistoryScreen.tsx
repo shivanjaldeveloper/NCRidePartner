@@ -1,9 +1,15 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
+  FlatList,
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
@@ -29,6 +35,10 @@ import {
   getRideHistory,
   RideHistoryItem,
 } from '../../services/api/ridesService';
+import {
+  getCachedRideHistory,
+  setCachedRideHistory,
+} from '../../utils/rideHistoryCache';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList, 'TripsTab'>,
@@ -44,19 +54,34 @@ type TripFilter = 'all' | 'completed' | 'cancelled';
 const isCompletedStatus = (status: string) =>
   status?.toUpperCase() === 'COMPLETED';
 
+// GetRideHistory has no server-side paging — it always returns the whole
+// list. Rendering all of it at once is what made this screen feel slow
+// once a partner had a lot of rides, so we page through it client-side
+// instead: render PAGE_SIZE rows, then reveal PAGE_SIZE more each time
+// the list is scrolled near the bottom.
+const PAGE_SIZE = 10;
+
 const TripHistoryScreen = () => {
   const navigation = useNavigation<NavProp>();
   const { t } = useTranslation();
   const [tab, setTab] = useState<TripFilter>('all');
 
   const [rides, setRides] = useState<RideHistoryItem[]>([]);
-  // `loading` -> center loader, only for the very first load (no data yet).
-  // `refreshing` -> top pull-to-refresh spinner, only for a manual swipe.
-  // Refetching in the background (e.g. on refocus) uses neither — the
-  // list just stays on screen and updates quietly once the new data lands.
+  // `loading` -> center loader, only when there's neither cached nor
+  // fresh data yet to show. `refreshing` -> top pull-to-refresh spinner,
+  // only for a manual swipe. Refetching in the background (e.g. on
+  // refocus, or revalidating after a cache hit) uses neither — the list
+  // just stays on screen and updates quietly once the new data lands.
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // How many rows of the current filtered list are actually rendered.
+  // Grows by PAGE_SIZE as the user scrolls; resets whenever the
+  // underlying list changes shape (tab switch, refresh, cache→fresh swap)
+  // so it doesn't stay stuck at some previous "12 of 50 completed" count
+  // that no longer makes sense for a different filter.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   type LoadMode = 'initial' | 'manual' | 'silent';
 
@@ -79,6 +104,9 @@ const TripHistoryScreen = () => {
           return;
         }
         setRides(res.Rides);
+        // Best-effort — a cache write failure shouldn't affect what's
+        // already showing on screen.
+        setCachedRideHistory(res.Rides);
       } catch (err: any) {
         // A silent background refetch failing shouldn't yank the
         // already-visible list away and replace it with an error screen —
@@ -95,8 +123,24 @@ const TripHistoryScreen = () => {
   );
 
   useEffect(() => {
-    loadHistory('initial');
-  }, [loadHistory]);
+    (async () => {
+      // Cache-first: paint whatever we last saw immediately (no
+      // spinner), then quietly revalidate against the server. Only fall
+      // back to the loading spinner when there's truly nothing cached
+      // yet — e.g. first-ever open.
+      const cached = await getCachedRideHistory();
+      if (cached && cached.length > 0) {
+        setRides(cached);
+        setLoading(false);
+        loadHistory('silent');
+      } else {
+        loadHistory('initial');
+      }
+    })();
+    // Only run once on mount — loadHistory itself is stable (memoised on
+    // `t`), refetching belongs to the focus effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Refresh every time the Trips tab regains focus (e.g. after completing
   // a new ride) so the list doesn't go stale. Skip the very first focus —
@@ -120,14 +164,35 @@ const TripHistoryScreen = () => {
     { id: 'cancelled', label: t('trips.status.cancelled') },
   ];
 
-  const filtered =
-    tab === 'all'
-      ? rides
-      : rides.filter(r =>
-          tab === 'completed'
-            ? isCompletedStatus(r.Status)
-            : !isCompletedStatus(r.Status),
-        );
+  const filtered = useMemo(
+    () =>
+      tab === 'all'
+        ? rides
+        : rides.filter(r =>
+            tab === 'completed'
+              ? isCompletedStatus(r.Status)
+              : !isCompletedStatus(r.Status),
+          ),
+    [rides, tab],
+  );
+
+  // Reset paging whenever the visible list changes shape — switching
+  // tabs, a refresh landing a different rides array, etc. — so scrolling
+  // always starts from the first PAGE_SIZE rows of whatever's now shown.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [tab, rides]);
+
+  const paginated = useMemo(
+    () => filtered.slice(0, visibleCount),
+    [filtered, visibleCount],
+  );
+  const hasMore = visibleCount < filtered.length;
+
+  const handleEndReached = useCallback(() => {
+    if (!hasMore) return;
+    setVisibleCount(v => Math.min(v + PAGE_SIZE, filtered.length));
+  }, [hasMore, filtered.length]);
 
   const openTripDetail = (ride: RideHistoryItem) =>
     navigation.navigate('TripDetail', {
@@ -136,125 +201,137 @@ const TripHistoryScreen = () => {
       createdTime: ride.CreatedTime,
     });
 
+  const renderTrip = useCallback(
+    ({ item: ride }: { item: RideHistoryItem }) => {
+      const completed = isCompletedStatus(ride.Status);
+      return (
+        <Card pad={14} style={styles.tripCard}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => openTripDetail(ride)}
+            style={styles.tripRow}
+          >
+            <View style={styles.tripIconWrap}>
+              <TaxiIcon size={20} color={Colors.ink} strokeWidth={1.8} />
+            </View>
+            <View style={styles.tripTextWrap}>
+              <Text style={styles.tripRoute} numberOfLines={1}>
+                {ride.PickupAddress} → {ride.DropAddress}
+              </Text>
+              <Text style={styles.tripMeta}>
+                {ride.CreatedDate} · {ride.CreatedTime} · {ride.DistanceKM} km
+              </Text>
+              <Text style={styles.tripId}>{ride.RideId}</Text>
+            </View>
+            <View style={styles.tripAmountWrap}>
+              <Text
+                style={[
+                  styles.tripEarning,
+                  { color: completed ? Colors.ink : Colors.mute },
+                ]}
+              >
+                {completed ? ride.FinalFareText : '—'}
+              </Text>
+              <View
+                style={[
+                  styles.statusChip,
+                  {
+                    backgroundColor: completed
+                      ? '#E9F8E4'
+                      : 'rgba(224,82,78,0.1)',
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusText,
+                    { color: completed ? Colors.green : Colors.red },
+                  ]}
+                >
+                  {completed
+                    ? t('trips.status.completed')
+                    : t('trips.status.cancelled')}
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Card>
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t],
+  );
+
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.flex}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => loadHistory('manual')}
-            tintColor={Colors.ink}
-          />
-        }
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('trips.title')}</Text>
-          <Text style={styles.subtitle}>{t('trips.subtitle')}</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>{t('trips.title')}</Text>
+        <Text style={styles.subtitle}>{t('trips.subtitle')}</Text>
+      </View>
+
+      <View style={styles.tabsWrap}>
+        <SegmentedTabs
+          options={TAB_OPTIONS}
+          value={tab}
+          onChange={id => setTab(id as TripFilter)}
+        />
+      </View>
+
+      {loading && (
+        <View style={styles.stateBox}>
+          <ActivityIndicator color={Colors.ink} size="small" />
+          <Text style={styles.stateText}>{t('trips.loading')}</Text>
         </View>
+      )}
 
-        <View style={styles.tabsWrap}>
-          <SegmentedTabs
-            options={TAB_OPTIONS}
-            value={tab}
-            onChange={id => setTab(id as TripFilter)}
-          />
+      {!loading && error && (
+        <View style={styles.stateBox}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            activeOpacity={0.85}
+            onPress={() => loadHistory('initial')}
+          >
+            <Text style={styles.retryButtonText}>{t('trips.retry')}</Text>
+          </TouchableOpacity>
         </View>
+      )}
 
-        {loading && (
-          <View style={styles.stateBox}>
-            <ActivityIndicator color={Colors.ink} size="small" />
-            <Text style={styles.stateText}>{t('trips.loading')}</Text>
-          </View>
-        )}
-
-        {!loading && error && (
-          <View style={styles.stateBox}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              activeOpacity={0.85}
-              onPress={() => loadHistory('initial')}
-            >
-              <Text style={styles.retryButtonText}>{t('trips.retry')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {!loading && !error && (
-          <View style={styles.list}>
-            {filtered.map(ride => {
-              const completed = isCompletedStatus(ride.Status);
-              return (
-                <Card key={ride.RideId} pad={14} style={styles.tripCard}>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => openTripDetail(ride)}
-                    style={styles.tripRow}
-                  >
-                    <View style={styles.tripIconWrap}>
-                      <TaxiIcon
-                        size={20}
-                        color={Colors.ink}
-                        strokeWidth={1.8}
-                      />
-                    </View>
-                    <View style={styles.tripTextWrap}>
-                      <Text style={styles.tripRoute} numberOfLines={1}>
-                        {ride.PickupAddress} → {ride.DropAddress}
-                      </Text>
-                      <Text style={styles.tripMeta}>
-                        {ride.CreatedDate} · {ride.CreatedTime} ·{' '}
-                        {ride.DistanceKM} km
-                      </Text>
-                      <Text style={styles.tripId}>{ride.RideId}</Text>
-                    </View>
-                    <View style={styles.tripAmountWrap}>
-                      <Text
-                        style={[
-                          styles.tripEarning,
-                          { color: completed ? Colors.ink : Colors.mute },
-                        ]}
-                      >
-                        {completed ? ride.FinalFareText : '—'}
-                      </Text>
-                      <View
-                        style={[
-                          styles.statusChip,
-                          {
-                            backgroundColor: completed
-                              ? '#E9F8E4'
-                              : 'rgba(224,82,78,0.1)',
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.statusText,
-                            { color: completed ? Colors.green : Colors.red },
-                          ]}
-                        >
-                          {completed
-                            ? t('trips.status.completed')
-                            : t('trips.status.cancelled')}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                </Card>
-              );
-            })}
-
-            {filtered.length === 0 && (
-              <Text style={styles.emptyText}>
-                {t('trips.emptyFor', { filter: t(`trips.status.${tab}`) })}
-              </Text>
-            )}
-          </View>
-        )}
-      </ScrollView>
+      {!loading && !error && (
+        <FlatList
+          data={paginated}
+          keyExtractor={ride => ride.RideId}
+          renderItem={renderTrip}
+          style={styles.flex}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => loadHistory('manual')}
+              tintColor={Colors.ink}
+            />
+          }
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.4}
+          initialNumToRender={PAGE_SIZE}
+          maxToRenderPerBatch={PAGE_SIZE}
+          windowSize={7}
+          removeClippedSubviews
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>
+              {t('trips.emptyFor', { filter: t(`trips.status.${tab}`) })}
+            </Text>
+          }
+          ListFooterComponent={
+            hasMore ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator color={Colors.mute} size="small" />
+              </View>
+            ) : null
+          }
+        />
+      )}
     </View>
   );
 };
@@ -268,9 +345,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: vscale(30),
   },
   header: {
     paddingTop: vscale(45),
@@ -322,6 +396,7 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: hscale(18),
     paddingTop: vscale(14),
+    paddingBottom: vscale(30),
     gap: vscale(10),
   },
   tripCard: {
@@ -384,5 +459,8 @@ const styles = StyleSheet.create({
     paddingVertical: vscale(40),
     color: Colors.mute,
     fontSize: fscale(14),
+  },
+  footerLoader: {
+    paddingVertical: vscale(16),
   },
 });

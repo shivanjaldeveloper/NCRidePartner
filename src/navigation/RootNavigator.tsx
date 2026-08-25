@@ -23,7 +23,6 @@ import TabNavigator from './TabNavigator';
 import VehicleScreen from '../screens/Vehicle/VehicleScreen';
 import BuyCreditScreen from '../screens/Credit/BuyCreditScreen';
 import PaymentScreen from '../screens/payment/PaymentScreen';
-import PayoutsScreen from '../screens/Payouts/PayoutsScreen';
 import WalletScreen from '../screens/Wallet/WalletScreen';
 import TripDetailScreen from '../screens/TripDetail/TripDetailScreen';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
@@ -90,7 +89,6 @@ const RootNavigator = () => {
                 animation: 'slide_from_bottom',
               }}
             />
-            <Stack.Screen name="Payouts" component={PayoutsScreen} />
             <Stack.Screen name="Wallet" component={WalletScreen} />
             <Stack.Screen name="TripDetail" component={TripDetailScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
