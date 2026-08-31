@@ -154,6 +154,13 @@ export const completeRide = (
     API_RIDE_REQUEST_BASE_URL,
   );
 
+export interface RideRating {
+  ByCustomer: string;
+  ByCustomerComment?: string;
+  ByPartner: string;
+  ByPartnerComment?: string;
+}
+
 export interface RideHistoryItem {
   RideId: string;
   RideTran: string;
@@ -171,6 +178,10 @@ export interface RideHistoryItem {
   CreatedTime: string;
   CompletedDate: string;
   CompletedTime: string;
+  // Present on completed rides once either side has rated — confirmed via
+  // the GetRideHistory sample. Absent (not just empty) on rides nobody's
+  // rated yet, so treat this as optional rather than defaulting fields.
+  Rating?: RideRating;
 }
 
 export interface GetRideHistoryResponse {
@@ -192,11 +203,6 @@ export const getRideHistory = (cookie: string) =>
     API_RIDE_REQUEST_BASE_URL,
   );
 
-export interface RideDetailCustomer {
-  Name: string;
-  Mobile: string;
-}
-
 export interface GetRideDetailResponse {
   Result: string;
   Message?: string;
@@ -209,7 +215,14 @@ export interface GetRideDetailResponse {
   Route: RideRoute & { DistanceKM: string; DurationMinutes: string };
   EstimatedFare: string;
   EstimatedFareText: string;
-  Customer: RideDetailCustomer;
+  // Flat fields, not nested under a "Customer" object — corrected against
+  // a real GetRideDetail sample response (same flat shape as
+  // AcceptRideResponse's CustomerName/CustomerMobile).
+  CustomerName?: string;
+  CustomerMobile?: string;
+  // Same shape/optionality as GetRideHistory's Rating — confirmed via the
+  // GetRideDetail sample.
+  Rating?: RideRating;
   ResponseDateTime: string;
 }
 
@@ -253,5 +266,32 @@ export const cancelAcceptedRide = (
   postAuthForm<CancelAcceptedRideResponse>(
     'CancelAcceptedRide',
     { cookie, rideTran, reason },
+    API_RIDE_REQUEST_BASE_URL,
+  );
+
+export interface SubmitRatingByPartnerResponse {
+  Result: string;
+  Message?: string;
+  Error?: string;
+  RideTran: string;
+  Rating: string;
+  ResponseDateTime: string;
+}
+
+/**
+ * Submits the partner's post-ride rating (and optional remark) for the
+ * passenger — confirmed via the SubmitRatingByPartner curl sample. comment
+ * is optional on the backend; pass an empty string when the partner left
+ * no remark rather than omitting the field.
+ */
+export const submitRatingByPartner = (
+  cookie: string,
+  rideTran: string,
+  rating: number,
+  comment: string = '',
+) =>
+  postAuthForm<SubmitRatingByPartnerResponse>(
+    'SubmitRatingByPartner',
+    { cookie, rideTran, rating, comment },
     API_RIDE_REQUEST_BASE_URL,
   );

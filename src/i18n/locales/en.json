@@ -224,6 +224,8 @@
     "rate": "Rate {{name}}",
     "howWas": "How was this passenger?",
     "submit": "Submit rating",
+    "commentPlaceholder": "Leave a comment (optional)",
+    "submitting": "Submitting...",
     "tags": {
       "polite": "Polite",
       "onTime": "On time",
@@ -481,6 +483,7 @@
       "route": "Route",
       "dateTime": "Date & time",
       "vehicle": "Vehicle",
+      "customer": "Customer",
       "passengerRating": "Passenger rating"
     },
     "vehicleSub": "UP16 AB 4821 · Maruti Swift Dzire",
@@ -491,7 +494,13 @@
     "tds": "TDS (1%)",
     "netEarning": "Net earning",
     "reportIssue": "Report an issue",
-    "reportIssueSub": "Fare dispute, passenger complaint"
+    "reportIssueSub": "Fare dispute, passenger complaint",
+    "ratings": {
+      "title": "Ratings",
+      "byCustomer": "Customer rated you",
+      "byPartner": "You rated customer"
+    },
+    "unknownPassenger": "Passenger"
   },
   "profile": {
     "title": "Account",

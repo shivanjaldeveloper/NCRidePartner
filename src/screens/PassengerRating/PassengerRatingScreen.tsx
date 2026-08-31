@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -9,9 +16,12 @@ import { hscale, vscale, fscale } from '../../theme/scale';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import StarFillIcon from '../../assets/icons/StarFillIcon';
 import { PARTNER_RIDE_REQUEST } from '../Home/mockHomeData';
+import { getCookie } from '../../utils/session';
+import { submitRatingByPartner } from '../../services/api/ridesService';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'PassengerRating'>;
+type ScreenRoute = RouteProp<RootStackParamList, 'PassengerRating'>;
 
 // key is the stable identity used for selection state; labelKey resolves
 // through the active language at render time.
@@ -25,11 +35,15 @@ const TAGS = [
 
 const PassengerRatingScreen = () => {
   const navigation = useNavigation<NavProp>();
+  const route = useRoute<ScreenRoute>();
   const { t } = useTranslation();
   const req = PARTNER_RIDE_REQUEST;
+  const ride = route.params?.ride;
 
   const [rating, setRating] = useState(5);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const toggleTag = (tagKey: string) => {
     setSelectedTags(prev =>
@@ -40,6 +54,38 @@ const PassengerRatingScreen = () => {
   };
 
   const handleDone = () => navigation.navigate('MainTabs');
+
+  const handleSubmit = async () => {
+    if (submitting) return;
+    if (!ride?.RideTran) {
+      // No ride context to rate against (e.g. screen opened without one) —
+      // don't block the partner from moving on.
+      handleDone();
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const cookie = await getCookie();
+      if (!cookie) throw new Error('Session not found. Please log in again.');
+      const res = await submitRatingByPartner(
+        cookie,
+        ride.RideTran,
+        rating,
+        comment.trim(),
+      );
+      if (res.Result !== 'Success') {
+        throw new Error(res.Message || 'Could not submit rating.');
+      }
+      handleDone();
+    } catch (err: any) {
+      Alert.alert(
+        'Could not submit rating',
+        err?.message || 'Please try again.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -90,6 +136,16 @@ const PassengerRatingScreen = () => {
           })}
         </View>
 
+        <TextInput
+          style={styles.commentInput}
+          placeholder={t('passengerRating.commentPlaceholder')}
+          placeholderTextColor={Colors.mute}
+          value={comment}
+          onChangeText={setComment}
+          multiline
+          maxLength={300}
+        />
+
         <View style={styles.actionsRow}>
           <PrimaryButton
             label={t('common.skip')}
@@ -97,12 +153,18 @@ const PassengerRatingScreen = () => {
             icon="none"
             variant="ghost"
             style={styles.actionButton}
+            disabled={submitting}
           />
           <PrimaryButton
-            label={t('passengerRating.submit')}
-            onPress={handleDone}
+            label={
+              submitting
+                ? t('passengerRating.submitting')
+                : t('passengerRating.submit')
+            }
+            onPress={handleSubmit}
             icon="none"
             style={styles.actionButton}
+            disabled={submitting}
           />
         </View>
       </View>
@@ -180,6 +242,20 @@ const styles = StyleSheet.create({
   },
   tagTextSelected: {
     color: '#FFFFFF',
+  },
+  commentInput: {
+    width: '100%',
+    minHeight: vscale(72),
+    marginTop: vscale(16),
+    paddingHorizontal: hscale(14),
+    paddingVertical: vscale(10),
+    borderRadius: hscale(14),
+    borderWidth: 0.5,
+    borderColor: Colors.line,
+    backgroundColor: Colors.surface,
+    fontSize: fscale(13.5),
+    color: Colors.ink,
+    textAlignVertical: 'top',
   },
   actionsRow: {
     flexDirection: 'row',

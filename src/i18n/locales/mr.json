@@ -224,6 +224,8 @@
     "rate": "{{name}} यांना रेट करा",
     "howWas": "हा प्रवासी कसा होता?",
     "submit": "रेटिंग सबमिट करा",
+    "commentPlaceholder": "टिप्पणी लिहा (ऐच्छिक)",
+    "submitting": "सबमिट होत आहे...",
     "tags": {
       "polite": "विनम्र",
       "onTime": "वेळेवर",
@@ -481,6 +483,7 @@
       "route": "मार्ग",
       "dateTime": "तारीख आणि वेळ",
       "vehicle": "वाहन",
+      "customer": "ग्राहक",
       "passengerRating": "प्रवासी रेटिंग"
     },
     "vehicleSub": "UP16 AB 4821 · मारुती स्विफ्ट डिझायर",
@@ -491,7 +494,13 @@
     "tds": "TDS (1%)",
     "netEarning": "निव्वळ कमाई",
     "reportIssue": "समस्येची तक्रार करा",
-    "reportIssueSub": "भाडे वाद, प्रवासी तक्रार"
+    "reportIssueSub": "भाडे वाद, प्रवासी तक्रार",
+    "ratings": {
+      "title": "रेटिंग",
+      "byCustomer": "ग्राहकाने तुम्हाला रेट केले",
+      "byPartner": "तुम्ही ग्राहकाला रेट केले"
+    },
+    "unknownPassenger": "प्रवासी"
   },
   "profile": {
     "title": "खाते",

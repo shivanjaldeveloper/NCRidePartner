@@ -61,5 +61,7 @@ export type RootStackParamList = {
   TripEarnings:
     | { ride?: PendingRide; fare?: string; fareText?: string }
     | undefined;
-  PassengerRating: undefined;
+  // Carries the ride forward so the rating submission has a RideTran to
+  // send — same optional-ride pattern as PickupNav/Arrived/LiveTrip.
+  PassengerRating: { ride?: PendingRide } | undefined;
 };

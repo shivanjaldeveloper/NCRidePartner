@@ -28,6 +28,7 @@ import { hscale, vscale, fscale } from '../../theme/scale';
 import Card from '../../components/common/Card';
 import SegmentedTabs from '../../components/common/SegmentedTabs';
 import TaxiIcon from '../../assets/icons/TaxiIcon';
+import StarFillIcon from '../../assets/icons/StarFillIcon';
 import { RootStackParamList } from '../../navigation/types';
 import { TabParamList } from '../../navigation/tabTypes';
 import { getCookie } from '../../utils/session';
@@ -253,6 +254,14 @@ const TripHistoryScreen = () => {
                     : t('trips.status.cancelled')}
                 </Text>
               </View>
+              {!!ride.Rating?.ByCustomer && (
+                <View style={styles.ratingBadge}>
+                  <StarFillIcon size={11} color={Colors.amber} />
+                  <Text style={styles.ratingBadgeText}>
+                    {ride.Rating.ByCustomer}
+                  </Text>
+                </View>
+              )}
             </View>
           </TouchableOpacity>
         </Card>
@@ -453,6 +462,17 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: fscale(10.5),
     fontWeight: '700',
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(3),
+    marginTop: vscale(5),
+  },
+  ratingBadgeText: {
+    fontSize: fscale(11),
+    fontWeight: '700',
+    color: Colors.ink2,
   },
   emptyText: {
     textAlign: 'center',

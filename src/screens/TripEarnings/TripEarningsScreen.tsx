@@ -164,7 +164,7 @@ const TripEarningsScreen = () => {
         </TouchableOpacity>
         <PrimaryButton
           label={t('tripEarnings.ratePassenger')}
-          onPress={() => navigation.navigate('PassengerRating')}
+          onPress={() => navigation.navigate('PassengerRating', { ride })}
           icon="none"
           style={styles.rateButton}
         />

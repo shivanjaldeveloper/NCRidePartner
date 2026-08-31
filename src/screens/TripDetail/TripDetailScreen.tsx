@@ -23,6 +23,7 @@ import ClockIcon from '../../assets/icons/ClockIcon';
 import CarIcon from '../../assets/icons/CarIcon';
 import UserIcon from '../../assets/icons/UserIcon';
 import ChatIcon from '../../assets/icons/ChatIcon';
+import StarFillIcon from '../../assets/icons/StarFillIcon';
 import { RootStackParamList } from '../../navigation/types';
 import { getCookie } from '../../utils/session';
 import {
@@ -75,8 +76,7 @@ const TripDetailScreen = () => {
   }, [loadDetail]);
 
   const isCompleted = detail ? isCompletedStatus(detail.Status) : false;
-  const customerName = detail?.Customer?.Name || 'Passenger';
-  const customerMobile = detail?.Customer?.Mobile;
+  const customerName = detail?.CustomerName || t('tripDetail.unknownPassenger');
   const fare = detail ? Number(detail.EstimatedFare) || 0 : 0;
   const gross = Math.round(fare * 1.1);
   const platformFee = Math.round(fare * 0.08);
@@ -218,11 +218,7 @@ const TripDetailScreen = () => {
             <Row
               icon={<UserIcon size={18} color={Colors.ink} strokeWidth={1.8} />}
               title={t('tripDetail.fields.customer')}
-              sub={
-                customerMobile
-                  ? `${customerName} · ${customerMobile}`
-                  : customerName
-              }
+              sub={customerName}
               showChevron={false}
             />
           </Card>
@@ -250,6 +246,41 @@ const TripDetailScreen = () => {
                   {detail.EstimatedFareText}
                 </Text>
               </View>
+            </Card>
+          )}
+
+          {!!detail.Rating && (
+            <Card style={styles.ratingsCard} pad={4}>
+              <Text style={styles.groupLabel}>
+                {t('tripDetail.ratings.title')}
+              </Text>
+              {!!detail.Rating.ByCustomer && (
+                <Row
+                  icon={<StarFillIcon size={18} color={Colors.amber} />}
+                  title={t('tripDetail.ratings.byCustomer')}
+                  sub={detail.Rating.ByCustomerComment || undefined}
+                  showChevron={false}
+                  showDivider={!!detail.Rating.ByPartner}
+                  right={
+                    <Text style={styles.ratingValue}>
+                      {detail.Rating.ByCustomer}
+                    </Text>
+                  }
+                />
+              )}
+              {!!detail.Rating.ByPartner && (
+                <Row
+                  icon={<StarFillIcon size={18} color={Colors.amber} />}
+                  title={t('tripDetail.ratings.byPartner')}
+                  sub={detail.Rating.ByPartnerComment || undefined}
+                  showChevron={false}
+                  right={
+                    <Text style={styles.ratingValue}>
+                      {detail.Rating.ByPartner}
+                    </Text>
+                  }
+                />
+              )}
             </Card>
           )}
 
@@ -410,6 +441,14 @@ const styles = StyleSheet.create({
     fontSize: fscale(16),
     fontWeight: '800',
     color: Colors.green,
+  },
+  ratingsCard: {
+    marginTop: vscale(12),
+  },
+  ratingValue: {
+    fontSize: fscale(14),
+    fontWeight: '800',
+    color: Colors.ink,
   },
   reportCard: {
     marginTop: vscale(12),
