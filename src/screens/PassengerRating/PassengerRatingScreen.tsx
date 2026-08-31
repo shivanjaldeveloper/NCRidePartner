@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  BackHandler,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -54,6 +55,14 @@ const PassengerRatingScreen = () => {
   };
 
   const handleDone = () => navigation.navigate('MainTabs');
+
+  // Only "Skip" or "Submit" below should move on from here — never the
+  // Android hardware back button, which would otherwise drop the partner
+  // back onto the (already-completed) earnings screen mid-rating.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, []);
 
   const handleSubmit = async () => {
     if (submitting) return;

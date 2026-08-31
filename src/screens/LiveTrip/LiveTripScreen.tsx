@@ -1,5 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  BackHandler,
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -46,6 +53,15 @@ const LiveTripScreen = () => {
   const ride = route.params?.ride;
   const [completing, setCompleting] = useState(false);
   const [liveProgress, setLiveProgress] = useState<RouteProgress | null>(null);
+
+  // Ride is in progress with the passenger on board — no intentional way
+  // off this screen except completing the trip, never the Android hardware
+  // back button (which would otherwise drop the partner back to MainTabs
+  // mid-trip with the ride still active on the server).
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, []);
 
   const handleNavigate = () => {
     if (!ride) return;

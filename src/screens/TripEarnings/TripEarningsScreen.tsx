@@ -1,12 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   Animated,
   Easing,
   StyleSheet,
+  BackHandler,
+  Alert,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -19,14 +22,26 @@ import { hscale, vscale, fscale } from '../../theme/scale';
 import Card from '../../components/common/Card';
 import PrimaryButton from '../../components/common/PrimaryButton';
 import CashIcon from '../../assets/icons/CashIcon';
-import ActivityIcon from '../../assets/icons/ActivityIcon';
+import StarFillIcon from '../../assets/icons/StarFillIcon';
 import { PARTNER_RIDE_REQUEST } from '../Home/mockHomeData';
+import { getCookie } from '../../utils/session';
+import { submitRatingByPartner } from '../../services/api/ridesService';
 import { RootStackParamList } from '../../navigation/types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'TripEarnings'>;
 type ScreenRoute = RouteProp<RootStackParamList, 'TripEarnings'>;
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+// key is the stable identity used for selection state; labelKey resolves
+// through the active language at render time.
+const TAGS = [
+  { key: 'polite', labelKey: 'passengerRating.tags.polite' },
+  { key: 'onTime', labelKey: 'passengerRating.tags.onTime' },
+  { key: 'cleanPickupArea', labelKey: 'passengerRating.tags.cleanPickupArea' },
+  { key: 'safeRide', labelKey: 'passengerRating.tags.safeRide' },
+  { key: 'easyToFind', labelKey: 'passengerRating.tags.easyToFind' },
+];
 
 const TripEarningsScreen = () => {
   const navigation = useNavigation<NavProp>();
@@ -38,18 +53,36 @@ const TripEarningsScreen = () => {
 
   // CompleteRide's response only ever returns the final total fare
   // (EstimatedFare/EstimatedFareText) — there's no per-component
-  // base/distance/time/surge split from the API, so this screen no longer
-  // fabricates one. Platform fee + TDS are display-only estimates against
-  // that real total (same 8%/1% shown in TripDetailScreen's breakdown).
+  // base/distance/time/surge split, no platform fee, and no TDS from the
+  // API today, so this screen shows the total fare as-is instead of
+  // fabricating a breakdown.
   const earning = Number(fare) || req.earning || 186;
-  const platform = Math.round(earning * 0.08);
-  const tds = Math.round(earning * 0.01);
-  const net = earning - platform - tds;
+  const totalFareText = fareText || `₹${earning}`;
+
+  // Same fallback pattern as PickupNav/Arrived: GetPendingRides/CompleteRide
+  // only send CustomerName when the backend has it, so fall back to a
+  // generic label instead of the mock passenger name.
+  const passengerName = ride?.CustomerName || t('common.passenger');
 
   const pickupLabel = ride?.Pickup?.Address || req.pickup;
   const dropLabel = ride?.Drop?.Address || req.drop;
   const distLabel = ride ? `${ride.TripDistanceKM} km` : req.tripDist;
-  const durationLabel = ride ? `${ride.TripDurationMinutes} min` : req.duration;
+  const durationLabel = ride
+    ? `${ride.TripDurationMinutes} minutes`
+    : req.duration;
+
+  const [rating, setRating] = useState(5);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const toggleTag = (tagKey: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tagKey)
+        ? prev.filter(k => k !== tagKey)
+        : [...prev, tagKey],
+    );
+  };
 
   const checkProgress = useRef(new Animated.Value(0)).current;
 
@@ -63,10 +96,52 @@ const TripEarningsScreen = () => {
     }).start();
   }, [checkProgress]);
 
+  // No back arrow on this screen and it's reached right after completing a
+  // ride — only leave it via the "Done" tap below, never the Android
+  // hardware back button.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, []);
+
   const strokeDashoffset = checkProgress.interpolate({
     inputRange: [0, 1],
     outputRange: [50, 0],
   });
+
+  const handleDone = () => navigation.navigate('MainTabs');
+
+  const handleSubmit = async () => {
+    if (submitting) return;
+    if (!ride?.RideTran) {
+      // No ride context to rate against — don't block the partner from
+      // moving on.
+      handleDone();
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const cookie = await getCookie();
+      if (!cookie) throw new Error('Session not found. Please log in again.');
+      const res = await submitRatingByPartner(
+        cookie,
+        ride.RideTran,
+        rating,
+        comment.trim(),
+      );
+      if (res.Result !== 'Success') {
+        throw new Error(res.Message || 'Could not submit rating.');
+      }
+      handleDone();
+    } catch (err: any) {
+      Alert.alert(
+        'Could not submit rating',
+        err?.message || 'Please try again.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -92,19 +167,16 @@ const TripEarningsScreen = () => {
           <Text style={styles.successTitle}>
             {t('tripEarnings.tripComplete')}
           </Text>
-          <Text style={styles.successSub}>
-            {pickupLabel} → {dropLabel}
-          </Text>
         </View>
 
         <View style={styles.body}>
-          <Card style={styles.netCard} pad={20}>
+          <Card style={styles.netCard} pad={22}>
             <View style={styles.netRow}>
               <View>
                 <Text style={styles.netEyebrow}>
-                  {t('tripEarnings.yourNetEarning')}
+                  {t('tripEarnings.totalFare')}
                 </Text>
-                <Text style={styles.netValue}>₹{net}</Text>
+                <Text style={styles.netValue}>{totalFareText}</Text>
               </View>
               <View style={styles.netIconWrap}>
                 <CashIcon size={26} color={Colors.lime} strokeWidth={1.8} />
@@ -117,40 +189,89 @@ const TripEarningsScreen = () => {
             </View>
           </Card>
 
-          <Card style={styles.breakdownCard} pad={16}>
-            <Text style={styles.breakdownLabel}>
-              {t('tripEarnings.fareBreakdown')}
+          <View style={styles.collectBanner}>
+            <CashIcon size={20} color={Colors.ink} strokeWidth={2} />
+            <Text style={styles.collectText}>
+              {t('tripEarnings.collectFromPassenger', {
+                amount: totalFareText,
+              })}
             </Text>
-            <View style={styles.breakdownRow}>
-              <Text style={[styles.breakdownKey, { color: Colors.ink2 }]}>
-                {t('tripDetail.grossEarning')}
-              </Text>
-              <Text style={[styles.breakdownValue, { color: Colors.ink2 }]}>
-                {fareText || `₹${earning}`}
-              </Text>
+          </View>
+
+          <Card style={styles.routeCard} pad={16}>
+            <View style={styles.routeRow}>
+              <View style={styles.pickupDot} />
+              <View style={styles.routeTextWrap}>
+                <Text style={styles.routeLabel}>
+                  {t('tripEarnings.pickup')}
+                </Text>
+                <Text style={styles.routeValue} numberOfLines={1}>
+                  {pickupLabel}
+                </Text>
+              </View>
             </View>
-            <View style={styles.breakdownRow}>
-              <Text style={[styles.breakdownKey, { color: Colors.red }]}>
-                {t('tripDetail.platformFee')}
-              </Text>
-              <Text style={[styles.breakdownValue, { color: Colors.red }]}>
-                −₹{platform}
-              </Text>
+            <View style={styles.routeConnector} />
+            <View style={styles.routeRow}>
+              <View style={styles.dropDot} />
+              <View style={styles.routeTextWrap}>
+                <Text style={styles.routeLabel}>{t('tripEarnings.drop')}</Text>
+                <Text style={styles.routeValue} numberOfLines={1}>
+                  {dropLabel}
+                </Text>
+              </View>
             </View>
-            <View style={styles.breakdownRow}>
-              <Text style={[styles.breakdownKey, { color: Colors.mute }]}>
-                {t('tripDetail.tds')}
-              </Text>
-              <Text style={[styles.breakdownValue, { color: Colors.mute }]}>
-                −₹{tds}
-              </Text>
+          </Card>
+
+          <Card style={styles.ratingCard} pad={18}>
+            <Text style={styles.ratingTitle}>Rate {passengerName}</Text>
+            <Text style={styles.ratingSubtitle}>How was this passenger?</Text>
+
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map(i => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => setRating(i)}
+                  hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                >
+                  <StarFillIcon
+                    size={34}
+                    color={i <= rating ? Colors.amber : 'rgba(15,17,21,0.15)'}
+                  />
+                </TouchableOpacity>
+              ))}
             </View>
-            <View style={styles.breakdownTotal}>
-              <Text style={styles.breakdownTotalLabel}>
-                {t('tripDetail.netEarning')}
-              </Text>
-              <Text style={styles.breakdownTotalValue}>₹{net}</Text>
+
+            <View style={styles.tagsRow}>
+              {TAGS.map(tag => {
+                const selected = selectedTags.includes(tag.key);
+                return (
+                  <TouchableOpacity
+                    key={tag.key}
+                    onPress={() => toggleTag(tag.key)}
+                    style={[styles.tagChip, selected && styles.tagChipSelected]}
+                  >
+                    <Text
+                      style={[
+                        styles.tagText,
+                        selected && styles.tagTextSelected,
+                      ]}
+                    >
+                      {t(tag.labelKey)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+
+            <TextInput
+              style={styles.commentInput}
+              placeholder={t('passengerRating.commentPlaceholder')}
+              placeholderTextColor={Colors.mute}
+              value={comment}
+              onChangeText={setComment}
+              multiline
+              maxLength={300}
+            />
           </Card>
         </View>
       </ScrollView>
@@ -158,15 +279,16 @@ const TripEarningsScreen = () => {
       <View
         style={[styles.footer, { paddingBottom: vscale(20) + insets.bottom }]}
       >
-        <TouchableOpacity style={styles.tripLogButton}>
-          <ActivityIcon size={18} color={Colors.ink} strokeWidth={1.8} />
-          <Text style={styles.tripLogLabel}>{t('tripEarnings.tripLog')}</Text>
-        </TouchableOpacity>
         <PrimaryButton
-          label={t('tripEarnings.ratePassenger')}
-          onPress={() => navigation.navigate('PassengerRating', { ride })}
+          label={
+            submitting
+              ? t('passengerRating.submitting')
+              : t('tripEarnings.done')
+          }
+          onPress={handleSubmit}
           icon="none"
-          style={styles.rateButton}
+          style={styles.doneButton}
+          disabled={submitting}
         />
       </View>
     </View>
@@ -187,10 +309,11 @@ const styles = StyleSheet.create({
     paddingBottom: vscale(20),
   },
   successHeader: {
-    height: vscale(200),
+    height: vscale(180),
     backgroundColor: Colors.lime,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: hscale(24),
   },
   checkCircle: {
     width: hscale(80),
@@ -211,14 +334,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: Colors.ink,
     letterSpacing: -0.5,
-  },
-  successSub: {
-    fontSize: fscale(13),
-    color: 'rgba(15,17,21,0.6)',
-    marginTop: vscale(2),
+    textAlign: 'center',
   },
   body: {
-    paddingHorizontal: hscale(18),
+    paddingHorizontal: hscale(20),
     paddingTop: vscale(20),
   },
   netCard: {
@@ -261,75 +380,137 @@ const styles = StyleSheet.create({
     fontSize: fscale(12),
     color: 'rgba(255,255,255,0.5)',
   },
-  breakdownCard: {
-    marginTop: vscale(12),
+  collectBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(10),
+    marginTop: vscale(14),
+    paddingVertical: vscale(16),
+    paddingHorizontal: hscale(18),
+    borderRadius: hscale(18),
+    backgroundColor: Colors.amber,
   },
-  breakdownLabel: {
-    fontSize: fscale(11),
+  collectText: {
+    flex: 1,
+    fontSize: fscale(15),
+    fontWeight: '800',
+    color: Colors.ink,
+    letterSpacing: -0.2,
+  },
+  routeCard: {
+    marginTop: vscale(14),
+  },
+  routeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: hscale(12),
+    paddingVertical: vscale(4),
+  },
+  pickupDot: {
+    width: hscale(10),
+    height: hscale(10),
+    borderRadius: hscale(5),
+    backgroundColor: Colors.green,
+    borderWidth: 3,
+    borderColor: 'rgba(31,157,107,0.15)',
+  },
+  dropDot: {
+    width: hscale(10),
+    height: hscale(10),
+    borderRadius: hscale(2),
+    backgroundColor: Colors.ink,
+  },
+  routeConnector: {
+    marginLeft: hscale(5),
+    width: 0,
+    height: vscale(16),
+    borderLeftWidth: 2,
+    borderLeftColor: Colors.line,
+    borderStyle: 'dashed',
+  },
+  routeTextWrap: {
+    flex: 1,
+  },
+  routeLabel: {
+    fontSize: fscale(10),
     color: Colors.mute,
     fontWeight: '700',
-    letterSpacing: 0.4,
     textTransform: 'uppercase',
-    marginBottom: vscale(8),
+    letterSpacing: 0.4,
   },
-  breakdownRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: vscale(6),
-  },
-  breakdownKey: {
-    fontSize: fscale(13.5),
-  },
-  breakdownValue: {
-    fontSize: fscale(13.5),
-    fontWeight: '600',
-  },
-  breakdownTotal: {
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.line,
-    marginTop: vscale(8),
-    paddingTop: vscale(10),
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  breakdownTotalLabel: {
+  routeValue: {
     fontSize: fscale(14),
     fontWeight: '700',
     color: Colors.ink,
+    marginTop: vscale(2),
   },
-  breakdownTotalValue: {
-    fontSize: fscale(18),
+  ratingCard: {
+    marginTop: vscale(14),
+  },
+  ratingTitle: {
+    fontSize: fscale(17),
     fontWeight: '800',
-    color: Colors.green,
-    letterSpacing: -0.4,
+    color: Colors.ink,
+    letterSpacing: -0.3,
+  },
+  ratingSubtitle: {
+    fontSize: fscale(12.5),
+    color: Colors.mute,
+    marginTop: vscale(2),
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: hscale(6),
+    marginTop: vscale(16),
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: hscale(8),
+    marginTop: vscale(14),
+  },
+  tagChip: {
+    paddingVertical: vscale(7),
+    paddingHorizontal: hscale(12),
+    borderRadius: 99,
+    backgroundColor: Colors.bg,
+    borderWidth: 0.5,
+    borderColor: Colors.line,
+  },
+  tagChipSelected: {
+    backgroundColor: Colors.ink,
+    borderColor: Colors.ink,
+  },
+  tagText: {
+    fontSize: fscale(12),
+    fontWeight: '600',
+    color: Colors.ink,
+  },
+  tagTextSelected: {
+    color: '#FFFFFF',
+  },
+  commentInput: {
+    width: '100%',
+    minHeight: vscale(64),
+    marginTop: vscale(14),
+    paddingHorizontal: hscale(14),
+    paddingVertical: vscale(10),
+    borderRadius: hscale(14),
+    borderWidth: 0.5,
+    borderColor: Colors.line,
+    backgroundColor: Colors.bg,
+    fontSize: fscale(13.5),
+    color: Colors.ink,
+    textAlignVertical: 'top',
   },
   footer: {
-    flexDirection: 'row',
-    gap: hscale(8),
-    paddingHorizontal: hscale(18),
+    paddingHorizontal: hscale(20),
     paddingTop: vscale(12),
     backgroundColor: Colors.bg,
     borderTopWidth: 0.5,
     borderTopColor: Colors.line,
   },
-  tripLogButton: {
-    width: hscale(90),
-    height: hscale(56),
-    borderRadius: hscale(18),
-    backgroundColor: 'rgba(255,255,255,0.65)',
-    borderWidth: 0.5,
-    borderColor: Colors.line,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: hscale(6),
-  },
-  tripLogLabel: {
-    fontSize: fscale(13),
-    fontWeight: '600',
-    color: Colors.ink,
-  },
-  rateButton: {
-    flex: 1,
+  doneButton: {
+    width: '100%',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   NativeSyntheticEvent,
   TextInputKeyPressEventData,
   Linking,
+  BackHandler,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -52,6 +53,15 @@ const ArrivedScreen = () => {
   const [starting, setStarting] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const otpRefs = useRef<Array<TextInput | null>>([]);
+
+  // Ride is accepted and the partner is at pickup — no intentional way off
+  // this screen except starting the ride, never the Android hardware back
+  // button (which would otherwise drop the partner back to MainTabs with
+  // the ride still accepted on the server).
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, []);
 
   const isOtpComplete = otp.every(d => d.length === 1);
 

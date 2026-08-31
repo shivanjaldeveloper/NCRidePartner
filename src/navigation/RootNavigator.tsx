@@ -35,7 +35,6 @@ import PickupNavScreen from '../screens/PickupNav/PickupNavScreen';
 import ArrivedScreen from '../screens/Arrived/ArrivedScreen';
 import LiveTripScreen from '../screens/LiveTrip/LiveTripScreen';
 import TripEarningsScreen from '../screens/TripEarnings/TripEarningsScreen';
-import PassengerRatingScreen from '../screens/PassengerRating/PassengerRatingScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -110,10 +109,10 @@ const RootNavigator = () => {
             <Stack.Screen name="PickupNav" component={PickupNavScreen} />
             <Stack.Screen name="Arrived" component={ArrivedScreen} />
             <Stack.Screen name="LiveTrip" component={LiveTripScreen} />
-            <Stack.Screen name="TripEarnings" component={TripEarningsScreen} />
             <Stack.Screen
-              name="PassengerRating"
-              component={PassengerRatingScreen}
+              name="TripEarnings"
+              component={TripEarningsScreen}
+              options={{ gestureEnabled: false }}
             />
           </Stack.Navigator>
         </NavigationContainer>

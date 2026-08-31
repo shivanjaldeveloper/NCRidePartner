@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
   Linking,
+  BackHandler,
   useWindowDimensions,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -57,6 +58,15 @@ const PickupNavScreen = () => {
   const [cancelling, setCancelling] = useState(false);
   const [liveProgress, setLiveProgress] = useState<RouteProgress | null>(null);
   const [sheetHeight, setSheetHeight] = useState(0);
+
+  // Ride is already accepted at this point — the only intentional way off
+  // this screen is the explicit Cancel action below, never the Android
+  // hardware back button (which would otherwise drop the partner back to
+  // MainTabs mid-pickup with the ride still accepted on the server).
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, []);
   const { height: windowHeight } = useWindowDimensions();
   // The bottom sheet's height is driven by its own content (ETA strip,
   // passenger row, pickup box, button — plus the safe-area inset it pads

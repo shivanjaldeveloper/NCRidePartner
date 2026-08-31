@@ -15,6 +15,7 @@ import {
 import {
   useNavigation,
   useFocusEffect,
+  useIsFocused,
   CompositeNavigationProp,
 } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -188,12 +189,22 @@ const HomeScreen = () => {
   // re-navigate the partner back into that screen even after they'd
   // already seen and backed out of the exact same offer(s).
   const seenRideTransRef = useRef<Set<string>>(new Set());
+  // HomeScreen stays mounted in the background for as long as any screen
+  // pushed on top of MainTabs (RideRequest, PickupNav, Arrived, LiveTrip,
+  // TripEarnings) is open — this poller keeps ticking the whole time. Without
+  // this focus check, a new offer arriving while the partner is mid-trip or
+  // sitting on the post-ride rating screen would silently yank them onto
+  // RideRequestScreen out from under whatever they were doing, and from
+  // there straight to MainTabs the moment that offer expired — looking like
+  // the current screen "auto-closes" a few seconds in for no reason.
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     if (!online) {
       seenRideTransRef.current.clear();
       return;
     }
+    if (!isFocused) return;
     if (incomingRides.length === 0) return;
     const hasNewOffer = incomingRides.some(
       r => !seenRideTransRef.current.has(r.RideTran),
@@ -201,7 +212,7 @@ const HomeScreen = () => {
     if (!hasNewOffer) return;
     incomingRides.forEach(r => seenRideTransRef.current.add(r.RideTran));
     navigation.navigate('RideRequest', { rides: incomingRides });
-  }, [online, incomingRides, navigation]);
+  }, [online, isFocused, incomingRides, navigation]);
 
   const [locationPrompt, setLocationPrompt] = useState<{
     title: string;

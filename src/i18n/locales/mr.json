@@ -588,14 +588,11 @@
   },
   "tripEarnings": {
     "tripComplete": "ट्रिप पूर्ण झाली!",
-    "yourNetEarning": "तुमची निव्वळ कमाई",
-    "fareBreakdown": "भाड्याचा तपशील",
-    "baseFare": "बेस भाडे",
-    "distanceFare": "अंतर भाडे",
-    "timeFare": "वेळ भाडे",
-    "surgeBonus": "सर्ज बोनस",
-    "tripLog": "ट्रिप लॉग",
-    "ratePassenger": "प्रवाशाला रेट करा"
+    "totalFare": "एकूण भाडे",
+    "collectFromPassenger": "प्रवाशाकडून {{amount}} घ्या",
+    "pickup": "पिकअप",
+    "drop": "ड्रॉप",
+    "done": "झाले"
   },
   "rideRequestSheet": {
     "newRideRequest": "नवीन राईड रिक्वेस्ट",

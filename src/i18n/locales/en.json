@@ -588,14 +588,11 @@
   },
   "tripEarnings": {
     "tripComplete": "Trip complete!",
-    "yourNetEarning": "Your net earning",
-    "fareBreakdown": "Fare breakdown",
-    "baseFare": "Base fare",
-    "distanceFare": "Distance fare",
-    "timeFare": "Time fare",
-    "surgeBonus": "Surge bonus",
-    "tripLog": "Trip log",
-    "ratePassenger": "Rate Passenger"
+    "totalFare": "Total fare",
+    "collectFromPassenger": "Collect {{amount}} from passenger",
+    "pickup": "Pickup",
+    "drop": "Drop",
+    "done": "Done"
   },
   "rideRequestSheet": {
     "newRideRequest": "New ride request",
