@@ -106,9 +106,31 @@ const RootNavigator = () => {
               component={DocumentDetailScreen}
             />
             <Stack.Screen name="RideRequest" component={RideRequestScreen} />
-            <Stack.Screen name="PickupNav" component={PickupNavScreen} />
-            <Stack.Screen name="Arrived" component={ArrivedScreen} />
-            <Stack.Screen name="LiveTrip" component={LiveTripScreen} />
+            {/* PickupNav → Arrived → LiveTrip → TripEarnings is the active-ride
+                span: once AcceptRide succeeds the ride exists on the server, so
+                the partner can't be allowed to swipe/back out of it. Each of
+                these screens already blocks the Android hardware back button
+                itself (see their own BackHandler effects), but that API is a
+                no-op on iOS and doesn't cover native-stack's own swipe-back
+                gesture on either platform — gestureEnabled: false is what
+                actually closes that gap. RideRequest (before acceptance) is
+                deliberately left out: nothing is booked yet, so backing out of
+                an offer is fine. */}
+            <Stack.Screen
+              name="PickupNav"
+              component={PickupNavScreen}
+              options={{ gestureEnabled: false }}
+            />
+            <Stack.Screen
+              name="Arrived"
+              component={ArrivedScreen}
+              options={{ gestureEnabled: false }}
+            />
+            <Stack.Screen
+              name="LiveTrip"
+              component={LiveTripScreen}
+              options={{ gestureEnabled: false }}
+            />
             <Stack.Screen
               name="TripEarnings"
               component={TripEarningsScreen}

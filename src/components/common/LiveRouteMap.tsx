@@ -134,6 +134,16 @@ const LiveRouteMap: React.FC<Props> = ({
     null,
   );
   const [rerouteSteps, setRerouteSteps] = useState<NavStep[] | null>(null);
+  // The backend's Route.EncodedPolyline (decodedCoords) is just a bare
+  // coordinate path — no maneuver/instruction metadata — so when it's the
+  // route being drawn (LiveTrip), baseSteps below is always empty and the
+  // turn banner has nothing to show. These hold a Directions-sourced set
+  // of steps fetched purely for banner instructions in that case; they
+  // never feed the drawn polyline, which stays exactly the backend's line.
+  const [polylineInstrCoords, setPolylineInstrCoords] = useState<
+    RouteCoordinate[]
+  >([]);
+  const [polylineInstrSteps, setPolylineInstrSteps] = useState<NavStep[]>([]);
   const [followMode, setFollowMode] = useState(true);
   const [activeInstruction, setActiveInstruction] =
     useState<NavInstruction | null>(null);
@@ -170,19 +180,26 @@ const LiveRouteMap: React.FC<Props> = ({
       ? []
       : fallbackSteps;
 
-  // Where each step begins within baseRoute's flat coordinate array —
-  // baseRoute is built by concatenating step coordinates end-to-end (see
-  // routing.ts), so these indices line up exactly with baseSteps.
-  const stepStartIndices = useMemo(() => {
+  // When the backend polyline is the route on screen, baseSteps is
+  // deliberately empty (see above) — so the banner is driven off this
+  // separate Directions-sourced route/steps instead, matched against its
+  // own coordinates the same way baseRoute/baseSteps are matched against
+  // each other. When there's no backend polyline, this is just baseRoute/
+  // baseSteps again — same instruction behaviour as before on those screens.
+  const instructionRoute =
+    decodedCoords.length > 1 ? polylineInstrCoords : baseRoute;
+  const instructionSteps: NavStep[] =
+    decodedCoords.length > 1 ? polylineInstrSteps : baseSteps;
+  const instructionStepStartIndices = useMemo(() => {
     const idx: number[] = [];
     let cum = 0;
-    for (const s of baseSteps) {
+    for (const s of instructionSteps) {
       idx.push(cum);
       cum += s.coordinates.length;
     }
     return idx;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseSteps]);
+  }, [instructionSteps]);
 
   // Reset any recalculated route as soon as we're navigating to a new
   // place (new ride, or pickup -> drop switchover) rather than carrying a
@@ -190,8 +207,50 @@ const LiveRouteMap: React.FC<Props> = ({
   useEffect(() => {
     setRerouteCoords(null);
     setRerouteSteps(null);
+    setPolylineInstrCoords([]);
+    setPolylineInstrSteps([]);
     lastRerouteAtRef.current = 0;
   }, [destination.latitude, destination.longitude, encodedPolyline]);
+
+  // Backend-polyline screens (LiveTrip) draw the server's exact route and
+  // never call Directions for that line — fallbackRoute is off there on
+  // purpose. The turn banner still needs maneuver data though, so this
+  // fetches Directions steps once off the first GPS fix, purely to drive
+  // the banner; it never touches fallbackCoords/decodedCoords/baseRoute,
+  // so the drawn line is unaffected no matter what this returns.
+  useEffect(() => {
+    if (decodedCoords.length <= 1 || !bannerEnabled) {
+      setPolylineInstrCoords([]);
+      setPolylineInstrSteps([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const granted = await hasLocationPermission();
+      if (!granted || cancelled) return;
+      if (!driverPosition) return;
+      const result = await getRoute(
+        { lat: driverPosition.latitude, lng: driverPosition.longitude },
+        { lat: destination.latitude, lng: destination.longitude },
+      );
+      if (cancelled || !result) return;
+      setPolylineInstrCoords(result.coordinates);
+      setPolylineInstrSteps(result.steps || []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Only (re)run off the FIRST fix, matching the fallback route effect's
+    // own behaviour — this is instruction data, not the drawn route, so it
+    // doesn't need the off-route recalculation fallbackRoute drives below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    encodedPolyline,
+    bannerEnabled,
+    destination.latitude,
+    destination.longitude,
+    !!driverPosition,
+  ]);
 
   // showsUserLocation on Android can throw/no-op ungracefully without an
   // already-granted permission — this app already asks for it elsewhere
@@ -360,30 +419,34 @@ const LiveRouteMap: React.FC<Props> = ({
       setActiveInstruction(val);
       cb?.(val);
     };
-    if (!driverPosition || baseRoute.length < 2 || baseSteps.length === 0) {
+    if (
+      !driverPosition ||
+      instructionRoute.length < 2 ||
+      instructionSteps.length === 0
+    ) {
       finish(null);
       return;
     }
     const { index: nearestIndex } = findNearestRouteIndex(
       driverPosition,
-      baseRoute,
+      instructionRoute,
     );
     let stepIndex = 0;
-    for (let i = 0; i < stepStartIndices.length; i++) {
-      if (stepStartIndices[i] <= nearestIndex) stepIndex = i;
+    for (let i = 0; i < instructionStepStartIndices.length; i++) {
+      if (instructionStepStartIndices[i] <= nearestIndex) stepIndex = i;
       else break;
     }
-    const step = baseSteps[stepIndex];
+    const step = instructionSteps[stepIndex];
     if (!step) {
       finish(null);
       return;
     }
-    const nextStepStart = stepStartIndices[stepIndex + 1];
+    const nextStepStart = instructionStepStartIndices[stepIndex + 1];
     const distanceToManeuver =
       nextStepStart != null
-        ? remainingMetersBetween(baseRoute, nearestIndex, nextStepStart)
-        : routeRemainingMeters(baseRoute, nearestIndex);
-    const next = baseSteps[stepIndex + 1];
+        ? remainingMetersBetween(instructionRoute, nearestIndex, nextStepStart)
+        : routeRemainingMeters(instructionRoute, nearestIndex);
+    const next = instructionSteps[stepIndex + 1];
     finish({
       maneuver: step.maneuver,
       instruction: step.instruction,
@@ -392,7 +455,12 @@ const LiveRouteMap: React.FC<Props> = ({
       nextInstruction: next?.instruction,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [driverPosition, baseRoute, baseSteps, stepStartIndices]);
+  }, [
+    driverPosition,
+    instructionRoute,
+    instructionSteps,
+    instructionStepStartIndices,
+  ]);
 
   const initialRegion: Region = {
     latitude: destination.latitude,

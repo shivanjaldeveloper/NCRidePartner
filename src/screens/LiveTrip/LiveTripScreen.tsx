@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -45,6 +45,10 @@ const STEPS = [
 ];
 const ACTIVE_STEP_INDEX = 1; // trip is in progress — "On trip" is current
 
+// Complete Trip stays disabled for this long after the screen mounts, to
+// prevent an accidental/immediate tap right after pickup.
+const COMPLETE_TRIP_LOCK_MS = 2 * 60 * 1000;
+
 const LiveTripScreen = () => {
   const navigation = useNavigation<NavProp>();
   const route = useRoute<ScreenRoute>();
@@ -53,6 +57,7 @@ const LiveTripScreen = () => {
   const ride = route.params?.ride;
   const [completing, setCompleting] = useState(false);
   const [liveProgress, setLiveProgress] = useState<RouteProgress | null>(null);
+  const [canComplete, setCanComplete] = useState(false);
 
   // Ride is in progress with the passenger on board — no intentional way
   // off this screen except completing the trip, never the Android hardware
@@ -61,6 +66,13 @@ const LiveTripScreen = () => {
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => sub.remove();
+  }, []);
+
+  // Lock the Complete Trip button for COMPLETE_TRIP_LOCK_MS from when this
+  // screen opens.
+  useEffect(() => {
+    const timer = setTimeout(() => setCanComplete(true), COMPLETE_TRIP_LOCK_MS);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleNavigate = () => {
@@ -73,7 +85,7 @@ const LiveTripScreen = () => {
   };
 
   const handleCompleteTrip = async () => {
-    if (completing) return;
+    if (completing || !canComplete) return;
     if (!ride?.RideTran) {
       Alert.alert('', 'Missing ride details. Please go back and try again.');
       return;
@@ -267,7 +279,7 @@ const LiveTripScreen = () => {
             }
             onPress={handleCompleteTrip}
             icon={completing ? 'none' : 'check'}
-            disabled={completing}
+            disabled={completing || !canComplete}
             style={styles.fullButton}
           />
         </BottomSheetPanel>

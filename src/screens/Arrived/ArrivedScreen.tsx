@@ -149,11 +149,9 @@ const ArrivedScreen = () => {
             // Partner's just arrived, not necessarily parked exactly on
             // the pickup pin — still worth showing the last stretch of
             // route/live position so they can see how close they really
-            // are and nudge over if needed.
-            // Turn-by-turn banner doesn't belong on this screen — partner
-            // is entering the OTP here, not driving, so suppress it even
-            // though liveNavigation (camera follow) stays on.
-            showInstructionBanner={false}
+            // are and nudge over if needed. Banner now shown here too,
+            // same as PickupNav — no encodedPolyline is passed, so it
+            // runs off the same fallback Google Directions steps.
           />
         ) : (
           <RouteMapIllustration />

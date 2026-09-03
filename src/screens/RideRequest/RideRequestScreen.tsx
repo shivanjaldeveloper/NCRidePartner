@@ -8,7 +8,12 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  useIsFocused,
+  RouteProp,
+} from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
@@ -42,6 +47,14 @@ const RideRequestScreen = () => {
   const navigation = useNavigation<NavProp>();
   const route = useRoute<ScreenRoute>();
   const { t } = useTranslation();
+  // Guards the "every offer's gone, head back" effect below. Once a ride is
+  // accepted this screen is replaced out of the stack (see handleAccept), so
+  // in practice this only matters as a second line of defense — without it,
+  // if this screen were ever left in the stack behind another push, the
+  // shared poller ticking in the background could still empty `rides` and
+  // fire navigate('MainTabs') while some other screen (mid-pickup, mid-trip,
+  // the post-ride rating screen) was the one actually on screen.
+  const isFocused = useIsFocused();
 
   // Shares the exact same poll instance HomeScreen uses (see
   // contexts/RidePollingContext.tsx) rather than running an independent
@@ -61,10 +74,11 @@ const RideRequestScreen = () => {
   // open — nothing left to review, so head back rather than sit on a
   // blank list.
   useEffect(() => {
+    if (!isFocused) return;
     if (hasFetchedOnce && rides.length === 0) {
       navigation.navigate('MainTabs');
     }
-  }, [hasFetchedOnce, rides.length, navigation]);
+  }, [isFocused, hasFetchedOnce, rides.length, navigation]);
 
   const handleAccept = async (ride: PendingRide) => {
     if (acceptingId) return;
@@ -87,7 +101,21 @@ const RideRequestScreen = () => {
       // passenger name/number gets fetched here and then silently
       // dropped, and every downstream screen falls back to the generic
       // "Passenger" label forever, even on a successful accept.
-      navigation.navigate('PickupNav', {
+      //
+      // replace (not navigate) is deliberate: once accepted, this screen
+      // has nothing left to show and must not stay mounted in the
+      // background. The shared poller (RidePollingContext) keeps hitting
+      // GetPendingRides every ~6s for as long as the partner is online,
+      // regardless of what screen they're on — and the instant this ride
+      // drops off that pending list (it's accepted now, not pending) with
+      // no other offer queued, the "every offer's gone" effect above would
+      // fire from this screen even while it's buried behind
+      // PickupNav/Arrived/LiveTrip/TripEarnings, sending navigate('MainTabs')
+      // and collapsing the whole active-ride flow back to home a few
+      // seconds after acceptance — which is exactly what was happening.
+      // Replacing this screen out of the stack removes that effect from
+      // existence the moment the ride is accepted.
+      navigation.replace('PickupNav', {
         ride: {
           ...ride,
           CustomerName: res.CustomerName ?? ride.CustomerName,

@@ -578,6 +578,7 @@
     "estEarning": "Est. earning",
     "passenger": "Passenger",
     "completeTrip": "Complete Trip",
+    "tripStarted": "Trip started · {{time}}",
     "steps": {
       "pickedUp": "Picked up",
       "onTrip": "On trip",

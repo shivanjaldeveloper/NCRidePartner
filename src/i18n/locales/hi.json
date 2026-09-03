@@ -578,6 +578,7 @@
     "estEarning": "अनुमानित कमाई",
     "passenger": "पैसेंजर",
     "completeTrip": "ट्रिप पूरी करें",
+    "tripStarted": "ट्रिप शुरू हुई · {{time}}",
     "steps": {
       "pickedUp": "पिक अप किया",
       "onTrip": "ट्रिप पर",

@@ -111,6 +111,23 @@ const TripEarningsScreen = () => {
 
   const handleDone = () => navigation.navigate('MainTabs');
 
+  // submitRatingByPartner's only free-text field is `comment` — there's no
+  // separate tags/labels param confirmed on this endpoint. So the selected
+  // pills (TAGS above) are folded into that same comment string here,
+  // translated to their current display text, joined by commas, followed by
+  // the partner's own typed remark on a new line if they wrote one. Without
+  // this, tapping a pill only ever updated local UI state and never actually
+  // reached the backend.
+  const buildComment = () => {
+    const tagLabels = TAGS.filter(tag => selectedTags.includes(tag.key)).map(
+      tag => t(tag.labelKey),
+    );
+    const tagLine = tagLabels.join(', ');
+    const remark = comment.trim();
+    if (tagLine && remark) return `${tagLine}\n${remark}`;
+    return tagLine || remark;
+  };
+
   const handleSubmit = async () => {
     if (submitting) return;
     if (!ride?.RideTran) {
@@ -127,7 +144,7 @@ const TripEarningsScreen = () => {
         cookie,
         ride.RideTran,
         rating,
-        comment.trim(),
+        buildComment(),
       );
       if (res.Result !== 'Success') {
         throw new Error(res.Message || 'Could not submit rating.');
